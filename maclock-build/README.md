@@ -11,7 +11,7 @@ I recorded a walkthrough for how I assembled mine that goes into much more detai
 - [Raspberry Pi Zero 2 W](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w/)
 - [Waveshare 2.8 inch IPS LCD](https://www.waveshare.com/2.8inch-dpi-lcd.htm)
 - [3D printed screen bezel](../maclock-screen-bezel)
-- [Macintosh Mini breakout board](https://www.pcbway.com/orderonline.aspx?outsideid=802d4efa-7309-4b4f-bf3a-cc70d992479b) (if you want brightness, buttons, and sound). You can also [view the source files](../maclock-pcb).
+- [Macintosh Mini breakout board](https://www.pcbway.com/orderonline.aspx?outsideid=802d4efa-7309-4b4f-bf3a-cc70d992479b) (if you want brightness, buttons, and sound). Full [bill of materials here](./maclock-pcb).
 
 ## 1. Wiring
 
