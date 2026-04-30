@@ -1,0 +1,12 @@
+[Unit]
+Description=Rotary encoder brightness control
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/local/bin/brightness_control.py
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

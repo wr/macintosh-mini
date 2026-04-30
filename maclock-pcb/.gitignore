@@ -1,0 +1,12 @@
+# KiCad — auto-generated / per-user state, not for the repo
+*-backups/
+*.kicad_prl
+fp-info-cache
+*.kicad_pcb.zip
+
+# Build artifacts
+*.gerber
+*.drl
+*.dxf
+gerbers/
+plot/

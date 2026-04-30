@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+
+# Editor
+*.swp
+*~
+
+# Copyrighted Apple material — never commit
+ROM
+*.hda
+*.hfv
+*.dsk
+*.img
