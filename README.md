@@ -17,9 +17,7 @@ Turn a [Maclock](https://www.aliexpress.us/w/wholesale-maclock.html) (a simple a
 ## The build
 1. Follow the [Maclock hardware guide](https://github.com/wr/macintosh-mini/tree/main/maclock-build) for instructions for assembling the Macintosh Mini.
 
-I recorded a walkthrough for how I assembled mine that goes into much more detail than the written guide:
-[<img height="300" alt="Frame 2" src="https://github.com/user-attachments/assets/345a346a-67c7-46be-971e-8b5e387e1155" />
-](https://www.youtube.com/watch?v=zAbAf5-H5Yo)
+I recorded a walkthrough [video](https://www.youtube.com/watch?v=zAbAf5-H5Yo) for how I assembled mine that goes into much more detail than the written guide:
 
 ## The software—quick install (recommended)
 
