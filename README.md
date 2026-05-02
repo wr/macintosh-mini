@@ -1,15 +1,18 @@
-<img height="120" alt="Frame 1" src="https://github.com/user-attachments/assets/46c3cbee-632c-491f-9091-b8459978577c" />
+<img height="300" alt="Slide 16_9 - 1" src="https://github.com/user-attachments/assets/1952ccdc-c1eb-40cc-904e-79eab73d15dd" />
 
 ## What?
 
-Turn a [Maclock](https://www.aliexpress.us/w/wholesale-maclock.html) (a simple alarm clock inside a shockingly accurate miniature Macintosh shell) into a full-fledged Mac using a Raspberry Pi Zero.
+Turn a [Maclock](https://www.aliexpress.us/w/wholesale-maclock.html) (a simple alarm clock inside a shockingly accurate miniature Macintosh shell) into a working Mac using a Raspberry Pi Zero. Buttons, brightness, sound, and battery all work.
 
 ## Hardware you'll need
 - [Maclock](https://www.aliexpress.us/w/wholesale-maclock.html)
 - [Raspberry Pi Zero 2 W](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w/)
 - [Waveshare 2.8 inch IPS LCD](https://www.waveshare.com/2.8inch-dpi-lcd.htm)
 - [3D printed screen bezel](./maclock-screen-bezel)
-- [Macintosh Mini breakout board](https://www.pcbway.com/orderonline.aspx?outsideid=802d4efa-7309-4b4f-bf3a-cc70d992479b) (if you want brightness, buttons, and sound). Full [bill of materials here](./maclock-pcb).
+- [Macintosh Mini breakout board](./maclock-pcb) (if you want brightness, buttons, and sound). Open source design—here's a link to a [cart on PCBway](https://www.pcbway.com/orderonline.aspx?outsideid=802d4efa-7309-4b4f-bf3a-cc70d992479b) to order your own.
+
+<img height="100" alt="Macintosh Mini PCB" src="https://github.com/user-attachments/assets/737a05eb-cc00-4b0e-b82b-f892061ca27d" />
+
 
 ## The build
 1. Follow the [Maclock hardware guide](https://github.com/wr/macintosh-mini/tree/main/maclock-build) for instructions for assembling the Macintosh Mini.
