@@ -11,7 +11,7 @@ Turn a [Maclock](https://www.aliexpress.us/w/wholesale-maclock.html) (a simple a
 - [3D printed screen bezel](./maclock-screen-bezel)
 - [Macintosh Mini breakout board](./maclock-pcb) (if you want brightness, buttons, and sound). Open source design—here's a link to a [cart on PCBway](https://www.pcbway.com/project/shareproject/W654223ASS41_Untitled_kicad_pcb_95cca7e3.html) to order your own.
 
-<img height="100" alt="Macintosh Mini PCB" src="https://github.com/user-attachments/assets/737a05eb-cc00-4b0e-b82b-f892061ca27d" />
+<img height="140" alt="Macintosh Mini PCB" src="https://github.com/user-attachments/assets/2230bd4a-3ca1-49cb-a75f-22cee96a8ea3" />
 
 
 ## The build
