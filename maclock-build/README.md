@@ -30,7 +30,16 @@ I recorded a walkthrough for how I assembled mine that goes into much more detai
 
 Bend, cut, or desolder pins 13, 19, 23, 35, and 37 so they don't plug into the Waveshare display board. Leaving them in can cause odd issues with the buttons and dial on the front of the Mac.
 
-## 2. The software—quick install (recommended)
+## 2. Breakout board
+
+You can buy the breakout board I designed on [PCBway](https://www.pcbway.com/project/shareproject/W654223ASS41_Untitled_kicad_pcb_95cca7e3.html). I recommend following the video guide for complete details, but in brief:
+
+1. Solder passives (resistors, audio filter capacitor, pin headers)
+2. Solder PAM8302 audio amplifier
+3. Place board into the Maclock (it should just drop right in under the Pi, around the floppy connector)
+4. Solder or jumper the wires from the GPIO pins to the breakout headers following the above table.
+
+## 3. The software—quick install (recommended)
 
 1. Install [Raspberry Pi OS (lite)](https://www.raspberrypi.com/software/) onto an SD card.
 
