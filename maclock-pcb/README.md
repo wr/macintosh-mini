@@ -23,7 +23,7 @@ To populate one board:
 | Ref         | Qty | Part                                      | Footprint           | Notes                                              |
 | ----------- | --- | ----------------------------------------- | ------------------- | -------------------------------------------------- |
 | SW1, SW2    | 2   | SMD tactile switch (e.g. Mountain TS32735) | 4.6 × 3.5 mm SMT    | Skip if you're wiring the Maclock's existing buttons to the SW1/SW2 pads |
-| JP1         | 1   | 5-pin rotary encoder                      | 1×5 round, 2.54 mm   | Skip if you're wiring the Maclock's existing dial   |
+| JP1         | 1   | 3-pin rotary encoder                      |   | Skip if you're wiring the Maclock's existing dial   |
 
 ## License
 
