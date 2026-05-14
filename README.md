@@ -9,7 +9,7 @@ Turn a [Maclock](https://www.aliexpress.us/w/wholesale-maclock.html) (a simple a
 - [Raspberry Pi Zero 2 W](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w/)
 - [Waveshare 2.8 inch IPS LCD](https://www.waveshare.com/2.8inch-dpi-lcd.htm)
 - [3D printed screen bezel](./maclock-screen-bezel)
-- [Macintosh Mini breakout board](./maclock-pcb) (if you want brightness, buttons, and sound). Open source design—here's a link to a [cart on PCBway](https://www.pcbway.com/orderonline.aspx?outsideid=802d4efa-7309-4b4f-bf3a-cc70d992479b) to order your own.
+- [Macintosh Mini breakout board](./maclock-pcb) (if you want brightness, buttons, and sound). Open source design—here's a link to a [cart on PCBway](https://www.pcbway.com/project/shareproject/W654223ASS41_Untitled_kicad_pcb_95cca7e3.html) to order your own.
 
 <img height="100" alt="Macintosh Mini PCB" src="https://github.com/user-attachments/assets/737a05eb-cc00-4b0e-b82b-f892061ca27d" />
 
