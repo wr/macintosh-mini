@@ -1,13 +1,15 @@
-# macOS
+# KiCad transient files
+*.lck
+~*.lck
+*.kicad_prl
+*-backups/
+_restore_backup_*/
+*_drc_violations.json
+*.kicad_pcb.zip
+fp-info-cache
+
+# OS / editor
 .DS_Store
-
-# Editor
+.vscode/
 *.swp
-*~
-
-# Copyrighted Apple material — never commit
-ROM
-*.hda
-*.hfv
-*.dsk
-*.img
+.history/
