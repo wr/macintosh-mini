@@ -10,6 +10,7 @@ I recorded a walkthrough for how I assembled mine that goes into much more detai
 - [Maclock](https://www.aliexpress.us/w/wholesale-maclock.html)
 - [Raspberry Pi Zero 2 W](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w/)
 - [Waveshare 2.8 inch IPS LCD](https://www.waveshare.com/2.8inch-dpi-lcd.htm)
+- [Adafruit PAM8302 audio amplifier](https://learn.adafruit.com/adafruit-pam8302-mono-2-5w-class-d-audio-amplifier) and [speaker](https://www.adafruit.com/product/3923)
 - [3D printed screen bezel](../maclock-screen-bezel)
 - [Macintosh Mini breakout board](https://www.pcbway.com/project/shareproject/W654223ASS41_Untitled_kicad_pcb_95cca7e3.html) (if you want brightness, buttons, and sound). Full [bill of materials here](./maclock-pcb).
 
@@ -113,6 +114,9 @@ Once you reboot your Pi, the screen should start working.
 ---
 
 ### 2. Buttons and brightness dial
+
+> [!NOTE]
+> Ensure you've bent the GPIO pins in Step 1 before installing these helpers. Otherwise the Waveshare display board will send erroneous signals, causing unexpected shutdowns. _(Thanks [@slikke](https://github.com/slikke)! [#4](https://github.com/wr/macintosh-mini/issues/4))_
 
 Two helpers drive the rotary encoder behind the brightness dial and the two pushbuttons on the front:
 
