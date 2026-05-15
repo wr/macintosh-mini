@@ -11,6 +11,7 @@
 #   --all | --all-sheepshaver | --all-basilisk | --maclock | --sheepshaver | --basilisk
 #   --chime <name>      e.g. StartupMacII (default)
 #   --color <mode>      Color | Grayscale | "Black & White"  (also accepts color/grayscale/bw)
+#   --screen <scale>    1.5x | 1.25x | 1x  (BasiliskII only, default: 1.5x)
 #   --disk <file>       disk image filename in $HOME (default: auto-discover)
 #   --hostname <name>   default: leave unchanged
 #   --perf | --no-perf  enable/disable performance optimizations (default: prompt)
@@ -214,6 +215,7 @@ INSTALL_SHEEPSHAVER=0
 INSTALL_BASILISK=0
 CHIME_NAME=""
 COLOR_MODE=""
+SCREEN_SIZE=""
 NEW_HOSTNAME=""
 PERF=""   # "" = prompt, 1 = on, 0 = off
 
@@ -227,6 +229,7 @@ while [[ $# -gt 0 ]]; do
     --basilisk)       INSTALL_BASILISK=1; shift ;;
     --chime)          CHIME_NAME=$2; shift 2 ;;
     --color)          COLOR_MODE=$2; shift 2 ;;
+    --screen)         SCREEN_SIZE=$2; shift 2 ;;
     --disk)           DISK_IMAGE=$2; shift 2 ;;
     --hostname)       NEW_HOSTNAME=$2; shift 2 ;;
     --perf)           PERF=1; shift ;;
@@ -327,6 +330,22 @@ case "$COLOR_MODE" in
   "Grayscale"|grayscale)        COLOR_DEPTH=8;  COLOR_LABEL="Grayscale" ;;
   "Black & White"|bw)           COLOR_DEPTH=1;  COLOR_LABEL="Black & White" ;;
   *) die "Invalid color mode: $COLOR_MODE" ;;
+esac
+
+# Screen size — BasiliskII only; SheepShaver always uses 640×480
+if [[ $INSTALL_BASILISK -eq 1 && -z $SCREEN_SIZE ]]; then
+  SCREEN_SIZE=$(wt_menu "Screen size" "Mac screen resolution (display is 640×480):" "1.5x" 3 \
+    "1.5x"   "426×320 → 1.5× upscale" \
+    "1.25x"  "512×384 → 1.25× upscale" \
+    "1x"     "640×480 → native, no upscale") || die "Cancelled"
+fi
+[[ $INSTALL_BASILISK -eq 1 && -z $SCREEN_SIZE ]] && SCREEN_SIZE="1.5x"
+
+case "$SCREEN_SIZE" in
+  "1.5x")  BASILISK_RES="426/320"; SCREEN_LABEL="426×320 (1.5× upscale)" ;;
+  "1.25x") BASILISK_RES="512/384"; SCREEN_LABEL="512×384 (1.25× upscale)" ;;
+  "1x")    BASILISK_RES="640/480"; SCREEN_LABEL="640×480 (native)" ;;
+  *) die "Invalid screen size: $SCREEN_SIZE" ;;
 esac
 
 # Era-matched crash sound for the chosen chime.
@@ -765,21 +784,24 @@ LAUNCHER
   run "[basilisk] Installing launcher + sounds" install_basilisk_launcher
 
   write_basilisk_prefs() {
+    mkdir -p "$HOME/mac-exchange"
     cat > "$HOME/.basilisk_ii_prefs" <<EOF
 disk $DISK_IMAGE
 rom $ROM_FILE
-screen win/640/480/$COLOR_DEPTH
+screen win/$BASILISK_RES/$COLOR_DEPTH
 ramsize 33554432
 modelid 5
-cpu 2
+cpu 3
 fpu true
 nogui true
 nosound false
 ignoreillegal true
 frameskip 2
+extfs $HOME/mac-exchange
+ether slirp
 EOF
   }
-  run "[basilisk] Writing prefs ($COLOR_LABEL / ${COLOR_DEPTH}bpp)" write_basilisk_prefs
+  run "[basilisk] Writing prefs ($COLOR_LABEL / ${COLOR_DEPTH}bpp / $SCREEN_LABEL)" write_basilisk_prefs
 
   config_basilisk_autologin() {
     sudo mkdir -p /etc/systemd/system/getty@tty1.service.d
