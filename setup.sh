@@ -3,13 +3,15 @@
 #
 # Run on the Pi (or `curl … | bash`). Idempotent. Reboots at the end.
 #
-# For SheepShaver, place ROM and HD10_512.hda in $HOME first.
+# Place ROM and disk image in $HOME before running.
+#   SheepShaver: 4 MB PPC ROM  + *.hda disk image  (Mac OS 8.1+)
+#   BasiliskII:  512 KB IIci ROM + *.hda or *.dsk   (Mac OS 7.x, recommended)
 #
 # Flags (skip prompts):
-#   --all | --maclock | --sheepshaver
+#   --all | --all-sheepshaver | --all-basilisk | --maclock | --sheepshaver | --basilisk
 #   --chime <name>      e.g. StartupMacII (default)
 #   --color <mode>      Color | Grayscale | "Black & White"  (also accepts color/grayscale/bw)
-#   --disk <file>       disk image filename in $HOME (default: auto-discover *.hda)
+#   --disk <file>       disk image filename in $HOME (default: auto-discover)
 #   --hostname <name>   default: leave unchanged
 #   --perf | --no-perf  enable/disable performance optimizations (default: prompt)
 #   --debug             show all command output instead of capturing to log
@@ -18,7 +20,6 @@ set -euo pipefail
 
 REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/main"
 
-# SheepShaver paths (DISK_IMAGE is auto-discovered or set via --disk)
 DISK_IMAGE=""
 ROM_FILE="ROM"
 CHIME_FILE="chime.wav"
@@ -42,10 +43,6 @@ LOG_FILE=$(mktemp /tmp/macintosh-mini-setup.XXXXXX.log)
 DEBUG=0
 
 # --- Whiptail color theme --------------------------------------------------
-# Standard whiptail look with a black/dark-gray root background.
-# NEWT_COLORS is colon-separated; setting only `root` leaves every other
-# element at its default. NEWT's palette is limited to 8 named colors;
-# `black` reads as dark gray on most modern terminals.
 export NEWT_COLORS='root=,black'
 
 # --- Output helpers --------------------------------------------------------
@@ -95,8 +92,6 @@ emit_gauge() {
 step_pct() { echo $(( CURRENT_STEP * 100 / TOTAL_STEPS )); }
 
 # --- Run helpers -----------------------------------------------------------
-# Quietly run a command/function; capture to LOG_FILE; on success advance the
-# gauge, on failure dump the log and exit. With --debug, runs verbose.
 run() {
   local label=$1; shift
   CURRENT_STEP=$((CURRENT_STEP + 1))
@@ -155,7 +150,6 @@ ensure_whiptail() {
 }
 
 wt_menu() {
-  # Args: title, prompt, default_tag, list_height, then pairs of tag/label.
   local title=$1 prompt=$2 default=$3 list_height=$4
   shift 4
   local total_height=$(( list_height + 8 ))
@@ -172,9 +166,7 @@ wt_input() {
     3>&1 1>&2 2>&3 </dev/tty
 }
 
-# --- Asset sanity check ----------------------------------------------------
-# Verify ROM and at least one disk image exist in $HOME. Idempotent —
-# safe to call multiple times.
+# --- Asset sanity checks ---------------------------------------------------
 check_sheepshaver_assets() {
   [[ -f "$HOME/$ROM_FILE" ]] || die "Missing $HOME/$ROM_FILE — copy it over before running"
   if [[ -n $DISK_IMAGE ]]; then
@@ -184,6 +176,22 @@ check_sheepshaver_assets() {
     local hdas=("$HOME"/*.hda)
     shopt -u nullglob
     [[ ${#hdas[@]} -gt 0 ]] || die "No .hda disk image found in $HOME — copy one over before running"
+  fi
+}
+
+check_basilisk_assets() {
+  [[ -f "$HOME/$ROM_FILE" ]] || die "Missing $HOME/$ROM_FILE — copy the Mac IIci ROM (512 KB) before running"
+  local rom_size
+  rom_size=$(wc -c < "$HOME/$ROM_FILE" 2>/dev/null || echo 0)
+  [[ $rom_size -eq 524288 ]] || \
+    die "ROM is ${rom_size} bytes (expected 524288 / 512 KB) — BasiliskII needs the Mac IIci ROM, not the 4 MB PPC ROM"
+  if [[ -n $DISK_IMAGE ]]; then
+    [[ -f "$HOME/$DISK_IMAGE" ]] || die "Missing $HOME/$DISK_IMAGE (passed via --disk)"
+  else
+    shopt -s nullglob
+    local disks=("$HOME"/*.hda "$HOME"/*.dsk)
+    shopt -u nullglob
+    [[ ${#disks[@]} -gt 0 ]] || die "No disk image (.hda or .dsk) found in \$HOME — copy one before running"
   fi
 }
 
@@ -203,6 +211,7 @@ EOF
 # --- Argument parsing ------------------------------------------------------
 INSTALL_MACLOCK=0
 INSTALL_SHEEPSHAVER=0
+INSTALL_BASILISK=0
 CHIME_NAME=""
 COLOR_MODE=""
 NEW_HOSTNAME=""
@@ -210,16 +219,19 @@ PERF=""   # "" = prompt, 1 = on, 0 = off
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --all)         INSTALL_MACLOCK=1; INSTALL_SHEEPSHAVER=1; shift ;;
-    --maclock)     INSTALL_MACLOCK=1; shift ;;
-    --sheepshaver) INSTALL_SHEEPSHAVER=1; shift ;;
-    --chime)       CHIME_NAME=$2; shift 2 ;;
-    --color)       COLOR_MODE=$2; shift 2 ;;
-    --disk)        DISK_IMAGE=$2; shift 2 ;;
-    --hostname)    NEW_HOSTNAME=$2; shift 2 ;;
-    --perf)        PERF=1; shift ;;
-    --no-perf)     PERF=0; shift ;;
-    --debug)       DEBUG=1; shift ;;
+    --all-sheepshaver) INSTALL_MACLOCK=1; INSTALL_SHEEPSHAVER=1; shift ;;
+    --all)             INSTALL_MACLOCK=1; INSTALL_SHEEPSHAVER=1; shift ;;
+    --all-basilisk)   INSTALL_MACLOCK=1; INSTALL_BASILISK=1; shift ;;
+    --maclock)        INSTALL_MACLOCK=1; shift ;;
+    --sheepshaver)    INSTALL_SHEEPSHAVER=1; shift ;;
+    --basilisk)       INSTALL_BASILISK=1; shift ;;
+    --chime)          CHIME_NAME=$2; shift 2 ;;
+    --color)          COLOR_MODE=$2; shift 2 ;;
+    --disk)           DISK_IMAGE=$2; shift 2 ;;
+    --hostname)       NEW_HOSTNAME=$2; shift 2 ;;
+    --perf)           PERF=1; shift ;;
+    --no-perf)        PERF=0; shift ;;
+    --debug)          DEBUG=1; shift ;;
     *) die "Unknown option: $1" ;;
   esac
 done
@@ -230,50 +242,58 @@ printf '  log: %s%s\n' "$LOG_FILE" "$([[ $DEBUG -eq 1 ]] && echo '  [debug mode:
 
 [[ "$(uname -m)" == "aarch64" ]] || warn "Not aarch64 ($(uname -m)) — guide is tested on Pi Zero 2 W aarch64"
 
-# Pre-flight asset check — bail out before any sudo prompt or apt install
-# if the user explicitly asked for sheepshaver but is missing the ROM/disk.
+# Pre-flight asset check — bail out before any sudo prompt or apt install.
 [[ $INSTALL_SHEEPSHAVER -eq 1 ]] && check_sheepshaver_assets
+[[ $INSTALL_BASILISK    -eq 1 ]] && check_basilisk_assets
 
 ensure_sudo
 ensure_whiptail
 
 # --- Whiptail prompts ------------------------------------------------------
-if [[ $INSTALL_MACLOCK -eq 0 && $INSTALL_SHEEPSHAVER -eq 0 ]]; then
-  CHOICE=$(wt_menu "macintosh-mini" "What do you want to install?" "Both" 3 \
-    "Both"        "maclock hardware + SheepShaver" \
-    "maclock"     "hardware only (Waveshare display, dial, buttons)" \
-    "SheepShaver" "software only (emulator + kiosk autostart)") || die "Cancelled"
+if [[ $INSTALL_MACLOCK -eq 0 && $INSTALL_SHEEPSHAVER -eq 0 && $INSTALL_BASILISK -eq 0 ]]; then
+  CHOICE=$(wt_menu "macintosh-mini" "What do you want to install?" "Both-Basilisk" 5 \
+    "Both-Basilisk"    "maclock hardware + BasiliskII   (68k, Mac OS 7.x — recommended)" \
+    "Both-SheepShaver" "maclock hardware + SheepShaver  (PPC, Mac OS 8.1+)" \
+    "maclock"          "hardware only (Waveshare display, dial, buttons)" \
+    "BasiliskII"       "emulator only — BasiliskII  (68k, Mac OS 7.x)" \
+    "SheepShaver"      "emulator only — SheepShaver (PPC, Mac OS 8.1+)") || die "Cancelled"
   case "$CHOICE" in
-    Both)        INSTALL_MACLOCK=1; INSTALL_SHEEPSHAVER=1 ;;
-    maclock)     INSTALL_MACLOCK=1 ;;
-    SheepShaver) INSTALL_SHEEPSHAVER=1 ;;
+    Both-Basilisk)    INSTALL_MACLOCK=1; INSTALL_BASILISK=1 ;;
+    Both-SheepShaver) INSTALL_MACLOCK=1; INSTALL_SHEEPSHAVER=1 ;;
+    maclock)          INSTALL_MACLOCK=1 ;;
+    BasiliskII)       INSTALL_BASILISK=1 ;;
+    SheepShaver)      INSTALL_SHEEPSHAVER=1 ;;
   esac
-  # User just chose sheepshaver via the menu — re-check assets now.
   [[ $INSTALL_SHEEPSHAVER -eq 1 ]] && check_sheepshaver_assets
+  [[ $INSTALL_BASILISK    -eq 1 ]] && check_basilisk_assets
 fi
 
-# Disk image — auto-discover *.hda in $HOME, prompt if multiple, use as-is.
-if [[ $INSTALL_SHEEPSHAVER -eq 1 && -z $DISK_IMAGE ]]; then
+# Disk image — auto-discover in $HOME, prompt if multiple.
+if [[ ($INSTALL_SHEEPSHAVER -eq 1 || $INSTALL_BASILISK -eq 1) && -z $DISK_IMAGE ]]; then
   shopt -s nullglob
-  HDA_PATHS=("$HOME"/*.hda)
+  if [[ $INSTALL_SHEEPSHAVER -eq 1 ]]; then
+    DISK_PATHS=("$HOME"/*.hda)
+  else
+    DISK_PATHS=("$HOME"/*.hda "$HOME"/*.dsk)
+  fi
   shopt -u nullglob
-  if [[ ${#HDA_PATHS[@]} -eq 0 ]]; then
-    die "No .hda disk image found in $HOME — copy one over before running"
-  elif [[ ${#HDA_PATHS[@]} -eq 1 ]]; then
-    DISK_IMAGE=$(basename "${HDA_PATHS[0]}")
+  if [[ ${#DISK_PATHS[@]} -eq 0 ]]; then
+    die "No disk image found in \$HOME — copy one over before running"
+  elif [[ ${#DISK_PATHS[@]} -eq 1 ]]; then
+    DISK_IMAGE=$(basename "${DISK_PATHS[0]}")
   else
     WT_ARGS=()
-    for p in "${HDA_PATHS[@]}"; do
+    for p in "${DISK_PATHS[@]}"; do
       WT_ARGS+=("$(basename "$p")" "$(du -h "$p" | cut -f1)")
     done
-    DISK_IMAGE=$(wt_menu "Disk image" "Multiple .hda files in \$HOME — pick one:" \
-      "$(basename "${HDA_PATHS[0]}")" "${#HDA_PATHS[@]}" "${WT_ARGS[@]}") \
+    DISK_IMAGE=$(wt_menu "Disk image" "Multiple disk images in \$HOME — pick one:" \
+      "$(basename "${DISK_PATHS[0]}")" "${#DISK_PATHS[@]}" "${WT_ARGS[@]}") \
       || die "Cancelled"
   fi
 fi
 
-# Chime — show clean tags, resolve to filename via lookup
-if [[ $INSTALL_SHEEPSHAVER -eq 1 && -z $CHIME_NAME ]]; then
+# Chime
+if [[ ($INSTALL_SHEEPSHAVER -eq 1 || $INSTALL_BASILISK -eq 1) && -z $CHIME_NAME ]]; then
   WT_ARGS=()
   for entry in "${CHIMES_DATA[@]}"; do
     IFS='|' read -r tag desc _ <<< "$entry"
@@ -291,9 +311,11 @@ if [[ $INSTALL_SHEEPSHAVER -eq 1 && -z $CHIME_NAME ]]; then
 fi
 [[ -z $CHIME_NAME ]] && CHIME_NAME=$DEFAULT_CHIME
 
-# Color — clean tags
-if [[ $INSTALL_SHEEPSHAVER -eq 1 && -z $COLOR_MODE ]]; then
-  COLOR_MODE=$(wt_menu "Color mode" "Color depth:" "Color" 3 \
+# Color — BasiliskII defaults to Grayscale (authentic Mac 7.x look)
+if [[ ($INSTALL_SHEEPSHAVER -eq 1 || $INSTALL_BASILISK -eq 1) && -z $COLOR_MODE ]]; then
+  local_default="Color"
+  [[ $INSTALL_BASILISK -eq 1 ]] && local_default="Grayscale"
+  COLOR_MODE=$(wt_menu "Color mode" "Color depth:" "$local_default" 3 \
     "Color"          "16-bit" \
     "Grayscale"      "8-bit" \
     "Black & White"  "1-bit") || die "Cancelled"
@@ -349,6 +371,13 @@ if [[ $INSTALL_SHEEPSHAVER -eq 1 ]]; then
     TOTAL_STEPS=$((TOTAL_STEPS+12))
   fi
 fi
+if [[ $INSTALL_BASILISK -eq 1 ]]; then
+  if [[ -x /usr/local/bin/BasiliskII ]]; then
+    TOTAL_STEPS=$((TOTAL_STEPS+9))
+  else
+    TOTAL_STEPS=$((TOTAL_STEPS+12))
+  fi
+fi
 [[ $PERF -eq 1 ]] && TOTAL_STEPS=$((TOTAL_STEPS+3))
 
 # --- Open the gauge --------------------------------------------------------
@@ -370,13 +399,16 @@ fi
 
 # --- apt packages ---------------------------------------------------------
 APT_PKGS=(curl git)
-if [[ $INSTALL_SHEEPSHAVER -eq 1 ]]; then
+if [[ $INSTALL_SHEEPSHAVER -eq 1 || $INSTALL_BASILISK -eq 1 ]]; then
   APT_PKGS+=(
     build-essential autoconf automake libtool pkg-config
     libsdl2-dev libgtk-3-dev libgl1-mesa-dev libxkbcommon-dev
     cage wlr-randr seatd
     alsa-utils
   )
+fi
+if [[ $INSTALL_BASILISK -eq 1 ]]; then
+  APT_PKGS+=(libmpfr-dev)
 fi
 if [[ $INSTALL_MACLOCK -eq 1 ]]; then
   APT_PKGS+=(python3-lgpio device-tree-compiler unzip)
@@ -463,6 +495,8 @@ if [[ $INSTALL_MACLOCK -eq 1 ]]; then
   patch_config() {
     local f=/boot/firmware/config.txt
     grep -qF "# >>> macintosh-mini >>>" "$f" && return 0
+    # Disable DSI auto-detect to prevent conflict with DPI display
+    sudo sed -i 's/^display_auto_detect=1/display_auto_detect=0/' "$f"
     sudo tee -a "$f" >/dev/null <<'EOF'
 
 # >>> macintosh-mini >>>
@@ -505,7 +539,7 @@ EOF
   install_restart_wrapper() {
     sudo tee /usr/local/bin/sheepshaver-restart.sh >/dev/null <<'WRAPPER'
 #!/bin/bash
-# Reset button handler: stop SheepShaver, play the crash sound, relaunch.
+# Reset button: stop emulator, play crash sound, relaunch.
 systemctl stop getty@tty1.service
 sleep 0.5
 [[ -f /usr/local/bin/crash.wav ]] && aplay -q /usr/local/bin/crash.wav 2>/dev/null
@@ -517,7 +551,7 @@ WRAPPER
 fi
 
 # =========================================================================
-# SheepShaver — emulator + kiosk autostart
+# SheepShaver — emulator + kiosk autostart (Mac OS 8.1+, PowerPC ROM)
 # =========================================================================
 if [[ $INSTALL_SHEEPSHAVER -eq 1 ]]; then
   enable_seatd() {
@@ -532,8 +566,6 @@ if [[ $INSTALL_SHEEPSHAVER -eq 1 ]]; then
   }
   run "[sheepshaver] Enabling seatd; adding $USER to graphics groups" enable_seatd
 
-  # Sysctls must be active *before* configure runs — its SIGSEGV recovery
-  # probe mmaps low addresses, which requires vm.mmap_min_addr=0.
   write_sysctl() {
     sudo tee /etc/sysctl.d/60-sheepshaver.conf >/dev/null <<'SYSCTL'
 vm.mmap_min_addr=0
@@ -580,9 +612,6 @@ SYSCTL
   install_launcher() {
     sudo tee /usr/local/bin/sheepshaver.sh >/dev/null <<'LAUNCHER'
 #!/bin/bash
-# Launches SheepShaver fullscreen via cage on the current TTY.
-
-# Black out tty1 the moment we take over (covers boot + button-2 restarts).
 clear 2>/dev/null
 printf '\033[?25l' 2>/dev/null
 setterm --cursor off 2>/dev/null || true
@@ -656,6 +685,126 @@ fi
 EOF
   }
   run "[sheepshaver] Appending autostart to ~/.profile" patch_profile
+fi
+
+# =========================================================================
+# BasiliskII — emulator + kiosk autostart (Mac OS 7.x, 68k IIci ROM)
+# =========================================================================
+if [[ $INSTALL_BASILISK -eq 1 ]]; then
+  setup_basilisk_groups() {
+    sudo usermod -aG video,input,render "$USER"
+  }
+  run "[basilisk] Adding $USER to display groups" setup_basilisk_groups
+
+  write_basilisk_sysctl() {
+    sudo tee /etc/sysctl.d/60-basilisk.conf >/dev/null <<'SYSCTL'
+vm.mmap_min_addr=0
+SYSCTL
+    sudo sysctl --system >/dev/null
+  }
+  run "[basilisk] Writing sysctls (mmap_min_addr)" write_basilisk_sysctl
+
+  run "[basilisk] Fetching chime: $CHIME_NAME" curl -fL --retry 3 \
+    -o "$HOME/$CHIME_FILE" "$REPO_RAW/sheepshaver/chimes/${CHIME_NAME}.wav"
+
+  run "[basilisk] Fetching crash sound: $CRASH_NAME" curl -fL --retry 3 \
+    -o "$HOME/crash.wav" "$REPO_RAW/sheepshaver/chimes/${CRASH_NAME}.wav"
+
+  if [[ -x /usr/local/bin/BasiliskII ]]; then
+    : # already installed; no steps consumed
+  else
+    run "[basilisk] Cloning macemu (kanjitalk755 HEAD)" \
+      bash -c "[[ -d '$MACEMU_DIR/.git' ]] || git clone https://github.com/kanjitalk755/macemu.git '$MACEMU_DIR'"
+
+    prepare_basilisk_build() {
+      cd "$MACEMU_DIR/BasiliskII/src/Unix" || return $?
+      local extra_cflags=""
+      [[ $PERF -eq 1 ]] && extra_cflags=" -mcpu=cortex-a53 -mtune=cortex-a53"
+      CFLAGS="-g -O2${extra_cflags}" \
+      CXXFLAGS="-g -O2${extra_cflags}" \
+      ./autogen.sh --disable-jit-compiler --disable-vosf || return $?
+    }
+    run "[basilisk] Configuring build (--disable-jit-compiler --disable-vosf)" prepare_basilisk_build
+
+    do_basilisk_build() {
+      cd "$MACEMU_DIR/BasiliskII/src/Unix" || return $?
+      make -j"$(nproc)" || return $?
+    }
+    run_long "[basilisk] Building BasiliskII" do_basilisk_build
+
+    run "[basilisk] Installing BasiliskII binary" \
+      sudo install -m755 "$MACEMU_DIR/BasiliskII/src/Unix/BasiliskII" /usr/local/bin/BasiliskII
+  fi
+
+  install_basilisk_launcher() {
+    sudo tee /usr/local/bin/basilisk.sh >/dev/null <<'LAUNCHER'
+#!/bin/bash
+clear 2>/dev/null
+printf '\033[?25l' 2>/dev/null
+setterm --cursor off 2>/dev/null || true
+
+export XDG_RUNTIME_DIR=/tmp/runtime
+export LIBSEAT_BACKEND=logind
+mkdir -p "$XDG_RUNTIME_DIR"
+chmod 700 "$XDG_RUNTIME_DIR"
+
+cd ~
+aplay -q /usr/local/bin/chime.wav 2>/dev/null &
+cage -s -- sh -c '
+  sleep 2
+  wlr-randr --output DPI-1 --transform 270 2>/dev/null
+  wlr-randr --output Unknown-1 --transform 270 2>/dev/null
+  exec BasiliskII 2>&1 | systemd-cat -t basilisk
+'
+LAUNCHER
+    sudo chmod 755 /usr/local/bin/basilisk.sh
+    sudo install -m644 "$HOME/$CHIME_FILE" /usr/local/bin/chime.wav
+    sudo install -m644 "$HOME/crash.wav" /usr/local/bin/crash.wav
+    touch "$HOME/.hushlogin"
+  }
+  run "[basilisk] Installing launcher + sounds" install_basilisk_launcher
+
+  write_basilisk_prefs() {
+    cat > "$HOME/.basilisk_ii_prefs" <<EOF
+disk $DISK_IMAGE
+rom $ROM_FILE
+screen win/640/480/$COLOR_DEPTH
+ramsize 33554432
+modelid 5
+cpu 2
+fpu true
+nogui true
+nosound false
+ignoreillegal true
+frameskip 2
+EOF
+  }
+  run "[basilisk] Writing prefs ($COLOR_LABEL / ${COLOR_DEPTH}bpp)" write_basilisk_prefs
+
+  config_basilisk_autologin() {
+    sudo mkdir -p /etc/systemd/system/getty@tty1.service.d
+    sudo tee /etc/systemd/system/getty@tty1.service.d/autologin.conf >/dev/null <<EOF
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin $USER --noclear --noissue --nohostname %I \$TERM
+EOF
+    sudo systemctl daemon-reload
+  }
+  run "[basilisk] Configuring tty1 autologin for $USER" config_basilisk_autologin
+
+  patch_basilisk_profile() {
+    local marker="# >>> basilisk-autostart >>>"
+    grep -qF "$marker" "$HOME/.profile" 2>/dev/null && return 0
+    cat >> "$HOME/.profile" <<EOF
+
+$marker
+if [ "\$(tty)" = "/dev/tty1" ] && [ -z "\$WAYLAND_DISPLAY" ] && [ -z "\$DISPLAY" ]; then
+    exec /usr/local/bin/basilisk.sh
+fi
+# <<< basilisk-autostart <<<
+EOF
+  }
+  run "[basilisk] Appending autostart to ~/.profile" patch_basilisk_profile
 fi
 
 # --- Done -----------------------------------------------------------------
