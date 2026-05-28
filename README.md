@@ -56,9 +56,12 @@ Once installed the Pi boots straight into the Mac. A few controls:
 
 Re-run the installer any time to **update** an existing install — it keeps your disk image and settings. To **switch emulator**, pick the other one (BasiliskII ⇄ SheepShaver); each core's prefs are preserved.
 
-## The software—manual install
+## The software: manual install
 
-You can also do everything the script does by yourself: [Maclock hardware guide](https://github.com/wr/macintosh-mini/tree/main/maclock-build), [BasiliskII install guide](https://github.com/wr/macintosh-mini/blob/main/emulators/BasiliskII.md), and [SheepShaver install guide](https://github.com/wr/macintosh-mini/blob/main/emulators/SheepShaver.md).
+You can also do everything the script does by yourself: 
+- [Maclock hardware guide](https://github.com/wr/macintosh-mini/tree/main/maclock-build)
+- [BasiliskII install guide](https://github.com/wr/macintosh-mini/blob/main/emulators/BasiliskII.md)
+- [SheepShaver install guide](https://github.com/wr/macintosh-mini/blob/main/emulators/SheepShaver.md).
 
 
 **Getting help**

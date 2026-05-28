@@ -151,7 +151,7 @@ sudo systemctl enable --now brightness-control button-handler
 
 ### 4. Install the emulator
 
-The hardware side of the maclock is now done. The [setup script](../setup.sh) installs **BasiliskII** by default (much faster on the Pi Zero); manual build steps are in the [BasiliskII guide](../emulators/BasiliskII.md) (or the [SheepShaver guide](../emulators/SheepShaver.md) for PowerPC). Either way the autologin chain plays the chime and launches the emulator on `tty1`. Button 2 single-press relaunches it (`sheepshaver-restart.sh`, with the crash sound); double-press quits to a prompt (`macintosh-quit.sh`). Run `macintosh` to boot it again.
+The hardware side of the maclock is now done. The [setup script](../setup.sh) installs **BasiliskII**; manual build steps are in the [BasiliskII guide](../emulators/BasiliskII.md) (or the [SheepShaver guide](../emulators/SheepShaver.md) for PowerPC).
 
 ---
 
