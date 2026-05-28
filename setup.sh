@@ -164,7 +164,7 @@ wt_menu() {
   local total_height=$(( list_height + 8 ))
   whiptail --backtitle "macintosh-mini" --title "$title" \
     --default-item "$default" \
-    --menu "$prompt" "$total_height" 72 "$list_height" \
+    --menu "$prompt" "$total_height" 78 "$list_height" \
     "$@" 3>&1 1>&2 2>&3 </dev/tty
 }
 
@@ -319,18 +319,27 @@ ensure_whiptail
 
 # --- Whiptail prompts ------------------------------------------------------
 if [[ $INSTALL_MACLOCK -eq 0 && $INSTALL_SHEEPSHAVER -eq 0 && $INSTALL_BASILISK -eq 0 ]]; then
-  CHOICE=$(wt_menu "macintosh-mini" "What do you want to install?" "Both" 5 \
-    "Both"        "maclock + BasiliskII (68k, Mac OS 7)" \
-    "Both-PPC"    "maclock + SheepShaver (PowerPC, Mac OS 8.1+)" \
-    "maclock"     "hardware only (Waveshare display, dial, buttons)" \
-    "BasiliskII"  "68k emulator only (Mac OS 7)" \
-    "SheepShaver" "PowerPC emulator only (Mac OS 8.1+)") || die "Cancelled"
+  # Single-column menu (label = tag, blank item); the empty row separates the
+  # recommended default from the rest.
+  opt_full="BasiliskII emulator + Maclock hardware support (default, recommended)"
+  opt_ppc="SheepShaver emulator + Maclock hardware support (laggy)"
+  opt_hw="Maclock hardware support only"
+  opt_b2="BasiliskII emulator only"
+  opt_ss="SheepShaver emulator only"
+  CHOICE=$(wt_menu "macintosh-mini" "What do you want to install?" "$opt_full" 6 \
+    "$opt_full" "" \
+    "" "" \
+    "$opt_ppc" "" \
+    "$opt_hw" "" \
+    "$opt_b2" "" \
+    "$opt_ss" "") || die "Cancelled"
   case "$CHOICE" in
-    Both)        INSTALL_MACLOCK=1; INSTALL_BASILISK=1 ;;
-    Both-PPC)    INSTALL_MACLOCK=1; INSTALL_SHEEPSHAVER=1 ;;
-    maclock)     INSTALL_MACLOCK=1 ;;
-    BasiliskII)  INSTALL_BASILISK=1 ;;
-    SheepShaver) INSTALL_SHEEPSHAVER=1 ;;
+    "$opt_full") INSTALL_MACLOCK=1; INSTALL_BASILISK=1 ;;
+    "$opt_ppc")  INSTALL_MACLOCK=1; INSTALL_SHEEPSHAVER=1 ;;
+    "$opt_hw")   INSTALL_MACLOCK=1 ;;
+    "$opt_b2")   INSTALL_BASILISK=1 ;;
+    "$opt_ss")   INSTALL_SHEEPSHAVER=1 ;;
+    *)           die "Cancelled" ;;
   esac
   # User just chose an emulator via the menu — re-check assets now.
   [[ $INSTALL_SHEEPSHAVER -eq 1 ]] && check_sheepshaver_assets
