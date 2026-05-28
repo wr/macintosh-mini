@@ -13,3 +13,6 @@ fp-info-cache
 .vscode/
 *.swp
 .history/
+
+# Python
+__pycache__/

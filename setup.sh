@@ -179,6 +179,7 @@ wt_input() {
 # Verify ROM and at least one disk image exist in $HOME. Idempotent —
 # safe to call multiple times.
 check_sheepshaver_assets() {
+  [[ -f "$HOME/.sheepshaver_prefs" ]] && return 0   # existing install -> update, keep config
   [[ -f "$HOME/$ROM_FILE" ]] || die "Missing $HOME/$ROM_FILE — copy it over before running"
   if [[ -n $DISK_IMAGE ]]; then
     [[ -f "$HOME/$DISK_IMAGE" ]] || die "Missing $HOME/$DISK_IMAGE (passed via --disk)"
@@ -193,6 +194,7 @@ check_sheepshaver_assets() {
 # Verify a 68k ROM and a disk image exist for BasiliskII. The 68k ROM is
 # 512 KB or 1 MB; reject the 4 MB PPC ROM, which is a common mix-up.
 check_basilisk_assets() {
+  [[ -f "$HOME/.basilisk_ii_prefs" ]] && return 0   # existing install -> update, keep config
   [[ -f "$HOME/$ROM_FILE" ]] || die "Missing $HOME/$ROM_FILE — copy a 68k Mac ROM over before running"
   local rom_size
   rom_size=$(wc -c < "$HOME/$ROM_FILE")
@@ -207,6 +209,16 @@ check_basilisk_assets() {
     shopt -u nullglob
     [[ ${#disks[@]} -gt 0 ]] || die "No .hda or .dsk disk image found in $HOME — copy one over before running"
   fi
+}
+
+# `macintosh` command: boot/reboot the Mac on the display (re-triggers the tty1
+# autologin -> ~/.profile -> launcher chain). Works from the console or SSH.
+write_macintosh_cmd() {
+  sudo tee /usr/local/bin/macintosh >/dev/null <<'MAC'
+#!/bin/bash
+exec sudo systemctl restart getty@tty1
+MAC
+  sudo chmod 755 /usr/local/bin/macintosh
 }
 
 # --- Sudo bootstrap --------------------------------------------------------
@@ -284,9 +296,15 @@ if [[ $INSTALL_MACLOCK -eq 0 && $INSTALL_SHEEPSHAVER -eq 0 && $INSTALL_BASILISK 
   [[ $INSTALL_BASILISK    -eq 1 ]] && check_basilisk_assets
 fi
 
+# An existing prefs file means re-running is an update / core switch: keep the
+# user's prefs and skip the disk/chime/color prompts that only feed them.
+NEED_PREFS=0
+[[ $INSTALL_BASILISK    -eq 1 && ! -f $HOME/.basilisk_ii_prefs ]] && NEED_PREFS=1
+[[ $INSTALL_SHEEPSHAVER -eq 1 && ! -f $HOME/.sheepshaver_prefs ]] && NEED_PREFS=1
+
 # Disk image — auto-discover in $HOME, prompt if multiple, use as-is.
 # SheepShaver reads *.hda; BasiliskII also reads *.dsk.
-if [[ ($INSTALL_SHEEPSHAVER -eq 1 || $INSTALL_BASILISK -eq 1) && -z $DISK_IMAGE ]]; then
+if [[ ($INSTALL_SHEEPSHAVER -eq 1 || $INSTALL_BASILISK -eq 1) && -z $DISK_IMAGE && $NEED_PREFS -eq 1 ]]; then
   shopt -s nullglob
   if [[ $INSTALL_BASILISK -eq 1 ]]; then
     HDA_PATHS=("$HOME"/*.hda "$HOME"/*.dsk)
@@ -310,7 +328,7 @@ if [[ ($INSTALL_SHEEPSHAVER -eq 1 || $INSTALL_BASILISK -eq 1) && -z $DISK_IMAGE 
 fi
 
 # Chime — show clean tags, resolve to filename via lookup
-if [[ ($INSTALL_SHEEPSHAVER -eq 1 || $INSTALL_BASILISK -eq 1) && -z $CHIME_NAME ]]; then
+if [[ ($INSTALL_SHEEPSHAVER -eq 1 || $INSTALL_BASILISK -eq 1) && -z $CHIME_NAME && $NEED_PREFS -eq 1 ]]; then
   WT_ARGS=()
   for entry in "${CHIMES_DATA[@]}"; do
     IFS='|' read -r tag desc _ <<< "$entry"
@@ -329,7 +347,7 @@ fi
 [[ -z $CHIME_NAME ]] && CHIME_NAME=$DEFAULT_CHIME
 
 # Color — BasiliskII defaults to 8-bit (lighter), SheepShaver to 16-bit.
-if [[ ($INSTALL_SHEEPSHAVER -eq 1 || $INSTALL_BASILISK -eq 1) && -z $COLOR_MODE ]]; then
+if [[ ($INSTALL_SHEEPSHAVER -eq 1 || $INSTALL_BASILISK -eq 1) && -z $COLOR_MODE && $NEED_PREFS -eq 1 ]]; then
   color_default="Color"
   [[ $INSTALL_BASILISK -eq 1 ]] && color_default="Grayscale"
   COLOR_MODE=$(wt_menu "Color mode" "Color depth:" "$color_default" 3 \
@@ -552,15 +570,22 @@ EOF
   install_restart_wrapper() {
     sudo tee /usr/local/bin/sheepshaver-restart.sh >/dev/null <<'WRAPPER'
 #!/bin/bash
-# Reset button handler: stop SheepShaver, play the crash sound, relaunch.
+# Reset button (single press): stop the emulator, play the crash sound, relaunch.
 systemctl stop getty@tty1.service
 sleep 0.5
 [[ -f /usr/local/bin/crash.wav ]] && aplay -q /usr/local/bin/crash.wav 2>/dev/null
 systemctl start getty@tty1.service
 WRAPPER
-    sudo chmod 755 /usr/local/bin/sheepshaver-restart.sh
+    sudo tee /usr/local/bin/macintosh-quit.sh >/dev/null <<'QUIT'
+#!/bin/bash
+# Reset button (double press): force-quit the emulator (exit 143); the launcher
+# then drops to a Pi prompt instead of relaunching. `macintosh` boots it again.
+pkill -TERM -x BasiliskII 2>/dev/null
+pkill -TERM -x SheepShaver 2>/dev/null
+QUIT
+    sudo chmod 755 /usr/local/bin/sheepshaver-restart.sh /usr/local/bin/macintosh-quit.sh
   }
-  run "[maclock] Installing reset-button wrapper" install_restart_wrapper
+  run "[maclock] Installing reset-button wrappers" install_restart_wrapper
 fi
 
 # =========================================================================
@@ -590,11 +615,12 @@ SYSCTL
   }
   run "[sheepshaver] Writing sysctls (mmap_min_addr, overcommit)" write_sysctl
 
-  run "[sheepshaver] Fetching chime: $CHIME_NAME" curl -fL --retry 3 \
-    -o "$HOME/$CHIME_FILE" "$REPO_RAW/sheepshaver/chimes/${CHIME_NAME}.wav"
-
-  run "[sheepshaver] Fetching crash sound: $CRASH_NAME" curl -fL --retry 3 \
-    -o "$HOME/crash.wav" "$REPO_RAW/sheepshaver/chimes/${CRASH_NAME}.wav"
+  if [[ $NEED_PREFS -eq 1 ]]; then
+    run "[sheepshaver] Fetching chime: $CHIME_NAME" curl -fL --retry 3 \
+      -o "$HOME/$CHIME_FILE" "$REPO_RAW/sheepshaver/chimes/${CHIME_NAME}.wav"
+    run "[sheepshaver] Fetching crash sound: $CRASH_NAME" curl -fL --retry 3 \
+      -o "$HOME/crash.wav" "$REPO_RAW/sheepshaver/chimes/${CRASH_NAME}.wav"
+  fi
 
   if [[ -x /usr/local/bin/SheepShaver ]]; then
     : # already installed; no steps consumed
@@ -628,8 +654,8 @@ SYSCTL
     sudo tee /usr/local/bin/sheepshaver.sh >/dev/null <<'LAUNCHER'
 #!/bin/bash
 # Launches SheepShaver fullscreen via cage on the current TTY.
-
-# Black out tty1 the moment we take over (covers boot + button-2 restarts).
+# Relaunch: exit 0 (Mac Shut Down) or 143 (double-reset) -> Pi prompt;
+# crash -> relaunch; Mac Restart reboots the VM in place.
 clear 2>/dev/null
 printf '\033[?25l' 2>/dev/null
 setterm --cursor off 2>/dev/null || true
@@ -642,21 +668,36 @@ chmod 700 "$XDG_RUNTIME_DIR"
 
 cd ~
 aplay -q /usr/local/bin/chime.wav 2>/dev/null &
+
+rm -f /tmp/sheepshaver.exit
 cage -s -- sh -c '
   sleep 1
   wlr-randr --output DPI-1 --transform 270 2>/dev/null
   wlr-randr --output Unknown-1 --transform 270 2>/dev/null
-  exec setarch -R SheepShaver 2>&1 | systemd-cat -t sheepshaver
+  systemd-cat -t sheepshaver setarch -R SheepShaver
+  echo $? > /tmp/sheepshaver.exit
 '
+rc=$(cat /tmp/sheepshaver.exit 2>/dev/null || echo 99)
+rm -f /tmp/sheepshaver.exit
+
+if [ "$rc" = "0" ] || [ "$rc" = "143" ]; then
+  clear 2>/dev/null
+  setterm --cursor on 2>/dev/null || true
+  exec bash
+fi
+
+[ -f /usr/local/bin/crash.wav ] && aplay -q /usr/local/bin/crash.wav 2>/dev/null
 LAUNCHER
     sudo chmod 755 /usr/local/bin/sheepshaver.sh
-    sudo install -m644 "$HOME/$CHIME_FILE" /usr/local/bin/chime.wav
-    sudo install -m644 "$HOME/crash.wav" /usr/local/bin/crash.wav
+    [[ -f "$HOME/$CHIME_FILE" ]] && sudo install -m644 "$HOME/$CHIME_FILE" /usr/local/bin/chime.wav
+    [[ -f "$HOME/crash.wav" ]] && sudo install -m644 "$HOME/crash.wav" /usr/local/bin/crash.wav
+    write_macintosh_cmd
     touch "$HOME/.hushlogin"
   }
   run "[sheepshaver] Installing launcher + sounds" install_launcher
 
   write_prefs() {
+    [[ -f "$HOME/.sheepshaver_prefs" ]] && return 0   # update: keep existing prefs
     local ramsize=67108864     # 64 MB
     local extra=""
     if [[ $PERF -eq 1 ]]; then
@@ -732,11 +773,12 @@ SYSCTL
   }
   run "[basilisk] Writing sysctl (mmap_min_addr)" write_basilisk_sysctl
 
-  run "[basilisk] Fetching chime: $CHIME_NAME" curl -fL --retry 3 \
-    -o "$HOME/$CHIME_FILE" "$REPO_RAW/sheepshaver/chimes/${CHIME_NAME}.wav"
-
-  run "[basilisk] Fetching crash sound: $CRASH_NAME" curl -fL --retry 3 \
-    -o "$HOME/crash.wav" "$REPO_RAW/sheepshaver/chimes/${CRASH_NAME}.wav"
+  if [[ $NEED_PREFS -eq 1 ]]; then
+    run "[basilisk] Fetching chime: $CHIME_NAME" curl -fL --retry 3 \
+      -o "$HOME/$CHIME_FILE" "$REPO_RAW/sheepshaver/chimes/${CHIME_NAME}.wav"
+    run "[basilisk] Fetching crash sound: $CRASH_NAME" curl -fL --retry 3 \
+      -o "$HOME/crash.wav" "$REPO_RAW/sheepshaver/chimes/${CRASH_NAME}.wav"
+  fi
 
   if [[ -x /usr/local/bin/BasiliskII ]]; then
     : # already installed; no steps consumed
@@ -771,6 +813,8 @@ SYSCTL
     sudo tee /usr/local/bin/basilisk.sh >/dev/null <<'LAUNCHER'
 #!/bin/bash
 # Launches BasiliskII fullscreen via cage on the current TTY.
+# Relaunch: exit 0 (Mac Shut Down) or 143 (double-reset) -> Pi prompt;
+# crash -> relaunch; Mac Restart reboots the VM in place.
 clear 2>/dev/null
 printf '\033[?25l' 2>/dev/null
 setterm --cursor off 2>/dev/null || true
@@ -783,21 +827,36 @@ chmod 700 "$XDG_RUNTIME_DIR"
 
 cd ~
 aplay -q /usr/local/bin/chime.wav 2>/dev/null &
+
+rm -f /tmp/basilisk.exit
 cage -s -- sh -c '
   sleep 1
   wlr-randr --output DPI-1 --transform 270 2>/dev/null
   wlr-randr --output Unknown-1 --transform 270 2>/dev/null
-  exec setarch -R BasiliskII 2>&1 | systemd-cat -t basilisk
+  systemd-cat -t basilisk setarch -R BasiliskII
+  echo $? > /tmp/basilisk.exit
 '
+rc=$(cat /tmp/basilisk.exit 2>/dev/null || echo 99)
+rm -f /tmp/basilisk.exit
+
+if [ "$rc" = "0" ] || [ "$rc" = "143" ]; then
+  clear 2>/dev/null
+  setterm --cursor on 2>/dev/null || true
+  exec bash
+fi
+
+[ -f /usr/local/bin/crash.wav ] && aplay -q /usr/local/bin/crash.wav 2>/dev/null
 LAUNCHER
     sudo chmod 755 /usr/local/bin/basilisk.sh
-    sudo install -m644 "$HOME/$CHIME_FILE" /usr/local/bin/chime.wav
-    sudo install -m644 "$HOME/crash.wav" /usr/local/bin/crash.wav
+    [[ -f "$HOME/$CHIME_FILE" ]] && sudo install -m644 "$HOME/$CHIME_FILE" /usr/local/bin/chime.wav
+    [[ -f "$HOME/crash.wav" ]] && sudo install -m644 "$HOME/crash.wav" /usr/local/bin/crash.wav
+    write_macintosh_cmd
     touch "$HOME/.hushlogin"
   }
   run "[basilisk] Installing launcher + sounds" install_basilisk_launcher
 
   write_basilisk_prefs() {
+    [[ -f "$HOME/.basilisk_ii_prefs" ]] && return 0   # update: keep existing prefs
     local ramsize=67108864     # 64 MB
     [[ $PERF -eq 1 ]] && ramsize=134217728   # 128 MB
     cat > "$HOME/.basilisk_ii_prefs" <<EOF

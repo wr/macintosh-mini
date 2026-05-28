@@ -40,6 +40,16 @@ I recorded a walkthrough [video](https://www.youtube.com/watch?v=zAbAf5-H5Yo) fo
    
 4. The script will reboot your Pi when done, and it should Just Work™️
 
+## Using it
+
+Once installed the Pi boots straight into the Mac. A few controls:
+
+- **Reset button** (GPIO 26): a single press restarts the emulator; a **double press quits to a Pi shell prompt**.
+- **Shut Down** from inside Mac OS (Special → Shut Down) quits to the Pi prompt; **Restart** reboots the Mac in place; a crash auto-reboots.
+- **`macintosh`** — run this from the prompt to boot the Mac again.
+
+Re-run the installer any time to **update** an existing install — it keeps your disk image and settings. To **switch emulator**, pick the other one (BasiliskII ⇄ SheepShaver); each core's prefs are preserved.
+
 ## The software—manual install
 
 You can also do everything the script does by yourself: [Maclock hardware guide](https://github.com/wr/macintosh-mini/tree/main/maclock-build) and [Sheepshaver install guide](https://github.com/wr/macintosh-mini/tree/main/sheepshaver).
