@@ -221,6 +221,47 @@ MAC
   sudo chmod 755 /usr/local/bin/macintosh
 }
 
+# Boot preflight: confirm a ROM + disk are present (auto-fill prefs if exactly
+# one candidate of each exists), else explain on-screen instead of failing blind.
+write_preflight() {
+  sudo tee /usr/local/bin/mac-preflight >/dev/null <<'PREFLIGHT'
+#!/bin/bash
+# Usage: mac-preflight basilisk|sheepshaver. Exit 0 = ready to boot.
+case $1 in
+  basilisk)    prefs=$HOME/.basilisk_ii_prefs; sizes="524288 1048576" ;;
+  sheepshaver) prefs=$HOME/.sheepshaver_prefs; sizes="4194304" ;;
+  *) echo "mac-preflight: unknown emulator '$1'" >&2; exit 1 ;;
+esac
+get() { sed -n "s/^$1 //p" "$prefs" 2>/dev/null | head -1; }
+abs() { case $1 in /*) printf '%s' "$1" ;; ?*) printf '%s/%s' "$HOME" "$1" ;; esac; }
+rom=$(abs "$(get rom)"); disk=$(abs "$(get disk)")
+[ -f "$rom" ] && [ -f "$disk" ] && exit 0
+roms=(); for f in "$HOME"/*; do [ -f "$f" ] && for s in $sizes; do [ "$(stat -c%s "$f")" = "$s" ] && roms+=("$f"); done; done
+shopt -s nullglob
+case $1 in
+  basilisk)    disks=( "$HOME"/*.hda "$HOME"/*.dsk "$HOME"/*.img ) ;;
+  sheepshaver) disks=( "$HOME"/*.hda "$HOME"/*.img ) ;;
+esac
+shopt -u nullglob
+set_pref() { grep -q "^$1 " "$prefs" 2>/dev/null && sed -i "s#^$1 .*#$1 $2#" "$prefs" || printf '%s %s\n' "$1" "$2" >> "$prefs"; }
+if [ ${#roms[@]} -eq 1 ] && [ ${#disks[@]} -eq 1 ]; then
+  set_pref rom "${roms[0]}"; set_pref disk "${disks[0]}"; exit 0
+fi
+clear 2>/dev/null
+echo
+echo "  The Macintosh can't start yet."
+[ ${#roms[@]} -eq 0 ]  && echo "  - No ROM found in $HOME."
+[ ${#roms[@]} -gt 1 ]  && echo "  - ${#roms[@]} ROMs in $HOME - set one in $prefs (rom <file>)."
+[ ${#disks[@]} -eq 0 ] && echo "  - No disk image found in $HOME (.hda/.dsk/.img)."
+[ ${#disks[@]} -gt 1 ] && echo "  - ${#disks[@]} disk images in $HOME - set one in $prefs (disk <file>)."
+echo
+echo "  Fix that, then run:  macintosh"
+echo
+exit 1
+PREFLIGHT
+  sudo chmod 755 /usr/local/bin/mac-preflight
+}
+
 # --- Sudo bootstrap --------------------------------------------------------
 ensure_sudo() {
   if sudo -n true 2>/dev/null; then return; fi
@@ -667,6 +708,12 @@ mkdir -p "$XDG_RUNTIME_DIR"
 chmod 700 "$XDG_RUNTIME_DIR"
 
 cd ~
+
+if ! /usr/local/bin/mac-preflight sheepshaver; then
+  printf '\033[?25h' 2>/dev/null; setterm --cursor on 2>/dev/null || true
+  exec bash
+fi
+
 aplay -q /usr/local/bin/chime.wav 2>/dev/null &
 
 rm -f /tmp/sheepshaver.exit
@@ -692,6 +739,7 @@ LAUNCHER
     [[ -f "$HOME/$CHIME_FILE" ]] && sudo install -m644 "$HOME/$CHIME_FILE" /usr/local/bin/chime.wav
     [[ -f "$HOME/crash.wav" ]] && sudo install -m644 "$HOME/crash.wav" /usr/local/bin/crash.wav
     write_macintosh_cmd
+    write_preflight
     touch "$HOME/.hushlogin"
   }
   run "[sheepshaver] Installing launcher + sounds" install_launcher
@@ -826,6 +874,12 @@ mkdir -p "$XDG_RUNTIME_DIR"
 chmod 700 "$XDG_RUNTIME_DIR"
 
 cd ~
+
+if ! /usr/local/bin/mac-preflight basilisk; then
+  printf '\033[?25h' 2>/dev/null; setterm --cursor on 2>/dev/null || true
+  exec bash
+fi
+
 aplay -q /usr/local/bin/chime.wav 2>/dev/null &
 
 rm -f /tmp/basilisk.exit
@@ -851,6 +905,7 @@ LAUNCHER
     [[ -f "$HOME/$CHIME_FILE" ]] && sudo install -m644 "$HOME/$CHIME_FILE" /usr/local/bin/chime.wav
     [[ -f "$HOME/crash.wav" ]] && sudo install -m644 "$HOME/crash.wav" /usr/local/bin/crash.wav
     write_macintosh_cmd
+    write_preflight
     touch "$HOME/.hushlogin"
   }
   run "[basilisk] Installing launcher + sounds" install_basilisk_launcher
