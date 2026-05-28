@@ -321,10 +321,10 @@ ensure_whiptail
 if [[ $INSTALL_MACLOCK -eq 0 && $INSTALL_SHEEPSHAVER -eq 0 && $INSTALL_BASILISK -eq 0 ]]; then
   # Single-column menu (label = tag, blank item); the empty row separates the
   # recommended default from the rest.
-  opt_full="BasiliskII emulator + Maclock hardware support (default, recommended)"
+  opt_full="Basilisk II emulator + Maclock hardware support (default, recommended)"
   opt_ppc="SheepShaver emulator + Maclock hardware support (laggy)"
   opt_hw="Maclock hardware support only"
-  opt_b2="BasiliskII emulator only"
+  opt_b2="Basilisk II emulator only"
   opt_ss="SheepShaver emulator only"
   CHOICE=$(wt_menu "macintosh-mini" "What do you want to install?" "$opt_full" 6 \
     "$opt_full" "" \

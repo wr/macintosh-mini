@@ -23,9 +23,9 @@ I recorded a walkthrough [video](https://www.youtube.com/watch?v=zAbAf5-H5Yo) fo
 
 1. Install [Raspberry Pi OS (lite)](https://www.raspberrypi.com/software/) onto an SD card.
 
-2. Copy over a Mac OS disk image and a ROM file — the installer auto-discovers them in `$HOME`. It offers two emulators (it defaults to **BasiliskII**):
+2. Copy over a Mac OS disk image and a ROM file — the installer auto-discovers them in `$HOME`. It offers two emulators (it defaults to **Basilisk II**):
 
-   - **BasiliskII** — a 68k Mac running System 7. On the Pi Zero 2 W this is the fastest option. Needs a **512 KB or 1 MB 68k ROM** (Mac IIci / Quadra, try searching online for `064DC91D`) and a disk image.
+   - **Basilisk II** — a 68k Mac running System 7. On the Pi Zero 2 W this is the fastest option. Needs a **512 KB or 1 MB 68k ROM** (Mac IIci / Quadra, try searching online for `064DC91D`) and a disk image.
    - **SheepShaver** — if you want PowerPC running Mac OS 8.1+. Needs the **4 MB PowerPC [ROM](https://www.redundantrobot.com/sheepshaver)** and a disk image. Choose this only if you need PPC-era software as it's **very slow on a Pi Zero**.
 
    Rename your ROM file `ROM` (no file extension)
@@ -54,13 +54,13 @@ Once installed the Pi boots straight into the Mac. A few controls:
 - **`macintosh`** — run this from the prompt to boot the Mac again.
 - **Networking** works out of the box (slirp NAT). In the Mac, set TCP/IP to **DHCP**.
 
-Re-run the installer any time to **update** an existing install — it keeps your disk image and settings. To **switch emulator**, pick the other one (BasiliskII ⇄ SheepShaver); each core's prefs are preserved.
+Re-run the installer any time to **update** an existing install — it keeps your disk image and settings. To **switch emulator**, pick the other one (Basilisk II ⇄ SheepShaver); each core's prefs are preserved.
 
 ## The software: manual install
 
 You can also do everything the script does by yourself: 
 - [Maclock hardware guide](https://github.com/wr/macintosh-mini/tree/main/maclock-build)
-- [BasiliskII install guide](https://github.com/wr/macintosh-mini/blob/main/emulators/BasiliskII.md)
+- [Basilisk II install guide](https://github.com/wr/macintosh-mini/blob/main/emulators/BasiliskII.md)
 - [SheepShaver install guide](https://github.com/wr/macintosh-mini/blob/main/emulators/SheepShaver.md).
 
 
