@@ -23,7 +23,12 @@ I recorded a walkthrough [video](https://www.youtube.com/watch?v=zAbAf5-H5Yo) fo
 
 1. Install [Raspberry Pi OS (lite)](https://www.raspberrypi.com/software/) onto an SD card.
 
-2. Copy over a [MacOS disk image](https://bluescsi.com/docs/BlueSCSI-Images) and [ROM](https://www.redundantrobot.com/sheepshaver) file. Any `.hda` filename works — the script auto-discovers them in `$HOME`.
+2. Copy over a Mac OS disk image and a ROM file — the installer auto-discovers them in `$HOME`. It offers two emulators (it defaults to **BasiliskII**):
+
+   - **BasiliskII** — a 68k Mac running System 7. On the Pi Zero 2 W this is much faster than PowerPC emulation: both emulators run as a pure interpreter on ARM (their JITs are x86-only), and a 68k guest is far lighter to interpret than PowerPC. Needs a **512 KB or 1 MB 68k ROM** (Mac IIci / Quadra) and a `.hda` or `.dsk` disk image.
+   - **SheepShaver** — a PowerPC Mac running Mac OS 8.1+. Needs the **4 MB PowerPC [ROM](https://www.redundantrobot.com/sheepshaver)** and a `.hda` disk image. Choose this only if you need PPC-era software.
+
+   Disk images for either are available from the [BlueSCSI image library](https://bluescsi.com/docs/BlueSCSI-Images).
 
    ```bash
    scp ROM yourdisk.hda <user>@<pi_ip>:~/
