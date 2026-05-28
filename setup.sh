@@ -786,8 +786,8 @@ SYSCTL
     run "[basilisk] Cloning macemu (kanjitalk755 HEAD)" \
       bash -c "[[ -d '$MACEMU_DIR/.git' ]] || git clone https://github.com/kanjitalk755/macemu.git '$MACEMU_DIR'"
 
-    # JIT is x86-only (interpreter on ARM); VOSF disabled — the proven-on-Pi
-    # combination for stable 68k emulation on aarch64.
+    # JIT is x86-only (interpreter on ARM). VOSF on: only changed screen regions
+    # get re-blitted — meaningfully snappier UI, and stable on this Pi's aarch64.
     prepare_basilisk_build() {
       cd "$MACEMU_DIR/BasiliskII/src/Unix" || return $?
       local extra_cflags=""
@@ -795,9 +795,9 @@ SYSCTL
       CFLAGS="-g -O3${extra_cflags}" \
       CXXFLAGS="-g -O3${extra_cflags}" \
       ./autogen.sh --enable-sdl-video --enable-sdl-audio \
-        --disable-jit-compiler --disable-vosf || return $?
+        --disable-jit-compiler --enable-vosf || return $?
     }
-    run "[basilisk] Configuring build (SDL, no JIT, no VOSF)" prepare_basilisk_build
+    run "[basilisk] Configuring build (SDL, no JIT, VOSF)" prepare_basilisk_build
 
     do_basilisk_build() {
       cd "$MACEMU_DIR/BasiliskII/src/Unix" || return $?
