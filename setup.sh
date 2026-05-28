@@ -12,6 +12,7 @@
 #   --chime <name>      e.g. StartupMacII (default)
 #   --color <mode>      Color | Grayscale | "Black & White"  (also accepts color/grayscale/bw)
 #   --disk <file>       disk image filename in $HOME (default: auto-discover)
+#   --rom <file>        ROM filename in $HOME (default: ROM)
 #   --hostname <name>   default: leave unchanged
 #   --perf | --no-perf  enable/disable performance optimizations (default: prompt)
 #   --debug             show all command output instead of capturing to log
@@ -90,7 +91,7 @@ stop_gauge() {
 
 emit_gauge() {
   local pct=$1 msg=$2
-  [[ $USE_GAUGE -eq 1 ]] || return
+  [[ $USE_GAUGE -eq 1 ]] || return 0
   printf 'XXX\n%s\n%s\nXXX\n' "$pct" "$msg" >&9
 }
 
@@ -240,6 +241,7 @@ while [[ $# -gt 0 ]]; do
     --chime)         CHIME_NAME=$2; shift 2 ;;
     --color)         COLOR_MODE=$2; shift 2 ;;
     --disk)          DISK_IMAGE=$2; shift 2 ;;
+    --rom)           ROM_FILE=$2; shift 2 ;;
     --hostname)      NEW_HOSTNAME=$2; shift 2 ;;
     --perf)          PERF=1; shift ;;
     --no-perf)       PERF=0; shift ;;
@@ -418,6 +420,7 @@ if [[ $INSTALL_SHEEPSHAVER -eq 1 || $INSTALL_BASILISK -eq 1 ]]; then
   APT_PKGS+=(
     build-essential autoconf automake libtool pkg-config
     libsdl2-dev libgtk-3-dev libgl1-mesa-dev libxkbcommon-dev
+    libmpfr-dev
     cage wlr-randr seatd
     alsa-utils
   )
@@ -687,6 +690,8 @@ EOF
   run "[sheepshaver] Configuring tty1 autologin for $USER" config_autologin
 
   patch_profile() {
+    # Drop any BasiliskII autostart so SheepShaver wins on tty1.
+    sed -i '/# >>> basilisk-autostart >>>/,/# <<< basilisk-autostart <<</d' "$HOME/.profile" 2>/dev/null || true
     local marker="# >>> sheepshaver-autostart >>>"
     grep -qF "$marker" "$HOME/.profile" 2>/dev/null && return 0
     cat >> "$HOME/.profile" <<EOF
@@ -827,6 +832,8 @@ EOF
   run "[basilisk] Configuring tty1 autologin for $USER" config_autologin_basilisk
 
   patch_profile_basilisk() {
+    # Drop any SheepShaver autostart so BasiliskII wins on tty1.
+    sed -i '/# >>> sheepshaver-autostart >>>/,/# <<< sheepshaver-autostart <<</d' "$HOME/.profile" 2>/dev/null || true
     local marker="# >>> basilisk-autostart >>>"
     grep -qF "$marker" "$HOME/.profile" 2>/dev/null && return 0
     cat >> "$HOME/.profile" <<EOF
