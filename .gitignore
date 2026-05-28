@@ -7,9 +7,14 @@ _restore_backup_*/
 *_drc_violations.json
 *.kicad_pcb.zip
 fp-info-cache
+fp-lib-table
+sym-lib-table
 
 # OS / editor
 .DS_Store
 .vscode/
 *.swp
 .history/
+
+# Python
+__pycache__/
