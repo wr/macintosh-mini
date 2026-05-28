@@ -25,10 +25,12 @@ I recorded a walkthrough [video](https://www.youtube.com/watch?v=zAbAf5-H5Yo) fo
 
 2. Copy over a Mac OS disk image and a ROM file — the installer auto-discovers them in `$HOME`. It offers two emulators (it defaults to **BasiliskII**):
 
-   - **BasiliskII** — a 68k Mac running System 7. On the Pi Zero 2 W this is much faster than PowerPC emulation: both emulators run as a pure interpreter on ARM (their JITs are x86-only), and a 68k guest is far lighter to interpret than PowerPC. Needs a **512 KB or 1 MB 68k ROM** (Mac IIci / Quadra) and a `.hda` or `.dsk` disk image.
-   - **SheepShaver** — a PowerPC Mac running Mac OS 8.1+. Needs the **4 MB PowerPC [ROM](https://www.redundantrobot.com/sheepshaver)** and a `.hda` disk image. Choose this only if you need PPC-era software.
+   - **BasiliskII** — a 68k Mac running System 7. On the Pi Zero 2 W this is the fastest option. Needs a **512 KB or 1 MB 68k ROM** (Mac IIci / Quadra, try searching online for `064DC91D`) and a disk image.
+   - **SheepShaver** — if you want PowerPC running Mac OS 8.1+. Needs the **4 MB PowerPC [ROM](https://www.redundantrobot.com/sheepshaver)** and a disk image. Choose this only if you need PPC-era software as it's **very slow on a Pi Zero**.
 
-   Disk images for either are available from the [BlueSCSI image library](https://bluescsi.com/docs/BlueSCSI-Images).
+   Rename your ROM file `ROM` (no file extension)
+
+   Disk images are readily available online, but I recommend the [BlueSCSI image library](https://bluescsi.com/docs/BlueSCSI-Images).
 
    **Disk images that work:** any raw hard-disk image — `.hda`, `.img`, `.dsk`, `.hfv`, `.vhd` (the extension doesn't matter) — and Apple `.sparsebundle`.
    **Don't work:** `.dmg`, `.image`/`.smi`, `.toast`, or files still zipped (`.zip` / `.sit`).
@@ -50,12 +52,13 @@ Once installed the Pi boots straight into the Mac. A few controls:
 - **Reset button** (GPIO 26): a single press restarts the emulator; a **double press quits to a Pi shell prompt**.
 - **Shut Down** from inside Mac OS (Special → Shut Down) quits to the Pi prompt; **Restart** reboots the Mac in place; a crash auto-reboots.
 - **`macintosh`** — run this from the prompt to boot the Mac again.
+- **Networking** works out of the box (slirp NAT). In the Mac, set TCP/IP to **DHCP**.
 
 Re-run the installer any time to **update** an existing install — it keeps your disk image and settings. To **switch emulator**, pick the other one (BasiliskII ⇄ SheepShaver); each core's prefs are preserved.
 
 ## The software—manual install
 
-You can also do everything the script does by yourself: [Maclock hardware guide](https://github.com/wr/macintosh-mini/tree/main/maclock-build) and [Sheepshaver install guide](https://github.com/wr/macintosh-mini/tree/main/sheepshaver).
+You can also do everything the script does by yourself: [Maclock hardware guide](https://github.com/wr/macintosh-mini/tree/main/maclock-build), [BasiliskII install guide](https://github.com/wr/macintosh-mini/blob/main/emulators/BasiliskII.md), and [SheepShaver install guide](https://github.com/wr/macintosh-mini/blob/main/emulators/SheepShaver.md).
 
 
 **Getting help**

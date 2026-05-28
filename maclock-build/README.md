@@ -1,5 +1,5 @@
 # Macintosh Mini hardware guide
-This guide covers the hardware side: the wiring, the display drivers, and the helper scripts that make the dial control screen brightness and the buttons actually do things. The SheepShaver install is a [separate guide](../sheepshaver/).
+This guide covers the hardware side: the wiring, the display drivers, and the helper scripts that make the dial control screen brightness and the buttons actually do things. The emulator install is a [separate guide](../emulators/).
 
 ## Video guide
 I recorded a walkthrough for how I assembled mine that goes into much more detail than the written guide:
@@ -11,7 +11,7 @@ I recorded a walkthrough for how I assembled mine that goes into much more detai
 - [Raspberry Pi Zero 2 W](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w/)
 - [Waveshare 2.8 inch IPS LCD](https://www.waveshare.com/2.8inch-dpi-lcd.htm)
 - [3D printed screen bezel](../maclock-screen-bezel)
-- [Macintosh Mini breakout board](https://www.pcbway.com/project/shareproject/W654223ASS41_Untitled_kicad_pcb_95cca7e3.html) (if you want brightness, buttons, and sound). Full [bill of materials here](./maclock-pcb).
+- [Macintosh Mini breakout board](https://www.pcbway.com/project/shareproject/W654223ASS41_Untitled_kicad_pcb_95cca7e3.html) (if you want brightness, buttons, and sound). Full [bill of materials here](../maclock-pcb).
 
 ## 1. Wiring
 
@@ -31,9 +31,9 @@ Bend, cut, or desolder pins 13, 19, 23, 35, and 37 so they don't plug into the W
 
 ## 2. The software—quick install (recommended)
 
-1. Install [Raspberry Pi OS (lite)](https://www.raspberrypi.com/software/) onto an SD card.
+1. Install [Raspberry Pi OS (lite) 64-bit](https://www.raspberrypi.com/software/) onto an SD card.
 
-2. Copy over a [MacOS disk image](https://bluescsi.com/docs/BlueSCSI-Images) and [ROM](https://www.redundantrobot.com/sheepshaver) file. Any `.hda` filename works — the script auto-discovers them in `$HOME`.
+2. Copy over a [disk image](https://bluescsi.com/docs/BlueSCSI-Images) and a ROM file — the [main README](../) covers which ROM/disk to grab. The script auto-discovers them in `$HOME`.
 
    ```bash
    scp ROM yourdisk.hda <user>@<pi_ip>:~/
@@ -117,7 +117,7 @@ Once you reboot your Pi, the screen should start working.
 Two helpers drive the rotary encoder behind the brightness dial and the two pushbuttons on the front:
 
 - [`brightness_control.py`](./brightness_control.py) — gray-code rotary encoder reader, drives software PWM on GPIO 18 for backlight
-- [`button_handler.py`](./button_handler.py) — debounced falling-edge handlers for the two front buttons. Edit the `COMMANDS` dict to change what each button does (defaults: BTN1 = shutdown, BTN2 = restart SheepShaver)
+- [`button_handler.py`](./button_handler.py) — debounced falling-edge handlers for the two front buttons. Edit the `COMMANDS` / `DOUBLE_COMMANDS` dicts to change what each does (defaults: BTN1 = shutdown; BTN2 single-press = restart the emulator, double-press = quit to a prompt)
 
 Install both to `/usr/local/bin/`:
 
@@ -149,9 +149,9 @@ sudo systemctl enable --now brightness-control button-handler
 
 ---
 
-### 4. Install SheepShaver
+### 4. Install the emulator
 
-The hardware side of the maclock is now done. Follow the [SheepShaver guide](../sheepshaver/) to build SheepShaver, configure prefs, and set up auto-launch on `tty1`. That guide places `sheepshaver.sh`, `chime.wav`, `crash.wav`, and `sheepshaver-restart.sh` in `/usr/local/bin/` — the autologin chain plays the chime and starts SheepShaver, and pressing Button 2 calls `sheepshaver-restart.sh` (plays the crash sound, relaunches).
+The hardware side of the maclock is now done. The [setup script](../setup.sh) installs **BasiliskII** by default (much faster on the Pi Zero); manual build steps are in the [BasiliskII guide](../emulators/BasiliskII.md) (or the [SheepShaver guide](../emulators/SheepShaver.md) for PowerPC). Either way the autologin chain plays the chime and launches the emulator on `tty1`. Button 2 single-press relaunches it (`sheepshaver-restart.sh`, with the crash sound); double-press quits to a prompt (`macintosh-quit.sh`). Run `macintosh` to boot it again.
 
 ---
 

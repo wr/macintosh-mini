@@ -658,9 +658,9 @@ SYSCTL
 
   if [[ $NEED_PREFS -eq 1 ]]; then
     run "[sheepshaver] Fetching chime: $CHIME_NAME" curl -fL --retry 3 \
-      -o "$HOME/$CHIME_FILE" "$REPO_RAW/sheepshaver/chimes/${CHIME_NAME}.wav"
+      -o "$HOME/$CHIME_FILE" "$REPO_RAW/emulators/chimes/${CHIME_NAME}.wav"
     run "[sheepshaver] Fetching crash sound: $CRASH_NAME" curl -fL --retry 3 \
-      -o "$HOME/crash.wav" "$REPO_RAW/sheepshaver/chimes/${CRASH_NAME}.wav"
+      -o "$HOME/crash.wav" "$REPO_RAW/emulators/chimes/${CRASH_NAME}.wav"
   fi
 
   if [[ -x /usr/local/bin/SheepShaver ]]; then
@@ -762,6 +762,7 @@ cpu 4
 fpu true
 nogui true
 nosound false
+ether slirp
 ignoreillegal false$extra
 EOF
   }
@@ -823,9 +824,9 @@ SYSCTL
 
   if [[ $NEED_PREFS -eq 1 ]]; then
     run "[basilisk] Fetching chime: $CHIME_NAME" curl -fL --retry 3 \
-      -o "$HOME/$CHIME_FILE" "$REPO_RAW/sheepshaver/chimes/${CHIME_NAME}.wav"
+      -o "$HOME/$CHIME_FILE" "$REPO_RAW/emulators/chimes/${CHIME_NAME}.wav"
     run "[basilisk] Fetching crash sound: $CRASH_NAME" curl -fL --retry 3 \
-      -o "$HOME/crash.wav" "$REPO_RAW/sheepshaver/chimes/${CRASH_NAME}.wav"
+      -o "$HOME/crash.wav" "$REPO_RAW/emulators/chimes/${CRASH_NAME}.wav"
   fi
 
   if [[ -x /usr/local/bin/BasiliskII ]]; then
@@ -925,6 +926,7 @@ cpu 4
 fpu true
 nogui true
 nosound false
+ether slirp
 jit false
 jitfpu false
 frameskip 2

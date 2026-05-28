@@ -2,6 +2,8 @@
 
 This guide covers the software side: getting SheepShaver (a classic Mac emulator) to run on the Pi Zero. The [hardware build](../maclock-build) is a separate guide.
 
+> SheepShaver runs PowerPC Mac OS (8.1+) and is **slow** on the Pi Zero. **BasiliskII** (68k) is the [setup script](../setup.sh) default and much faster (see the [BasiliskII guide](./BasiliskII.md)) — use this guide only if you specifically need PPC-era software.
+
 > [!NOTE]
 > **Tested environment**
 > - **Hardware:** Raspberry Pi Zero 2 W (aarch64, ~416 MB RAM)
@@ -11,7 +13,7 @@ This guide covers the software side: getting SheepShaver (a classic Mac emulator
 
 ## Quick install
 
-1. Install [Raspberry Pi OS (lite)](https://www.raspberrypi.com/software/) onto an SD card.
+1. Install [Raspberry Pi OS (lite) 64-bit](https://www.raspberrypi.com/software/) onto an SD card.
 
 2. Copy over a [MacOS disk image](https://bluescsi.com/docs/BlueSCSI-Images) and [ROM](https://www.redundantrobot.com/sheepshaver) file. Any `.hda` filename works — the script auto-discovers them in `$HOME` and prompts you to choose if there's more than one.
 
@@ -100,8 +102,8 @@ For the manual install, drop this into `/usr/local/bin/sheepshaver.sh`:
 ```bash
 #!/bin/bash
 # Launches SheepShaver fullscreen via cage on the current TTY.
-
-# Black out tty1 the moment we take over (covers boot + button-2 restarts).
+# Relaunch: exit 0 (Mac Shut Down) or 143 (double-reset) -> Pi prompt;
+# crash -> relaunch; Mac Restart reboots the VM in place.
 clear 2>/dev/null
 printf '\033[?25l' 2>/dev/null
 setterm --cursor off 2>/dev/null || true
@@ -114,18 +116,31 @@ chmod 700 "$XDG_RUNTIME_DIR"
 
 cd ~
 aplay -q /usr/local/bin/chime.wav 2>/dev/null &
+
+rm -f /tmp/sheepshaver.exit
 cage -s -- sh -c '
   sleep 1
   wlr-randr --output DPI-1 --transform 270 2>/dev/null
   wlr-randr --output Unknown-1 --transform 270 2>/dev/null
-  exec setarch -R SheepShaver 2>&1 | systemd-cat -t sheepshaver
+  systemd-cat -t sheepshaver setarch -R SheepShaver
+  echo $? > /tmp/sheepshaver.exit
 '
+rc=$(cat /tmp/sheepshaver.exit 2>/dev/null || echo 99)
+rm -f /tmp/sheepshaver.exit
+
+if [ "$rc" = "0" ] || [ "$rc" = "143" ]; then
+  clear 2>/dev/null
+  setterm --cursor on 2>/dev/null || true
+  exec bash
+fi
+
+[ -f /usr/local/bin/crash.wav ] && aplay -q /usr/local/bin/crash.wav 2>/dev/null
 ```
 
 Grab a startup chime from this repo (replace `StartupMacII` with any name from [`chimes/`](./chimes/)) and install both:
 
 ```bash
-curl -fL -o chime.wav https://raw.githubusercontent.com/wr/macintosh-mini/main/sheepshaver/chimes/StartupMacII.wav
+curl -fL -o chime.wav https://raw.githubusercontent.com/wr/macintosh-mini/main/emulators/chimes/StartupMacII.wav
 sudo install -m644 chime.wav /usr/local/bin/chime.wav
 sudo install -m755 sheepshaver.sh /usr/local/bin/sheepshaver.sh
 ```
@@ -146,12 +161,15 @@ cpu 4
 fpu true
 nogui true
 nosound false
+ether slirp
 ignoreillegal false
 ```
 
 The trailing `/16` on the `screen` line is the bit depth: `1` for B&W, `8` for 256 colors / grayscale (set Mac OS Monitors → Grays for true grayscale), `16` for thousands of colors. Mac OS persists its own depth in the disk image too — if your settings don't take, also set Monitors inside Mac OS.
 
 For better performance, bump `ramsize 67108864` (64 MB) to `134217728` (128 MB) and add `sound_buffer 4096` on its own line. The setup script's `--perf` mode applies these by default. Building with `-mcpu=cortex-a53 -mtune=cortex-a53` in CFLAGS/CXXFLAGS gives another small win on Pi Zero 2 W.
+
+The `ether slirp` line gives the Mac networking via user-mode NAT — no host setup needed. Inside Mac OS, set TCP/IP to **DHCP**. For file sharing, point the Chooser's **Server IP Address** button at the server (AppleTalk doesn't cross slirp).
 
 ### 6. Autologin on `tty1`
 
