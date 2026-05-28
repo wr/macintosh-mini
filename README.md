@@ -30,6 +30,9 @@ I recorded a walkthrough [video](https://www.youtube.com/watch?v=zAbAf5-H5Yo) fo
 
    Disk images for either are available from the [BlueSCSI image library](https://bluescsi.com/docs/BlueSCSI-Images).
 
+   **Disk images that work:** any raw hard-disk image — `.hda`, `.img`, `.dsk`, `.hfv`, `.vhd` (the extension doesn't matter) — and Apple `.sparsebundle`.
+   **Don't work:** `.dmg`, `.image`/`.smi`, `.toast`, or files still zipped (`.zip` / `.sit`).
+
    ```bash
    scp ROM yourdisk.hda <user>@<pi_ip>:~/
    ```
