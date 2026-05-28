@@ -476,23 +476,29 @@ reconf_chime() {
 }
 
 configure_existing() {  # $1=prefs  $2=is_basilisk
-  local prefs=$1 isb=$2 cur_disk cur_depth cur_chime pick
+  local prefs=$1 isb=$2 cur_disk cur_depth cur_chime cur_color pick
   while true; do
     cur_disk=$(basename "$(pref_get "$prefs" disk)" 2>/dev/null)
     if [[ $isb -eq 1 ]]; then cur_depth=$(pref_get "$prefs" displaycolordepth)
     else cur_depth=$(pref_get "$prefs" screen | sed 's#.*/##'); fi
     cur_chime=$(cat "$HOME/.macintosh_chime" 2>/dev/null || true)
+    case "${cur_depth:-}" in
+      16) cur_color="Color 16-bit" ;;
+      8)  cur_color="Grayscale 8-bit" ;;
+      1)  cur_color="Black & White 1-bit" ;;
+      *)  cur_color="${cur_depth:-?}-bit" ;;
+    esac
     # OK = change the highlighted setting; Continue = proceed keeping settings.
     if pick=$(whiptail --backtitle "macintosh-mini" --title "Emulator Settings" \
         --ok-button "Change" --cancel-button "Continue" --menu "" 12 72 3 \
-        "Disk image"    "${cur_disk:-unknown}" \
-        "Startup chime" "${cur_chime:-—}" \
-        "Color depth"   "${cur_depth:-?}-bit" \
+        "Disk image:"    "${cur_disk:-unknown}" \
+        "Startup chime:" "${cur_chime:-—}" \
+        "Color depth:"   "$cur_color" \
         3>&1 1>&2 2>&3 </dev/tty); then
       case "$pick" in
-        "Disk image")    reconf_disk  "$prefs" "$isb" || true ;;
-        "Startup chime") reconf_chime                 || true ;;
-        "Color depth")   reconf_color "$prefs" "$isb" || true ;;
+        "Disk image:")    reconf_disk  "$prefs" "$isb" || true ;;
+        "Startup chime:") reconf_chime                 || true ;;
+        "Color depth:")   reconf_color "$prefs" "$isb" || true ;;
       esac
     else
       break
@@ -508,8 +514,8 @@ fi
 
 # Performance optimizations
 if [[ -z $PERF ]]; then
-  PERF_CHOICE=$(wt_menu "Performance" "Apply performance optimizations?" "Yes" 2 \
-    "Yes"  "128 MB RAM, leaner services, native build" \
+  PERF_CHOICE=$(wt_menu "Performance Optimizations" "" "Yes" 2 \
+    "Yes"  "Faster — more RAM, fewer background services" \
     "No"   "Stock install") || die "Cancelled"
   case "$PERF_CHOICE" in Yes) PERF=1 ;; No) PERF=0 ;; esac
 fi
