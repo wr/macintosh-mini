@@ -428,6 +428,79 @@ crash_for_chime() {
 }
 CRASH_NAME=$(crash_for_chime "$CHIME_NAME")
 
+# --- Reconfigure an existing install ---------------------------------------
+# When prefs already exist for the chosen emulator, offer to keep them or
+# change individual settings in place (instead of silently keeping them).
+pref_get() { sed -n "s/^$2 //p" "$1" 2>/dev/null | head -1; }
+pref_set() {
+  if grep -q "^$2 " "$1" 2>/dev/null; then sed -i "s#^$2 .*#$2 $3#" "$1"
+  else printf '%s %s\n' "$2" "$3" >> "$1"; fi
+}
+
+reconf_disk() {   # $1=prefs  $2=is_basilisk
+  local img p; local args=() paths=()
+  shopt -s nullglob
+  if [[ $2 -eq 1 ]]; then paths=("$HOME"/*.hda "$HOME"/*.dsk); else paths=("$HOME"/*.hda); fi
+  shopt -u nullglob
+  if [[ ${#paths[@]} -eq 0 ]]; then
+    whiptail --backtitle "macintosh-mini" --msgbox "No disk image in $HOME — copy one over first." 8 64 </dev/tty
+    return 0
+  fi
+  for p in "${paths[@]}"; do args+=("$(basename "$p")" "$(du -h "$p" | cut -f1)"); done
+  img=$(wt_menu "Disk image" "Pick the disk to boot:" "$(basename "${paths[0]}")" "${#paths[@]}" "${args[@]}") || return 0
+  if [[ $2 -eq 1 ]]; then pref_set "$1" disk "$HOME/$img"; else pref_set "$1" disk "$img"; fi
+}
+
+reconf_color() {  # $1=prefs  $2=is_basilisk
+  local mode depth
+  mode=$(wt_menu "Color depth" "Color depth:" "Color" 3 \
+    "Color" "16-bit" "Grayscale" "8-bit" "Black & White" "1-bit") || return 0
+  case "$mode" in "Color") depth=16 ;; "Grayscale") depth=8 ;; "Black & White") depth=1 ;; esac
+  if [[ $2 -eq 1 ]]; then pref_set "$1" displaycolordepth "$depth"
+  else sed -i "s#^\(screen .*\)/[0-9]*\$#\1/$depth#" "$1"; fi
+}
+
+reconf_chime() {
+  local tag name="" crash entry t d f; local args=()
+  for entry in "${CHIMES_DATA[@]}"; do IFS='|' read -r t d _ <<< "$entry"; args+=("$t" "$d"); done
+  tag=$(wt_menu "Boot chime" "Which startup chime?" "$DEFAULT_CHIME_TAG" 8 "${args[@]}") || return 0
+  for entry in "${CHIMES_DATA[@]}"; do IFS='|' read -r t _ f <<< "$entry"; [[ "$t" == "$tag" ]] && name=$f; done
+  [[ -n $name ]] || return 0
+  crash=$(crash_for_chime "$name")
+  curl -fL --retry 3 -o "$HOME/$CHIME_FILE" "$REPO_RAW/emulators/chimes/${name}.wav" \
+    && sudo install -m644 "$HOME/$CHIME_FILE" /usr/local/bin/chime.wav
+  curl -fL --retry 3 -o "$HOME/crash.wav" "$REPO_RAW/emulators/chimes/${crash}.wav" \
+    && sudo install -m644 "$HOME/crash.wav" /usr/local/bin/crash.wav
+  return 0
+}
+
+configure_existing() {  # $1=prefs  $2=is_basilisk  $3=emulator name
+  local prefs=$1 isb=$2 emu=$3 cur_disk cur_depth pick
+  while true; do
+    cur_disk=$(basename "$(pref_get "$prefs" disk)" 2>/dev/null)
+    if [[ $isb -eq 1 ]]; then cur_depth=$(pref_get "$prefs" displaycolordepth)
+    else cur_depth=$(pref_get "$prefs" screen | sed 's#.*/##'); fi
+    pick=$(wt_menu "$emu — already installed" \
+      "Keep your current settings, or change one:" "Keep" 4 \
+      "Keep"  "Keep existing settings (recommended)" \
+      "Disk"  "Change disk image   (now: ${cur_disk:-unknown})" \
+      "Chime" "Change startup chime" \
+      "Color" "Change color depth   (now: ${cur_depth:-?} bpp)") || break
+    case "$pick" in
+      Keep|"") break ;;
+      Disk)  reconf_disk  "$prefs" "$isb" || true ;;
+      Chime) reconf_chime              || true ;;
+      Color) reconf_color "$prefs" "$isb" || true ;;
+    esac
+  done
+}
+
+if [[ $NEED_PREFS -eq 0 && $INSTALL_BASILISK -eq 1 ]]; then
+  configure_existing "$HOME/.basilisk_ii_prefs" 1 "Basilisk II"
+elif [[ $NEED_PREFS -eq 0 && $INSTALL_SHEEPSHAVER -eq 1 ]]; then
+  configure_existing "$HOME/.sheepshaver_prefs" 0 "SheepShaver"
+fi
+
 # Performance optimizations
 if [[ -z $PERF ]]; then
   PERF_CHOICE=$(wt_menu "Performance" "Apply performance optimizations?" "Yes" 2 \
