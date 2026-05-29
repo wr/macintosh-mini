@@ -161,10 +161,11 @@ wt_menu() {
   # Args: title, prompt, default_tag, list_height, then pairs of tag/label.
   local title=$1 prompt=$2 default=$3 list_height=$4
   shift 4
-  local total_height=$(( list_height + 8 ))
+  local extra=8; [[ -z $prompt ]] && extra=7
+  local total_height=$(( list_height + extra ))
   whiptail --backtitle "macintosh-mini" --title "$title" \
     --default-item "$default" \
-    --menu "$prompt" "$total_height" 72 "$list_height" \
+    --menu "$prompt" "$total_height" 78 "$list_height" \
     "$@" 3>&1 1>&2 2>&3 </dev/tty
 }
 
@@ -319,18 +320,25 @@ ensure_whiptail
 
 # --- Whiptail prompts ------------------------------------------------------
 if [[ $INSTALL_MACLOCK -eq 0 && $INSTALL_SHEEPSHAVER -eq 0 && $INSTALL_BASILISK -eq 0 ]]; then
-  CHOICE=$(wt_menu "macintosh-mini" "What do you want to install?" "Both" 5 \
-    "Both"        "maclock + BasiliskII (68k, Mac OS 7)" \
-    "Both-PPC"    "maclock + SheepShaver (PowerPC, Mac OS 8.1+)" \
-    "maclock"     "hardware only (Waveshare display, dial, buttons)" \
-    "BasiliskII"  "68k emulator only (Mac OS 7)" \
-    "SheepShaver" "PowerPC emulator only (Mac OS 8.1+)") || die "Cancelled"
+  # Single-column menu (label = tag, blank item).
+  opt_full="Basilisk II + Maclock hardware (default)"
+  opt_ppc="SheepShaver + Maclock hardware (laggy)"
+  opt_hw="Maclock hardware only"
+  opt_b2="Basilisk II only"
+  opt_ss="SheepShaver only"
+  CHOICE=$(wt_menu "Macintosh Mini Installer" "" "$opt_full" 5 \
+    "$opt_full" "" \
+    "$opt_ppc" "" \
+    "$opt_hw" "" \
+    "$opt_b2" "" \
+    "$opt_ss" "") || die "Cancelled"
   case "$CHOICE" in
-    Both)        INSTALL_MACLOCK=1; INSTALL_BASILISK=1 ;;
-    Both-PPC)    INSTALL_MACLOCK=1; INSTALL_SHEEPSHAVER=1 ;;
-    maclock)     INSTALL_MACLOCK=1 ;;
-    BasiliskII)  INSTALL_BASILISK=1 ;;
-    SheepShaver) INSTALL_SHEEPSHAVER=1 ;;
+    "$opt_full") INSTALL_MACLOCK=1; INSTALL_BASILISK=1 ;;
+    "$opt_ppc")  INSTALL_MACLOCK=1; INSTALL_SHEEPSHAVER=1 ;;
+    "$opt_hw")   INSTALL_MACLOCK=1 ;;
+    "$opt_b2")   INSTALL_BASILISK=1 ;;
+    "$opt_ss")   INSTALL_SHEEPSHAVER=1 ;;
+    *)           die "Cancelled" ;;
   esac
   # User just chose an emulator via the menu — re-check assets now.
   [[ $INSTALL_SHEEPSHAVER -eq 1 ]] && check_sheepshaver_assets
@@ -386,6 +394,7 @@ if [[ ($INSTALL_SHEEPSHAVER -eq 1 || $INSTALL_BASILISK -eq 1) && -z $CHIME_NAME 
   done
 fi
 [[ -z $CHIME_NAME ]] && CHIME_NAME=$DEFAULT_CHIME
+[[ -n ${CHIME_TAG:-} ]] && printf '%s\n' "$CHIME_TAG" > "$HOME/.macintosh_chime"
 
 # Color — BasiliskII defaults to 8-bit (lighter), SheepShaver to 16-bit.
 if [[ ($INSTALL_SHEEPSHAVER -eq 1 || $INSTALL_BASILISK -eq 1) && -z $COLOR_MODE && $NEED_PREFS -eq 1 ]]; then
@@ -419,11 +428,95 @@ crash_for_chime() {
 }
 CRASH_NAME=$(crash_for_chime "$CHIME_NAME")
 
+# --- Reconfigure an existing install ---------------------------------------
+# When prefs already exist for the chosen emulator, offer to keep them or
+# change individual settings in place (instead of silently keeping them).
+pref_get() { sed -n "s/^$2 //p" "$1" 2>/dev/null | head -1; }
+pref_set() {
+  if grep -q "^$2 " "$1" 2>/dev/null; then sed -i "s#^$2 .*#$2 $3#" "$1"
+  else printf '%s %s\n' "$2" "$3" >> "$1"; fi
+}
+
+reconf_disk() {   # $1=prefs  $2=is_basilisk
+  local img p; local args=() paths=()
+  shopt -s nullglob
+  if [[ $2 -eq 1 ]]; then paths=("$HOME"/*.hda "$HOME"/*.dsk); else paths=("$HOME"/*.hda); fi
+  shopt -u nullglob
+  if [[ ${#paths[@]} -eq 0 ]]; then
+    whiptail --backtitle "macintosh-mini" --msgbox "No disk image in $HOME — copy one over first." 8 64 </dev/tty
+    return 0
+  fi
+  for p in "${paths[@]}"; do args+=("$(basename "$p")" "$(du -h "$p" | cut -f1)"); done
+  img=$(wt_menu "Disk image" "Pick the disk to boot:" "$(basename "${paths[0]}")" "${#paths[@]}" "${args[@]}") || return 0
+  if [[ $2 -eq 1 ]]; then pref_set "$1" disk "$HOME/$img"; else pref_set "$1" disk "$img"; fi
+}
+
+reconf_color() {  # $1=prefs  $2=is_basilisk
+  local mode depth
+  mode=$(wt_menu "Color depth" "Color depth:" "Color" 3 \
+    "Color" "16-bit" "Grayscale" "8-bit" "Black & White" "1-bit") || return 0
+  case "$mode" in "Color") depth=16 ;; "Grayscale") depth=8 ;; "Black & White") depth=1 ;; esac
+  if [[ $2 -eq 1 ]]; then pref_set "$1" displaycolordepth "$depth"
+  else sed -i "s#^\(screen .*\)/[0-9]*\$#\1/$depth#" "$1"; fi
+}
+
+reconf_chime() {
+  local tag name="" crash entry t d f; local args=()
+  for entry in "${CHIMES_DATA[@]}"; do IFS='|' read -r t d _ <<< "$entry"; args+=("$t" "$d"); done
+  tag=$(wt_menu "Boot chime" "Which startup chime?" "$DEFAULT_CHIME_TAG" 8 "${args[@]}") || return 0
+  for entry in "${CHIMES_DATA[@]}"; do IFS='|' read -r t _ f <<< "$entry"; [[ "$t" == "$tag" ]] && name=$f; done
+  [[ -n $name ]] || return 0
+  printf '%s\n' "$tag" > "$HOME/.macintosh_chime"
+  crash=$(crash_for_chime "$name")
+  curl -fL --retry 3 -o "$HOME/$CHIME_FILE" "$REPO_RAW/emulators/chimes/${name}.wav" \
+    && sudo install -m644 "$HOME/$CHIME_FILE" /usr/local/bin/chime.wav
+  curl -fL --retry 3 -o "$HOME/crash.wav" "$REPO_RAW/emulators/chimes/${crash}.wav" \
+    && sudo install -m644 "$HOME/crash.wav" /usr/local/bin/crash.wav
+  return 0
+}
+
+configure_existing() {  # $1=prefs  $2=is_basilisk
+  local prefs=$1 isb=$2 cur_disk cur_depth cur_chime cur_color pick
+  while true; do
+    cur_disk=$(basename "$(pref_get "$prefs" disk)" 2>/dev/null)
+    if [[ $isb -eq 1 ]]; then cur_depth=$(pref_get "$prefs" displaycolordepth)
+    else cur_depth=$(pref_get "$prefs" screen | sed 's#.*/##'); fi
+    cur_chime=$(cat "$HOME/.macintosh_chime" 2>/dev/null || true)
+    case "${cur_depth:-}" in
+      16) cur_color="Color 16-bit" ;;
+      8)  cur_color="Grayscale 8-bit" ;;
+      1)  cur_color="Black & White 1-bit" ;;
+      *)  cur_color="${cur_depth:-?}-bit" ;;
+    esac
+    # OK = change the highlighted setting; Continue = proceed keeping settings.
+    if pick=$(whiptail --backtitle "macintosh-mini" --title "Emulator Settings" \
+        --ok-button "Change" --cancel-button "Continue" --menu "" 12 72 3 \
+        "Disk image:"    "${cur_disk:-unknown}" \
+        "Startup chime:" "${cur_chime:-—}" \
+        "Color depth:"   "$cur_color" \
+        3>&1 1>&2 2>&3 </dev/tty); then
+      case "$pick" in
+        "Disk image:")    reconf_disk  "$prefs" "$isb" || true ;;
+        "Startup chime:") reconf_chime                 || true ;;
+        "Color depth:")   reconf_color "$prefs" "$isb" || true ;;
+      esac
+    else
+      break
+    fi
+  done
+}
+
+if [[ $NEED_PREFS -eq 0 && $INSTALL_BASILISK -eq 1 ]]; then
+  configure_existing "$HOME/.basilisk_ii_prefs" 1
+elif [[ $NEED_PREFS -eq 0 && $INSTALL_SHEEPSHAVER -eq 1 ]]; then
+  configure_existing "$HOME/.sheepshaver_prefs" 0
+fi
+
 # Performance optimizations
 if [[ -z $PERF ]]; then
-  PERF_CHOICE=$(wt_menu "Performance" "Apply performance optimizations?" "Yes" 2 \
-    "Yes"  "service masking, fsck skip, disable-bt, -mcpu=cortex-a53, 128MB RAM" \
-    "No"   "stock install") || die "Cancelled"
+  PERF_CHOICE=$(wt_menu "Performance Optimizations" "" "Yes" 2 \
+    "Yes"  "Faster — more RAM, fewer background services" \
+    "No"   "Stock install") || die "Cancelled"
   case "$PERF_CHOICE" in Yes) PERF=1 ;; No) PERF=0 ;; esac
 fi
 

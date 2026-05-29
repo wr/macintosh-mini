@@ -1,14 +1,14 @@
-# BasiliskII on Raspberry Pi Zero 2 W
+# Basilisk II on Raspberry Pi Zero 2 W
 
-This guide covers the software side: getting BasiliskII (a 68k classic Mac emulator) to run on the Pi Zero. The [hardware build](../maclock-build) is a separate guide.
+This guide covers the software side: getting Basilisk II (a 68k classic Mac emulator) to run on the Pi Zero. The [hardware build](../maclock-build) is a separate guide.
 
-> BasiliskII (68k) is the [setup script](../setup.sh) default and the fastest option on the Pi Zero — a 68k guest is far lighter to interpret than PowerPC. For PowerPC software (Mac OS 8.5+), see the [SheepShaver guide](./SheepShaver.md) instead.
+> Basilisk II (68k) is the [setup script](../setup.sh) default and the fastest option on the Pi Zero — a 68k guest is far lighter to interpret than PowerPC. For PowerPC software (Mac OS 8.5+), see the [SheepShaver guide](./SheepShaver.md) instead.
 
 > [!NOTE]
 > **Tested environment**
 > - **Hardware:** Raspberry Pi Zero 2 W (aarch64, ~416 MB RAM)
 > - **OS:** Raspberry Pi OS Lite, 64-bit (Trixie) kernel `6.12`
-> - **BasiliskII:** `kanjitalk755/macemu` HEAD. Don't pin to `v1.0.0` — it predates aarch64 support.
+> - **Basilisk II:** `kanjitalk755/macemu` HEAD. Don't pin to `v1.0.0` — it predates aarch64 support.
 
 
 ## Quick install
@@ -41,7 +41,7 @@ sudo apt install -y \
   git
 ```
 
-`libmpfr-dev` is required — BasiliskII emulates the 68k FPU with MPFR.
+`libmpfr-dev` is required — Basilisk II emulates the 68k FPU with MPFR.
 
 Enable the seat manager and add yourself to the right groups. The seatd group is `seat` on some distros and `_seatd` on Debian Trixie — adjust if `seat` doesn't exist:
 
@@ -54,7 +54,7 @@ Log out and back in (or reboot) so the new group memberships take effect.
 
 ### 2. Kernel setting (sysctl)
 
-BasiliskII maps the Mac low-memory globals at address `0x0`, so it needs `mmap_min_addr=0` — and it must be active **before** running `./autogen.sh` (configure's SIGSEGV-recovery probe needs it too):
+Basilisk II maps the Mac low-memory globals at address `0x0`, so it needs `mmap_min_addr=0` — and it must be active **before** running `./autogen.sh` (configure's SIGSEGV-recovery probe needs it too):
 
 ```bash
 sudo tee /etc/sysctl.d/60-basilisk.conf <<'EOF'
@@ -63,9 +63,9 @@ EOF
 sudo sysctl --system
 ```
 
-(Unlike SheepShaver, BasiliskII doesn't need `vm.overcommit_memory=1` — it has no large upfront reservation.)
+(Unlike SheepShaver, Basilisk II doesn't need `vm.overcommit_memory=1` — it has no large upfront reservation.)
 
-### 3. Build BasiliskII
+### 3. Build Basilisk II
 
 ```bash
 cd ~
@@ -78,9 +78,9 @@ make -j"$(nproc)"
 sudo install -m755 BasiliskII /usr/local/bin/BasiliskII
 ```
 
-- The JIT is x86-only, so on ARM BasiliskII runs as an interpreter — `--disable-jit-compiler` is correct.
+- The JIT is x86-only, so on ARM Basilisk II runs as an interpreter — `--disable-jit-compiler` is correct.
 - `--enable-vosf` re-blits only the changed parts of the screen (snappier UI); stable on this Pi.
-- No `-DMEM_BULK` needed — that's a SheepShaver-on-aarch64 fix; BasiliskII uses `DIRECT_ADDRESSING` here out of the box.
+- No `-DMEM_BULK` needed — that's a SheepShaver-on-aarch64 fix; Basilisk II uses `DIRECT_ADDRESSING` here out of the box.
 - `-mcpu=cortex-a53` is a small Pi Zero 2 W win.
 - Low on RAM? Use `make -j2` — four parallel compiles can OOM on a 512 MB Pi.
 
@@ -136,7 +136,7 @@ sudo install -m644 crash.wav /usr/local/bin/crash.wav
 sudo install -m755 basilisk.sh /usr/local/bin/basilisk.sh
 ```
 
-### 5. BasiliskII preferences
+### 5. Basilisk II preferences
 
 ```sh
 nano ~/.basilisk_ii_prefs
@@ -177,7 +177,7 @@ EOF
 sudo systemctl daemon-reload
 ```
 
-### 7. Auto-launch BasiliskII on `tty1`
+### 7. Auto-launch Basilisk II on `tty1`
 
 ```bash
 cat >> ~/.profile <<'EOF'

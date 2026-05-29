@@ -151,7 +151,7 @@ sudo systemctl enable --now brightness-control button-handler
 
 ### 4. Install the emulator
 
-The hardware side of the maclock is now done. The [setup script](../setup.sh) installs **BasiliskII**; manual build steps are in the [BasiliskII guide](../emulators/BasiliskII.md) (or the [SheepShaver guide](../emulators/SheepShaver.md) for PowerPC).
+The hardware side of the maclock is now done. The [setup script](../setup.sh) installs **Basilisk II**; manual build steps are in the [Basilisk II guide](../emulators/BasiliskII.md) (or the [SheepShaver guide](../emulators/SheepShaver.md) for PowerPC).
 
 ---
 
