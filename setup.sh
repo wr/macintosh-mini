@@ -20,6 +20,7 @@
 set -euo pipefail
 
 REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/main"
+VERSION="1.0.0"
 
 # SheepShaver paths (DISK_IMAGE is auto-discovered or set via --disk)
 DISK_IMAGE=""
@@ -309,7 +310,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # --- Header ---------------------------------------------------------------
-printf '\033[1;35m╔═ macintosh-mini setup ═╗\033[0m\n'
+printf '\033[1;35m╔═ macintosh-mini installer v%s ═╗\033[0m\n' "$VERSION"
 printf '  log: %s%s\n' "$LOG_FILE" "$([[ $DEBUG -eq 1 ]] && echo '  [debug mode: verbose]' || echo '')"
 
 [[ "$(uname -m)" == "aarch64" ]] || warn "Not aarch64 ($(uname -m)) — guide is tested on Pi Zero 2 W aarch64"
@@ -330,7 +331,7 @@ if [[ $INSTALL_MACLOCK -eq 0 && $INSTALL_SHEEPSHAVER -eq 0 && $INSTALL_BASILISK 
   opt_hw="Maclock hardware only"
   opt_b2="Basilisk II only"
   opt_ss="SheepShaver only"
-  CHOICE=$(wt_menu "Macintosh Mini Installer" "" "$opt_full" 5 \
+  CHOICE=$(wt_menu "Macintosh Mini Installer v$VERSION" "" "$opt_full" 5 \
     "$opt_full" "" \
     "$opt_ppc" "" \
     "$opt_hw" "" \
