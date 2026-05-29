@@ -182,6 +182,10 @@ wt_input() {
 check_sheepshaver_assets() {
   [[ -f "$HOME/.sheepshaver_prefs" ]] && return 0   # existing install -> update, keep config
   [[ -f "$HOME/$ROM_FILE" ]] || die "Missing $HOME/$ROM_FILE — copy it over before running"
+  local rom_size; rom_size=$(wc -c < "$HOME/$ROM_FILE")
+  if [[ $rom_size -eq 524288 || $rom_size -eq 1048576 ]]; then
+    die "ROM is $rom_size bytes (a 68k ROM) — SheepShaver needs the 4 MB PowerPC ROM"
+  fi
   if [[ -n $DISK_IMAGE ]]; then
     [[ -f "$HOME/$DISK_IMAGE" ]] || die "Missing $HOME/$DISK_IMAGE (passed via --disk)"
   else
@@ -790,6 +794,7 @@ SYSCTL
 # Launches SheepShaver fullscreen via cage on the current TTY.
 # Relaunch: exit 0 (Mac Shut Down) or 143 (double-reset) -> Pi prompt;
 # crash -> relaunch; Mac Restart reboots the VM in place.
+ulimit -c 0   # no core dumps when killed abruptly (reset stops cage mid-render)
 clear 2>/dev/null
 printf '\033[?25l' 2>/dev/null
 setterm --cursor off 2>/dev/null || true
@@ -957,6 +962,7 @@ SYSCTL
 # Launches BasiliskII fullscreen via cage on the current TTY.
 # Relaunch: exit 0 (Mac Shut Down) or 143 (double-reset) -> Pi prompt;
 # crash -> relaunch; Mac Restart reboots the VM in place.
+ulimit -c 0   # no core dumps when killed abruptly (reset stops cage mid-render)
 clear 2>/dev/null
 printf '\033[?25l' 2>/dev/null
 setterm --cursor off 2>/dev/null || true
