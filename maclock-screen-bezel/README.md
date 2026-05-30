@@ -2,6 +2,9 @@
 
 3D-printable bezel that frames the Waveshare 2.8" DPI LCD inside the AliExpress Maclock shell, hiding the gap between the panel and the original screen cutout. Used together with the [breakout PCB](../maclock-pcb/) and the [hardware build](../maclock-build/).
 
+> [!TIP]
+> Did you find my work useful? [Your support](https://buymeacoffee.com/wellsriley) helps fund future projects. Thank you!
+
 ## File
 
 | File                          | Purpose                                |
