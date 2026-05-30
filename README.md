@@ -21,12 +21,12 @@ I recorded a walkthrough [video](https://www.youtube.com/watch?v=zAbAf5-H5Yo) fo
 
 ## The software—quick install (recommended)
 
-1. Install [Raspberry Pi OS (lite)](https://www.raspberrypi.com/software/) onto an SD card.
+1. Install [Raspberry Pi OS (lite) 64-bit](https://www.raspberrypi.com/software/) onto an SD card.
 
 2. Copy over a Mac OS disk image and a ROM file — the installer auto-discovers them in `$HOME`. It offers two emulators (it defaults to **Basilisk II**):
 
-   - **Basilisk II** — a 68k Mac running System 7. On the Pi Zero 2 W this is the fastest option. Needs a **512 KB or 1 MB 68k ROM** (Mac IIci / Quadra, try searching online for `064DC91D`) and a disk image.
-   - **SheepShaver** — if you want PowerPC running Mac OS 8.1+. Needs the **4 MB PowerPC [ROM](https://www.redundantrobot.com/sheepshaver)** and a disk image. Choose this only if you need PPC-era software as it's **very slow on a Pi Zero**.
+   - **Basilisk II** — a 68k Mac running System 7.0-8.5. On the Pi Zero 2 W this is the fastest option. Needs a **512 KB or 1 MB 68k ROM** (Mac IIci / Quadra, try searching online for `064DC91D`) and a disk image.
+   - **SheepShaver** — if you *need* PowerPC running Mac OS 8.1+. Needs the **4 MB PowerPC [ROM](https://www.redundantrobot.com/sheepshaver)** and a disk image. Choose this only if you need PPC-era software as it's **very slow on a Pi Zero**.
 
    Rename your ROM file `ROM` (no file extension)
 
