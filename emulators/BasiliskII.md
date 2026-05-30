@@ -2,14 +2,10 @@
 
 This guide covers the software side: getting Basilisk II (a 68k classic Mac emulator) to run on the Pi Zero. The [hardware build](../maclock-build) is a separate guide.
 
-> Basilisk II (68k) is the [setup script](../setup.sh) default and the fastest option on the Pi Zero — a 68k guest is far lighter to interpret than PowerPC. For PowerPC software (Mac OS 8.5+), see the [SheepShaver guide](./SheepShaver.md) instead.
+Basilisk II (68k) is the [setup script](../setup.sh) default and the fastest option on the Pi Zero — a 68k guest is far lighter to interpret than PowerPC. For PowerPC software (Mac OS 8.5+), see the [SheepShaver guide](./SheepShaver.md) instead.
 
-> [!NOTE]
-> **Tested environment**
-> - **Hardware:** Raspberry Pi Zero 2 W (aarch64, ~416 MB RAM)
-> - **OS:** Raspberry Pi OS Lite, 64-bit (Trixie) kernel `6.12`
-> - **Basilisk II:** `kanjitalk755/macemu` HEAD. Don't pin to `v1.0.0` — it predates aarch64 support.
-
+> [!TIP]
+> Did you find my work useful? [Your support](https://buymeacoffee.com/wellsriley) helps fund future projects. Thank you!
 
 ## Quick install
 
