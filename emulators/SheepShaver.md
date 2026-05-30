@@ -4,11 +4,8 @@ This guide covers the software side: getting SheepShaver (a classic Mac emulator
 
 > SheepShaver runs PowerPC Mac OS (8.1+) and is **slow** on the Pi Zero. **Basilisk II** (68k) is the [setup script](../setup.sh) default and much faster (see the [Basilisk II guide](./BasiliskII.md)) — use this guide only if you specifically need PPC-era software.
 
-> [!NOTE]
-> **Tested environment**
-> - **Hardware:** Raspberry Pi Zero 2 W (aarch64, ~416 MB RAM)
-> - **OS:** Raspberry Pi OS Lite, 64-bit (Trixie) kernel `6.12`
-> - **SheepShaver:** `kanjitalk755/macemu` HEAD. Don't pin to `v1.0.0` — it's from Dec 2020 and predates aarch64 support.
+> [!TIP]
+> Did you find my work useful? [Your support](https://buymeacoffee.com/wellsriley) helps fund future projects. Thank you!
 
 
 ## Quick install
