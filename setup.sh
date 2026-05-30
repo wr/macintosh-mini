@@ -783,7 +783,7 @@ SYSCTL
       cd "$MACEMU_DIR/SheepShaver/src/Unix" || return $?
       make -j"$(nproc)" || return $?
     }
-    run_long "[sheepshaver] Building SheepShaver" do_build
+    run_long "[sheepshaver] Building SheepShaver (be patient!)" do_build
 
     run "[sheepshaver] Installing SheepShaver binary" \
       sudo install -m755 "$MACEMU_DIR/SheepShaver/src/Unix/SheepShaver" /usr/local/bin/SheepShaver
@@ -951,7 +951,7 @@ SYSCTL
       cd "$MACEMU_DIR/BasiliskII/src/Unix" || return $?
       make -j"$(nproc)" || return $?
     }
-    run_long "[basilisk] Building BasiliskII" do_basilisk_build
+    run_long "[basilisk] Building Basilisk II (be patient!)" do_basilisk_build
 
     run "[basilisk] Installing BasiliskII binary" \
       sudo install -m755 "$MACEMU_DIR/BasiliskII/src/Unix/BasiliskII" /usr/local/bin/BasiliskII
