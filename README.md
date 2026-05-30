@@ -4,6 +4,9 @@
 
 Turn a [Maclock](https://www.aliexpress.us/w/wholesale-maclock.html) (a simple alarm clock inside a shockingly accurate miniature Macintosh shell) into a working Mac using a Raspberry Pi Zero. Buttons, brightness, sound, and battery all work.
 
+> [!TIP]
+> Did you find my work useful? [Your support](https://buymeacoffee.com/wellsriley) helps fund future projects. Thank you!
+
 ## Hardware you'll need
 - [Maclock](https://www.aliexpress.us/w/wholesale-maclock.html)
 - [Raspberry Pi Zero 2 W](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w/)
