@@ -1,0 +1,11 @@
+# Secrets: Wi-Fi password + Amazon session cookies. NEVER commit this.
+src/secrets.h
+
+# PlatformIO build output
+.pio/
+.pioenvs/
+.piolibdeps/
+
+# IDE
+.vscode/
+.idea/
