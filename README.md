@@ -8,9 +8,9 @@ Turn a [Maclock](https://www.aliexpress.us/w/wholesale-maclock.html) (a simple a
 > Did you find my work useful? [Your support](https://buymeacoffee.com/wellsriley) helps fund future projects. Thank you!
 
 ## Hardware you'll need
-- [Maclock](https://www.aliexpress.us/w/wholesale-maclock.html)
-- [Raspberry Pi Zero 2 W](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w/)
-- [Waveshare 2.8 inch IPS LCD](https://www.waveshare.com/2.8inch-dpi-lcd.htm)
+- [Maclock](https://amzn.to/4e7FKrw)
+- [Raspberry Pi Zero 2 W](https://amzn.to/4ac7FVR)
+- [Waveshare 2.8 inch IPS LCD](https://amzn.to/4ue5GaP)
 - [3D printed screen bezel](./maclock-screen-bezel)
 - [Macintosh Mini breakout board](./maclock-pcb) (if you want brightness, buttons, and sound). Open source design—here's a link to a [cart on PCBway](https://www.pcbway.com/project/shareproject/W654223ASS41_Untitled_kicad_pcb_95cca7e3.html) to order your own.
 
