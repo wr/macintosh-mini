@@ -11,6 +11,7 @@
 #   --all | --all-basilisk | --maclock | --sheepshaver | --basilisk
 #   --chime <name>      e.g. StartupMacII (default)
 #   --color <mode>      Color | Grayscale | "Black & White"  (also accepts color/grayscale/bw)
+#   --modelid <n>       BasiliskII modelid: 5 (Mac IIci, System 7.0-7.1) or 14 (Quadra, 7.5+/OS 8)
 #   --disk <file>       disk image filename in $HOME (default: auto-discover)
 #   --rom <file>        ROM filename in $HOME (default: ROM)
 #   --hostname <name>   default: leave unchanged
@@ -20,7 +21,7 @@
 set -euo pipefail
 
 REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/main"
-VERSION="1.0.0"
+VERSION="1.1.0"
 
 # SheepShaver paths (DISK_IMAGE is auto-discovered or set via --disk)
 DISK_IMAGE=""
@@ -287,6 +288,7 @@ INSTALL_SHEEPSHAVER=0
 INSTALL_BASILISK=0
 CHIME_NAME=""
 COLOR_MODE=""
+MODELID=""   # BasiliskII only: 5 (Mac IIci) or 14 (Quadra)
 NEW_HOSTNAME=""
 PERF=""   # "" = prompt, 1 = on, 0 = off
 
@@ -299,6 +301,7 @@ while [[ $# -gt 0 ]]; do
     --basilisk)      INSTALL_BASILISK=1; shift ;;
     --chime)         CHIME_NAME=$2; shift 2 ;;
     --color)         COLOR_MODE=$2; shift 2 ;;
+    --modelid)       MODELID=$2; shift 2 ;;
     --disk)          DISK_IMAGE=$2; shift 2 ;;
     --rom)           ROM_FILE=$2; shift 2 ;;
     --hostname)      NEW_HOSTNAME=$2; shift 2 ;;
@@ -419,6 +422,24 @@ case "$COLOR_MODE" in
   *) die "Invalid color mode: $COLOR_MODE" ;;
 esac
 
+# Mac model (BasiliskII only) — modelid 5 (Mac IIci) is right for System 7.0/7.1.
+# System 7.5+ and Mac OS 8 need modelid 14 (Quadra; the IIci's 68030 isn't
+# supported there). Most people install 7.5+, so default to 14.
+if [[ $INSTALL_BASILISK -eq 1 && -z $MODELID && $NEED_PREFS -eq 1 ]]; then
+  MODELID_TAG=$(wt_menu "Mac model" "Which Mac OS will you boot?" "Quadra (14)" 2 \
+    "Quadra (14)"   "System 7.5+ / Mac OS 8" \
+    "Mac IIci (5)"  "System 7.0 / 7.1") || die "Cancelled"
+  case "$MODELID_TAG" in
+    "Mac IIci (5)") MODELID=5 ;;
+    "Quadra (14)")  MODELID=14 ;;
+  esac
+fi
+[[ -z $MODELID ]] && MODELID=14
+case "$MODELID" in
+  5|14) ;;
+  *) die "Invalid modelid: $MODELID (must be 5 or 14)" ;;
+esac
+
 # Era-matched crash sound for the chosen chime.
 crash_for_chime() {
   case "$1" in
@@ -465,6 +486,19 @@ reconf_color() {  # $1=prefs  $2=is_basilisk
   else sed -i "s#^\(screen .*\)/[0-9]*\$#\1/$depth#" "$1"; fi
 }
 
+reconf_modelid() {  # $1=prefs (BasiliskII only)
+  local tag id
+  tag=$(wt_menu "Mac model" "Which Mac OS will you boot?" "Quadra (14)" 2 \
+    "Quadra (14)"   "System 7.5+ / Mac OS 8" \
+    "Mac IIci (5)"  "System 7.0 / 7.1") || return 0
+  case "$tag" in
+    "Mac IIci (5)") id=5 ;;
+    "Quadra (14)")  id=14 ;;
+    *) return 0 ;;
+  esac
+  pref_set "$1" modelid "$id"
+}
+
 reconf_chime() {
   local tag name="" crash entry t d f; local args=()
   for entry in "${CHIMES_DATA[@]}"; do IFS='|' read -r t d _ <<< "$entry"; args+=("$t" "$d"); done
@@ -481,7 +515,7 @@ reconf_chime() {
 }
 
 configure_existing() {  # $1=prefs  $2=is_basilisk
-  local prefs=$1 isb=$2 cur_disk cur_depth cur_chime cur_color pick
+  local prefs=$1 isb=$2 cur_disk cur_depth cur_chime cur_color cur_modelid cur_model pick
   while true; do
     cur_disk=$(basename "$(pref_get "$prefs" disk)" 2>/dev/null)
     if [[ $isb -eq 1 ]]; then cur_depth=$(pref_get "$prefs" displaycolordepth)
@@ -494,20 +528,34 @@ configure_existing() {  # $1=prefs  $2=is_basilisk
       *)  cur_color="${cur_depth:-?}-bit" ;;
     esac
     # OK = change the highlighted setting; Continue = proceed keeping settings.
-    if pick=$(whiptail --backtitle "macintosh-mini" --title "Emulator Settings" \
-        --ok-button "Change" --cancel-button "Continue" --menu "" 12 72 3 \
-        "Disk image:"    "${cur_disk:-unknown}" \
-        "Startup chime:" "${cur_chime:-—}" \
-        "Color depth:"   "$cur_color" \
-        3>&1 1>&2 2>&3 </dev/tty); then
-      case "$pick" in
-        "Disk image:")    reconf_disk  "$prefs" "$isb" || true ;;
-        "Startup chime:") reconf_chime                 || true ;;
-        "Color depth:")   reconf_color "$prefs" "$isb" || true ;;
+    if [[ $isb -eq 1 ]]; then
+      cur_modelid=$(pref_get "$prefs" modelid)
+      case "${cur_modelid:-}" in
+        5)  cur_model="Mac IIci (5) — System 7.0/7.1" ;;
+        14) cur_model="Quadra (14) — System 7.5+ / OS 8" ;;
+        *)  cur_model="modelid ${cur_modelid:-?}" ;;
       esac
+      pick=$(whiptail --backtitle "macintosh-mini" --title "Emulator Settings" \
+          --ok-button "Change" --cancel-button "Continue" --menu "" 13 72 4 \
+          "Disk image:"    "${cur_disk:-unknown}" \
+          "Startup chime:" "${cur_chime:-—}" \
+          "Color depth:"   "$cur_color" \
+          "Mac model:"     "$cur_model" \
+          3>&1 1>&2 2>&3 </dev/tty) || break
     else
-      break
+      pick=$(whiptail --backtitle "macintosh-mini" --title "Emulator Settings" \
+          --ok-button "Change" --cancel-button "Continue" --menu "" 12 72 3 \
+          "Disk image:"    "${cur_disk:-unknown}" \
+          "Startup chime:" "${cur_chime:-—}" \
+          "Color depth:"   "$cur_color" \
+          3>&1 1>&2 2>&3 </dev/tty) || break
     fi
+    case "$pick" in
+      "Disk image:")    reconf_disk    "$prefs" "$isb" || true ;;
+      "Startup chime:") reconf_chime                   || true ;;
+      "Color depth:")   reconf_color   "$prefs" "$isb" || true ;;
+      "Mac model:")     reconf_modelid "$prefs"        || true ;;
+    esac
   done
 }
 
@@ -1021,7 +1069,7 @@ rom $HOME/$ROM_FILE
 screen win/640/480
 displaycolordepth $COLOR_DEPTH
 ramsize $ramsize
-modelid 5
+modelid $MODELID
 cpu 4
 fpu true
 nogui true
@@ -1034,7 +1082,12 @@ idlewait true
 ignoresegv true
 EOF
   }
-  run "[basilisk] Writing prefs ($COLOR_LABEL / ${COLOR_DEPTH}bpp / 640×480)" write_basilisk_prefs
+  case "$MODELID" in
+    5)  MODEL_LABEL="Mac IIci" ;;
+    14) MODEL_LABEL="Quadra" ;;
+    *)  MODEL_LABEL="modelid $MODELID" ;;
+  esac
+  run "[basilisk] Writing prefs ($MODEL_LABEL / $COLOR_LABEL / ${COLOR_DEPTH}bpp / 640×480)" write_basilisk_prefs
 
   config_autologin_basilisk() {
     sudo mkdir -p /etc/systemd/system/getty@tty1.service.d

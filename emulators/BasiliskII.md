@@ -158,7 +158,11 @@ ether slirp
 ```
 
 - `displaycolordepth` is the bit depth: `1` for B&W, `8` for 256 colors / grayscale, `16` for thousands.
-- `modelid 5` is a Mac IIci — right for **System 7.x**. **Mac OS 8.1 needs `modelid 14`** (a Quadra; 8.1 dropped 68030 support) paired with a 1 MB ROM (e.g. `064DC91D`).
+- **`modelid` must match the OS you're booting:**
+  - `modelid 5` — Mac IIci, right for **System 7.0 / 7.1**.
+  - `modelid 14` — Quadra, required for **System 7.5 and later, including Mac OS 8** (the IIci's 68030 isn't supported there). Pair with a 1 MB ROM (e.g. `064DC91D`).
+
+  Boot the wrong modelid for your OS and you'll get a sad Mac on boot — switch the value in the prefs and try again.
 - `ether slirp` gives networking via user-mode NAT — no host setup. Inside Mac OS set TCP/IP to **DHCP**; for file sharing use the Chooser's **Server IP Address** button (AppleTalk doesn't cross slirp).
 
 ### 6. Autologin on `tty1`
