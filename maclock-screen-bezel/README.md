@@ -11,7 +11,10 @@
 | ----------------------------- | -------------------------------------- |
 | `maclock-screen-bezel.stl`    | Print at 0.2mm layers, no supports.    |
 
-Black PLA looks closest to the original Mac. PETG / resin also fine.
+I recommend using black PLA or PETG for a seamless look.
+
+> [!WARNING]
+> The fit should be snug, but not tight. Scale up the print size slightly or sand down the inner edges if the fit is too tight, otherwise you risk cracking the LCD.
 
 ## License
 
