@@ -1,8 +1,9 @@
-<img height="300" alt="Slide 16_9 - 1" src="https://github.com/user-attachments/assets/1952ccdc-c1eb-40cc-904e-79eab73d15dd" />
-
-## What?
+# Macintosh Mini
 
 Turn a [Maclock](https://www.aliexpress.us/w/wholesale-maclock.html) (a simple alarm clock inside a shockingly accurate miniature Macintosh shell) into a working Mac using a Raspberry Pi Zero. Buttons, brightness, sound, and battery all work.
+
+[<img height="300" alt="Frame 2" src="https://github.com/user-attachments/assets/345a346a-67c7-46be-971e-8b5e387e1155" />
+](https://www.youtube.com/watch?v=zAbAf5-H5Yo)
 
 > [!TIP]
 > Did you find my work useful? [Your support](https://buymeacoffee.com/wellsriley) helps fund future projects. Thank you!
@@ -13,7 +14,8 @@ Turn a [Maclock](https://www.aliexpress.us/w/wholesale-maclock.html) (a simple a
 - [Waveshare 2.8 inch IPS LCD](https://amzn.to/4ue5GaP)
 - [Adafruit PAM8302 audio amp](https://amzn.to/4uITeAP) + small speaker
 - [3D printed screen bezel](./maclock-screen-bezel)
-- [Macintosh Mini breakout board](./maclock-pcb) (if you want brightness, buttons, and sound). Open source design—here's a link to a [cart on PCBway](https://www.pcbway.com/project/shareproject/W654223ASS41_Untitled_kicad_pcb_95cca7e3.html) to order your own.
+- [Macintosh Mini breakout board](./maclock-pcb) (if you want brightness, buttons, and sound). Here's a [cart on PCBway](https://www.pcbway.com/project/shareproject/W654223ASS41_Untitled_kicad_pcb_95cca7e3.html) to order your own.
+- [MicroUSB to USB-A female cable](https://www.aliexpress.us/item/3256807845070147.html?gatewayAdapt=glo2usa#nav-specification) (if you want to add a USB port to the back) - Choose `Color: OTGV8DO-AFH`
 
 <img height="140" alt="Macintosh Mini PCB" src="https://github.com/user-attachments/assets/2230bd4a-3ca1-49cb-a75f-22cee96a8ea3" />
 
