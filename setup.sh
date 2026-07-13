@@ -781,13 +781,15 @@ fi
 if [[ $INSTALL_SHEEPSHAVER -eq 1 ]]; then
   enable_seatd() {
     sudo systemctl enable --now seatd || return $?
-    local seat_group="" g
-    for g in seat _seatd; do
-      if getent group "$g" >/dev/null 2>&1; then seat_group=$g; break; fi
+    # Only add groups that actually exist — usermod aborts if any listed
+    # group is missing, and distros vary on which of these they ship.
+    local groups="" g
+    for g in seat _seatd video input render; do
+      getent group "$g" >/dev/null 2>&1 && groups="${groups:+$groups,}$g"
     done
-    local groups="video,input,render"
-    [[ -n $seat_group ]] && groups="$seat_group,$groups"
-    sudo usermod -aG "$groups" "$USER"
+    if [[ -n $groups ]]; then
+      sudo usermod -aG "$groups" "$USER"
+    fi
   }
   run "[sheepshaver] Enabling seatd; adding $USER to graphics groups" enable_seatd
 
@@ -950,13 +952,15 @@ fi
 if [[ $INSTALL_BASILISK -eq 1 ]]; then
   enable_seatd_basilisk() {
     sudo systemctl enable --now seatd || return $?
-    local seat_group="" g
-    for g in seat _seatd; do
-      if getent group "$g" >/dev/null 2>&1; then seat_group=$g; break; fi
+    # Only add groups that actually exist — usermod aborts if any listed
+    # group is missing, and distros vary on which of these they ship.
+    local groups="" g
+    for g in seat _seatd video input render; do
+      getent group "$g" >/dev/null 2>&1 && groups="${groups:+$groups,}$g"
     done
-    local groups="video,input,render"
-    [[ -n $seat_group ]] && groups="$seat_group,$groups"
-    sudo usermod -aG "$groups" "$USER"
+    if [[ -n $groups ]]; then
+      sudo usermod -aG "$groups" "$USER"
+    fi
   }
   run "[basilisk] Enabling seatd; adding $USER to graphics groups" enable_seatd_basilisk
 
