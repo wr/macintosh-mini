@@ -5,7 +5,7 @@ This guide covers the software side: getting Basilisk II (a 68k classic Mac emul
 Basilisk II (68k) is the [setup script](../setup.sh) default and the fastest option on the Pi Zero — a 68k guest is far lighter to interpret than PowerPC. For PowerPC software (Mac OS 8.5+), see the [SheepShaver guide](./SheepShaver.md) instead.
 
 > [!TIP]
-> Did you find my work useful? [Your support](https://buymeacoffee.com/wellsriley) helps fund future projects. Thank you!
+> Did you find my work useful? [Your support](https://buymeacoffee.com/wellsworkshop) helps fund future projects. Thank you!
 
 ## Quick install
 
