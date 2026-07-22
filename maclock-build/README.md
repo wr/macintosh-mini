@@ -1,8 +1,7 @@
 # Macintosh Mini hardware guide
 This guide covers the hardware side: the wiring, the display drivers, and the helper scripts that make the dial control screen brightness and the buttons actually do things. The emulator install is a [separate guide](../emulators/).
 
-> [!TIP]
-> Did you find my work useful? [Your support](https://buymeacoffee.com/wellsworkshop) helps fund future projects. Thank you!
+<a href="https://www.buymeacoffee.com/wellsworkshop"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=wellsworkshop&button_colour=FFDD00&font_colour=000000&font_family=Arial&outline_colour=000000&coffee_colour=ffffff" /></a>
 
 ## Video guide
 I recorded a walkthrough for how I assembled mine that goes into much more detail than the written guide:
