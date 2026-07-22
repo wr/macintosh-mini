@@ -6,7 +6,7 @@ Turn a [Maclock](https://www.aliexpress.us/w/wholesale-maclock.html) (a simple a
 ](https://www.youtube.com/watch?v=zAbAf5-H5Yo)
 
 > [!TIP]
-> Did you find my work useful? [Your support](https://buymeacoffee.com/wellsriley) helps fund future projects. Thank you!
+> Did you find my work useful? [Your support](https://buymeacoffee.com/wellsworkshop) helps fund future projects. Thank you!
 
 ## Hardware you'll need
 - [Maclock](https://amzn.to/4e7FKrw)
