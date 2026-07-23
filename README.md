@@ -1,4 +1,4 @@
-<h1 align="center">Macintosh Mini</h1>
+<h1 align="center"><img width="50" alt="happy macs" align="center" src="https://github.com/user-attachments/assets/cb2fd525-ec2b-48ac-8d7f-acda3212f89b" /> Macintosh Mini</h1>
 
 <p align="center">
   <strong>Turn a Maclock alarm clock into a working Mac with a Raspberry Pi Zero.</strong>
@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <a href="https://www.youtube.com/watch?v=zAbAf5-H5Yo"><img height="300" alt="Macintosh Mini booting into System 7" src="https://github.com/user-attachments/assets/345a346a-67c7-46be-971e-8b5e387e1155" /></a>
+  <a href="https://www.youtube.com/watch?v=zAbAf5-H5Yo"><img height="400" alt="Macintosh Mini booting into System 7" src="https://github.com/user-attachments/assets/345a346a-67c7-46be-971e-8b5e387e1155" /></a>
 </p>
 
 <p align="center">
