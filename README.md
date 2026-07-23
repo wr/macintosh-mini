@@ -37,7 +37,7 @@ A [Maclock](https://www.aliexpress.us/w/wholesale-maclock.html) is a cheap alarm
 - [MicroUSB to USB-A female cable](https://www.aliexpress.us/item/3256807845070147.html?gatewayAdapt=glo2usa#nav-specification) — to add a USB port to the back. Choose `Color: OTGV8DO-AFH`.
 
 <p align="center">
-  <img height="140" alt="Macintosh Mini breakout PCB" src="https://github.com/user-attachments/assets/2230bd4a-3ca1-49cb-a75f-22cee96a8ea3" />
+  <img height="220" alt="Macintosh Mini breakout PCB rotating" src="./docs/maclock-breakout.webp" />
 </p>
 
 ## Hardware Build
