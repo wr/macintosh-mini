@@ -33,7 +33,7 @@ A [Maclock](https://www.aliexpress.us/w/wholesale-maclock.html) is a cheap alarm
 - [Waveshare 2.8 inch IPS LCD](https://amzn.to/4ue5GaP)
 - [Adafruit PAM8302 audio amp](https://amzn.to/4uITeAP) + small speaker
 - [3D printed screen bezel](./maclock-screen-bezel)
-- [Macintosh Mini breakout board](./maclock-pcb) — for brightness, buttons, and sound. Order your own from this [PCBway cart](https://www.pcbway.com/project/shareproject/W654223ASS41_Untitled_kicad_pcb_95cca7e3.html).
+- [Macintosh Mini breakout board](./maclock-pcb) — for brightness, buttons, and sound. Order from [PCBway](https://www.pcbway.com/project/shareproject/W654223ASS41_Untitled_kicad_pcb_95cca7e3.html).
 - [MicroUSB to USB-A female cable](https://www.aliexpress.us/item/3256807845070147.html?gatewayAdapt=glo2usa#nav-specification) — to add a USB port to the back. Choose `Color: OTGV8DO-AFH`.
 
 <p align="center">
