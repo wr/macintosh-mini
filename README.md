@@ -9,8 +9,7 @@
   <a href="#shopping-list">Shopping list</a> ⬪
   <a href="#hardware-build">Hardware build</a> ⬪
   <a href="#software--quick-install">Software install</a> ⬪
-  <a href="#donate">Donate</a> ⬪
-  <a href="#license">License</a>
+  <a href="#donate">Donate</a>
 </p>
 
 <p align="center">
