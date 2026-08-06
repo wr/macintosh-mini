@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <sub>I recorded a full build video that <a href="https://www.youtube.com/watch?v=zAbAf5-H5Yo">you can watch here</a>.</sub>
+  I recorded a full build video that <a href="https://www.youtube.com/watch?v=zAbAf5-H5Yo">you can watch here</a>.
 </p>
 
 ---
