@@ -727,7 +727,6 @@ if [[ $INSTALL_MACLOCK -eq 1 ]]; then
       # loading the overlay twice just makes the second probe fail.
       grep -q '^dtoverlay=pwm-gpio,gpio=18$' "$f" || sudo sed -i \
         '0,/^dtoverlay=audremap-pin19$/s//&\ndtoverlay=pwm-gpio,gpio=18/' "$f"
-      sudo sed -i '/^dtoverlay=rotary-encoder,pin_a=11/d' "$f"
       return 0
     fi
     sudo tee -a "$f" >/dev/null <<'EOF'
@@ -770,7 +769,10 @@ EOF
       sudo install -m644 "/tmp/$f" "/etc/systemd/system/$f" || return $?
     done
     sudo systemctl daemon-reload
-    sudo systemctl enable --now brightness-control.service button-handler.service
+    # reenable, not enable: the unit moved from multi-user.target to
+    # sysinit.target, and plain enable only adds the new symlink.
+    sudo systemctl reenable brightness-control.service button-handler.service
+    sudo systemctl start brightness-control.service button-handler.service
   }
   run "[maclock] Installing GPIO helpers + systemd units" install_gpio_helpers
 
