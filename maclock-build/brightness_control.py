@@ -14,6 +14,7 @@ import os
 import signal
 import sys
 import time
+import traceback
 
 try:
     import lgpio
@@ -26,11 +27,10 @@ CLK_PIN = 11
 DT_PIN = 10
 PWM_PERIOD_NS = 1_000_000  # 1 kHz
 
-# The backlight is driven from an hrtimer, which cannot hold a pulse of much
-# under 10 us. Gamma compresses the dark end hard enough that a naive mapping
-# asks for 39 ns at the first step, so the bottom of the dial is floored here
-# rather than silently landing wherever the timer happens to fire. Level 0
-# still turns the backlight fully off.
+# Gamma compresses the dark end hard: a plain mapping asks for a 39 ns pulse
+# at level 1. The driver accepts that, but nothing can hold a pulse so short
+# repeatably, so the bottom of the dial is floored to something a timer can
+# actually produce. Level 0 still goes fully dark.
 MIN_PULSE_NS = 20_000
 
 # Sampling the pins beats reacting to every edge. The encoder bounces hard —
@@ -39,22 +39,20 @@ MIN_PULSE_NS = 20_000
 # does, gets the direction wrong on about one turn in five.
 POLL_S = 0.001
 
-# The dial is small, barely exposed, and its detents are mush, so it gets
-# flicked through an arc rather than clicked. Brightness tracks how far it
-# turned: a flick lands 8 to 10 counts, so it crosses about a third of the
-# range. DEADBAND drops the odd stray count, and reversing takes a longer
-# run than continuing, which keeps a flick going the way it started.
+# The dial gets flicked through an arc rather than clicked detent by detent,
+# so brightness follows how far it turned. DEADBAND drops the odd stray count;
+# reversing needs a longer run than continuing, so a flick holds the direction
+# it started in.
 LEVEL_PER_COUNT = 4
 DEADBAND = 1
 REVERSE_DEADBAND = 4
 IDLE_RESET_S = 0.4
 
-# Move to a new level over a few milliseconds instead of jumping to it. A
-# flick only yields 8 to 10 counts, so without this the backlight arrives in
-# visible steps however small they are.
+# Ease into a new level over a few milliseconds. A flick only lands 8 to 10
+# counts, so without this the backlight arrives in visible steps.
 RAMP_PER_TICK = 1.0
 
-# Perceived brightness is closer to the square of the duty cycle, so map the
+# Perceived brightness is roughly the square of the duty cycle, so map the
 # dial through a curve. Without it most of the arc is spent up at the bright
 # end, where the eye can barely tell the difference.
 GAMMA = 2.2
@@ -126,6 +124,7 @@ def open_backlight():
     # Duty must never exceed period, so zero it before changing the period
     write(os.path.join(channel, "duty_cycle"), 0)
     write(os.path.join(channel, "period"), PWM_PERIOD_NS)
+    write(os.path.join(channel, "enable"), 1)
     return channel
 
 
@@ -139,7 +138,6 @@ def duty_for(dial):
 
 def set_backlight(dial):
     write(os.path.join(pwm_dir, "duty_cycle"), duty_for(dial))
-    write(os.path.join(pwm_dir, "enable"), 1)
 
 
 def cleanup(*_):
@@ -150,8 +148,7 @@ def cleanup(*_):
         return
     cleaning = True
 
-    # Leave the backlight on — an unexported channel drives GPIO 18 low, which
-    # reads as a dead screen.
+    # Stopping at a low level would hand back a dark screen, so leave it lit.
     if pwm_dir is not None:
         set_backlight(100)
     if h is not None:
@@ -194,10 +191,10 @@ def main():
                 threshold = REVERSE_DEADBAND if reversing else DEADBAND
                 if abs(accum) >= threshold:
                     last_dir = 1 if accum > 0 else -1
-                    moved = max(0, min(100, level + accum * LEVEL_PER_COUNT))
+                    target = max(0, min(100, level + accum * LEVEL_PER_COUNT))
                     accum = 0
-                    if moved != level:   # already at a rail
-                        level = moved
+                    if target != level:   # unchanged when pinned at 0 or 100
+                        level = target
                         print(f"Level: {level}", flush=True)
 
             elif accum and time.monotonic() - last_move > IDLE_RESET_S:
@@ -213,13 +210,13 @@ def main():
                     shown += RAMP_PER_TICK if level > shown else -RAMP_PER_TICK
                 duty = duty_for(shown)
                 if duty != last_duty:
-                    write(os.path.join(pwm_dir, "duty_cycle"), duty)
+                    set_backlight(shown)
                     last_duty = duty
 
             time.sleep(POLL_S)
-    except Exception as e:
+    except Exception:
         failed = True
-        print(f"Error: {e}", flush=True)
+        print(traceback.format_exc(), flush=True)
     finally:
         cleanup()
 
