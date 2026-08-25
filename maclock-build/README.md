@@ -87,9 +87,6 @@ disable_audio_dither=1
 # Backlight — kernel software PWM on GPIO 18
 dtoverlay=pwm-gpio,gpio=18
 
-# Brightness dial — kernel quadrature decoding
-dtoverlay=rotary-encoder,pin_a=11,pin_b=10,relative_axis=1
-
 # Boot speed
 initial_turbo=30
 boot_delay=0
@@ -138,7 +135,7 @@ Once you reboot your Pi, the screen should start working.
 
 Two helpers drive the rotary encoder behind the brightness dial and the two pushbuttons on the front:
 
-- [`brightness_control.py`](./brightness_control.py) — reads dial clicks from the kernel `rotary-encoder` input device and sets the backlight through the kernel `pwm-gpio` driver on GPIO 18 (`/sys/class/pwm`)
+- [`brightness_control.py`](./brightness_control.py) — samples the dial every 1 ms, decodes the gray code, and sets the backlight through the kernel `pwm-gpio` driver on GPIO 18 (`/sys/class/pwm`)
 - [`button_handler.py`](./button_handler.py) — debounced falling-edge handlers for the two front buttons. Edit the `COMMANDS` / `DOUBLE_COMMANDS` dicts to change what each does (defaults: BTN1 = shutdown; BTN2 single-press = restart the emulator, double-press = quit to a prompt)
 
 Install both to `/usr/local/bin/`:
@@ -187,19 +184,19 @@ aplay: pcm_write:2178: write error: Input/output error
 
 The kernel `pwm-gpio` driver sidesteps this. It toggles GPIO 18 from an hrtimer and never touches the PWM peripheral, so audio keeps both channels. At 1 kHz it costs under 4% CPU and shows no visible flicker down to 5% brightness, even with all four cores pinned.
 
-**The dial has no pull-ups or filter caps.** `ENC_A` and `ENC_B` run straight from the encoder to the Pi and lean on the internal ~50k pull-ups, while the buttons and the encoder's push-switch get proper 1K pull-ups (R1, R2, R3). A 50k pull-up driving a dirty contact through a long wire gives ragged edges, and one channel can go quiet mid-turn.
+**Sample the dial, do not chase its edges.** The encoder bounces hard — one flick throws hundreds of transitions, some as close together as 19 microseconds. Sampling the two pins every 1 ms steps over that chatter. Decoding every edge instead, which is what the kernel `rotary-encoder` driver does, reads the direction backwards on roughly one flick in five.
 
-Captured during real flicks, edges per channel:
+Measured across ten flicks, five each way, on a healthy unit:
 
-| flick | ENC_A edges | ENC_B edges |
-| ----- | ----------- | ----------- |
-| 1     | 3           | 102         |
-| 2     | 13          | 76          |
-| 3     | 49          | 273         |
-| 4     | 216         | 134         |
+| decoder                  | flicks decoded correctly |
+| ------------------------ | ------------------------ |
+| every edge               | 8 / 10                   |
+| sampled 250 us to 6 ms   | 10 / 10                  |
 
-Direction lives in the phase between the two channels, so when one drops out there is nothing to decode — replaying that capture through the old 1 ms poll loop, the kernel driver, and several filters all give the same inconsistent answer.
+Anything in that sampling range works, so 1 ms is a middle choice that costs about 4% of one core.
 
-The software does what it can: the kernel `rotary-encoder` driver catches every edge, and `brightness_control.py` accumulates counts, ignores strays below `DEADBAND`, and demands a much longer run (`REVERSE_DEADBAND`) before it will reverse. A fix belongs on the board — 10K pull-ups to 3V3 and 100nF to ground on both channels — or in the encoder itself, which is worth cleaning or replacing if the detents feel mushy.
+**A worn encoder cannot be fixed in software.** If the dial jumps around or moves the wrong way, capture the raw pins and decode the capture offline before touching the code. On a good encoder each flick nets 8 to 10 counts in one direction. A bad one nets one or two, with no consistent sign, and no sample rate rescues it — the direction is simply not in the signal. Mushy detents are the tell. Clean the contacts or replace the encoder.
+
+Note also that `ENC_A` and `ENC_B` get no pull-up and no filter cap on the breakout board, unlike the buttons and the encoder's push-switch (R1, R2, R3), so they lean on the Pi's weak internal pull-ups. 10K to 3V3 and 100nF to ground on both channels would be worth adding to a board revision.
 
 **Audio buzz at low brightness.** The onboard analogue audio is PWM on a digital pin next to the display's, so it picks up interference. Nothing on the software side fixes it — a USB DAC does.

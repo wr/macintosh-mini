@@ -724,8 +724,7 @@ if [[ $INSTALL_MACLOCK -eq 1 ]]; then
       sudo sed -i 's|^dtoverlay=audremap,pins_18_19$|dtoverlay=audremap-pin19|' "$f"
       grep -q '^dtoverlay=pwm-gpio,gpio=18$' "$f" || sudo sed -i \
         's|^dtoverlay=audremap-pin19$|dtoverlay=audremap-pin19\ndtoverlay=pwm-gpio,gpio=18|' "$f"
-      grep -q '^dtoverlay=rotary-encoder' "$f" || sudo sed -i \
-        's|^dtoverlay=pwm-gpio,gpio=18$|dtoverlay=pwm-gpio,gpio=18\ndtoverlay=rotary-encoder,pin_a=11,pin_b=10,relative_axis=1|' "$f"
+      sudo sed -i '/^dtoverlay=rotary-encoder,pin_a=11/d' "$f"
       return 0
     fi
     sudo tee -a "$f" >/dev/null <<'EOF'
@@ -748,10 +747,6 @@ disable_audio_dither=1
 # Backlight — kernel software PWM on GPIO 18. The PWM peripheral itself is
 # owned by the audio firmware; enabling it there kills sound until reboot.
 dtoverlay=pwm-gpio,gpio=18
-
-# Brightness dial — the kernel decodes the quadrature, which survives the
-# contact bounce that a userspace poll loop drops.
-dtoverlay=rotary-encoder,pin_a=11,pin_b=10,relative_axis=1
 
 # Boot speed
 initial_turbo=30
