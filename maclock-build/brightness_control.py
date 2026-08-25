@@ -11,6 +11,7 @@
 # ####################################
 
 import os
+import select
 import signal
 import struct
 import sys
@@ -22,10 +23,13 @@ MIN_DUTY = 5
 MAX_DUTY = 100
 STEP = 20
 
-# The encoder is electrically noisy — a single click produces a burst of
-# roughly a hundred edges. Take the first event of a burst and ignore the
-# rest, so one click moves brightness one step.
-LOCKOUT_S = 0.05
+# The encoder is electrically noisy. One click produces a burst of events,
+# and the first few can point the wrong way, so a burst is collected and its
+# events are summed. The sign of the sum is the direction the dial actually
+# moved. A burst ends on a quiet gap, or early if it runs long enough in one
+# direction to be unambiguous.
+BURST_GAP_S = 0.03
+BURST_MAX = 6
 
 PWM_SYSFS = "/sys/class/pwm"
 PWM_DEVICE = "pwm_gpio"     # dtoverlay=pwm-gpio,gpio=18
@@ -148,27 +152,40 @@ def main():
     print(f"Brightness control running. brightness={brightness}% "
           f"encoder={path}", flush=True)
 
-    last_step = 0.0
-    with open(path, "rb") as f:
+    pending = 0
+    events = 0
+    with open(path, "rb", buffering=0) as f:
+        poll = select.poll()
+        poll.register(f, select.POLLIN)
         while True:
-            data = f.read(EVENT_SIZE)
-            if not data:
-                break
-            _sec, _usec, etype, _code, value = struct.unpack(EVENT_FORMAT, data)
-            if etype != EV_REL or value == 0:
+            # Wait indefinitely when idle, but only for the gap once a burst
+            # is under way, so the burst gets flushed when the dial settles.
+            if poll.poll(BURST_GAP_S * 1000 if pending else None):
+                data = f.read(EVENT_SIZE)
+                if not data:
+                    break
+                _sec, _usec, etype, _code, value = struct.unpack(
+                    EVENT_FORMAT, data)
+                if etype != EV_REL or value == 0:
+                    continue
+                pending += value
+                events += 1
+                if abs(pending) < BURST_MAX:
+                    continue
+
+            if pending == 0:
+                events = 0
                 continue
 
-            now = time.monotonic()
-            if now - last_step < LOCKOUT_S:
-                continue
-            last_step = now
-
-            if value > 0:
+            if pending > 0:
                 brightness = min(MAX_DUTY, brightness + STEP)
             else:
                 brightness = max(MIN_DUTY, brightness - STEP)
             set_backlight(brightness)
-            print(f"Brightness: {brightness}%", flush=True)
+            print(f"Brightness: {brightness}% (burst {events} events, "
+                  f"sum {pending:+d})", flush=True)
+            pending = 0
+            events = 0
 
     cleanup()
 
