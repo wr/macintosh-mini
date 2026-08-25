@@ -721,6 +721,7 @@ if [[ $INSTALL_MACLOCK -eq 1 ]]; then
     if grep -qF "# >>> macintosh-mini >>>" "$f"; then
       # Older installs put audio on GPIO 18+19, which blocked the backlight
       # PWM on 18. Migrate them. See issue #15.
+      sudo sed -i 's|^# Audio — PWM on GPIO 18+19, only 19 is physically wired$|# Audio — PWM on GPIO 19 only, which is the one physically wired|' "$f"
       sudo sed -i 's|^dtoverlay=audremap,pins_18_19$|dtoverlay=audremap-pin19|' "$f"
       grep -q '^dtoverlay=pwm-gpio,gpio=18$' "$f" || sudo sed -i \
         's|^dtoverlay=audremap-pin19$|dtoverlay=audremap-pin19\ndtoverlay=pwm-gpio,gpio=18|' "$f"

@@ -166,10 +166,12 @@ def main():
                 threshold = REVERSE_DEADBAND if reversing else DEADBAND
                 if abs(accum) >= threshold:
                     last_dir = 1 if accum > 0 else -1
-                    level = max(0, min(100, level + accum * LEVEL_PER_COUNT))
+                    moved = max(0, min(100, level + accum * LEVEL_PER_COUNT))
                     accum = 0
-                    set_backlight(level)
-                    print(f"Level: {level}", flush=True)
+                    if moved != level:   # already at a rail
+                        level = moved
+                        set_backlight(level)
+                        print(f"Level: {level}", flush=True)
 
             elif accum and time.monotonic() - last_move > IDLE_RESET_S:
                 # The dial settled mid-count. Drop it rather than let stray
