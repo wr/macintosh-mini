@@ -187,6 +187,19 @@ aplay: pcm_write:2178: write error: Input/output error
 
 The kernel `pwm-gpio` driver sidesteps this. It toggles GPIO 18 from an hrtimer and never touches the PWM peripheral, so audio keeps both channels. At 1 kHz it costs under 4% CPU and shows no visible flicker down to 5% brightness, even with all four cores pinned.
 
-**The dial is electrically noisy.** One click produces on the order of a hundred contact-bounce edges. The old code polled the pins every 1 ms, which filtered the bounce by accident but also dropped real transitions, so a fast turn registered almost nothing. The kernel `rotary-encoder` driver decodes on interrupts and does not miss them; `brightness_control.py` then ignores everything within 50 ms of an accepted click (`LOCKOUT_S`), so one click is one step. Raise that value if a single click ever moves two steps.
+**The dial has no pull-ups or filter caps.** `ENC_A` and `ENC_B` run straight from the encoder to the Pi and lean on the internal ~50k pull-ups, while the buttons and the encoder's push-switch get proper 1K pull-ups (R1, R2, R3). A 50k pull-up driving a dirty contact through a long wire gives ragged edges, and one channel can go quiet mid-turn.
+
+Captured during real flicks, edges per channel:
+
+| flick | ENC_A edges | ENC_B edges |
+| ----- | ----------- | ----------- |
+| 1     | 3           | 102         |
+| 2     | 13          | 76          |
+| 3     | 49          | 273         |
+| 4     | 216         | 134         |
+
+Direction lives in the phase between the two channels, so when one drops out there is nothing to decode — replaying that capture through the old 1 ms poll loop, the kernel driver, and several filters all give the same inconsistent answer.
+
+The software does what it can: the kernel `rotary-encoder` driver catches every edge, and `brightness_control.py` accumulates counts, ignores strays below `DEADBAND`, and demands a much longer run (`REVERSE_DEADBAND`) before it will reverse. A fix belongs on the board — 10K pull-ups to 3V3 and 100nF to ground on both channels — or in the encoder itself, which is worth cleaning or replacing if the detents feel mushy.
 
 **Audio buzz at low brightness.** The onboard analogue audio is PWM on a digital pin next to the display's, so it picks up interference. Nothing on the software side fixes it — a USB DAC does.

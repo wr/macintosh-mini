@@ -19,17 +19,34 @@ import time
 
 # --- Config ---
 PWM_PERIOD_NS = 1_000_000  # 1 kHz
-MIN_DUTY = 5
+MIN_DUTY = 5               # never let the screen go fully dark
 MAX_DUTY = 100
-STEP = 20
 
-# The encoder is electrically noisy. One click produces a burst of events,
-# and the first few can point the wrong way, so a burst is collected and its
-# events are summed. The sign of the sum is the direction the dial actually
-# moved. A burst ends on a quiet gap, or early if it runs long enough in one
-# direction to be unambiguous.
-BURST_GAP_S = 0.03
-BURST_MAX = 6
+# The dial is small, barely exposed, and its detents are mush, so it gets
+# flicked through an arc rather than clicked. Brightness tracks how far it
+# turned: a flick of roughly 70 degrees crosses most of the range, and a
+# nudge moves it a little. DEADBAND swallows the odd stray count from
+# contact bounce without stalling a real turn.
+LEVEL_PER_COUNT = 3
+DEADBAND = 2
+
+# ENC_A and ENC_B have no pull-up or filter cap on the breakout board, so one
+# channel can drop out mid-flick and the driver then reports the wrong
+# direction. Committing to a direction and demanding a much stronger run to
+# reverse keeps a flick going the way it started.
+REVERSE_DEADBAND = 6
+
+# Perceived brightness is closer to the square of the duty cycle, so map the
+# dial through a curve. Without it most of the arc is spent up at the bright
+# end, where the eye can barely tell the difference.
+GAMMA = 2.2
+
+# The encoder is electrically noisy. Contact bounce throws single events in
+# both directions, while a real click lands five or six the same way, so
+# events accumulate and only a run past THRESHOLD moves the brightness.
+# Stray counts cancel instead of stepping. The accumulator resets once the
+# dial has been still for IDLE_RESET_S, so noise cannot add up over time.
+IDLE_RESET_S = 0.4
 
 PWM_SYSFS = "/sys/class/pwm"
 PWM_DEVICE = "pwm_gpio"     # dtoverlay=pwm-gpio,gpio=18
@@ -41,7 +58,7 @@ EVENT_FORMAT = "llHHi"
 EVENT_SIZE = struct.calcsize(EVENT_FORMAT)
 EV_REL = 0x02
 
-brightness = MAX_DUTY
+level = 100    # dial position, 0-100
 pwm_dir = None
 
 
@@ -120,8 +137,10 @@ def open_backlight():
     return channel
 
 
-def set_backlight(duty):
-    write(os.path.join(pwm_dir, "duty_cycle"), duty * PWM_PERIOD_NS // 100)
+def set_backlight(level):
+    duty = MIN_DUTY + (MAX_DUTY - MIN_DUTY) * (level / 100.0) ** GAMMA
+    write(os.path.join(pwm_dir, "duty_cycle"),
+          int(duty * PWM_PERIOD_NS / 100))
     write(os.path.join(pwm_dir, "enable"), 1)
 
 
@@ -129,15 +148,15 @@ def cleanup(*_):
     # Leave the backlight on — an unexported channel drives GPIO 18 low, which
     # reads as a dead screen.
     if pwm_dir is not None:
-        set_backlight(MAX_DUTY)
+        set_backlight(100)
     sys.exit(0)
 
 
 def main():
-    global brightness, pwm_dir
+    global level, pwm_dir
 
     pwm_dir = open_backlight()
-    set_backlight(brightness)
+    set_backlight(level)
 
     signal.signal(signal.SIGTERM, cleanup)
     signal.signal(signal.SIGINT, cleanup)
@@ -149,43 +168,39 @@ def main():
               "/boot/firmware/config.txt?", flush=True)
         sys.exit(1)
 
-    print(f"Brightness control running. brightness={brightness}% "
-          f"encoder={path}", flush=True)
+    print(f"Brightness control running. level={level} encoder={path}",
+          flush=True)
 
-    pending = 0
-    events = 0
+    accum = 0
+    last_dir = 0
     with open(path, "rb", buffering=0) as f:
         poll = select.poll()
         poll.register(f, select.POLLIN)
         while True:
-            # Wait indefinitely when idle, but only for the gap once a burst
-            # is under way, so the burst gets flushed when the dial settles.
-            if poll.poll(BURST_GAP_S * 1000 if pending else None):
-                data = f.read(EVENT_SIZE)
-                if not data:
-                    break
-                _sec, _usec, etype, _code, value = struct.unpack(
-                    EVENT_FORMAT, data)
-                if etype != EV_REL or value == 0:
-                    continue
-                pending += value
-                events += 1
-                if abs(pending) < BURST_MAX:
-                    continue
-
-            if pending == 0:
-                events = 0
+            # Wait indefinitely when the accumulator is empty, otherwise only
+            # until the dial has been still long enough to discard the count.
+            if not poll.poll(IDLE_RESET_S * 1000 if accum else None):
+                accum = 0
+                last_dir = 0
                 continue
 
-            if pending > 0:
-                brightness = min(MAX_DUTY, brightness + STEP)
-            else:
-                brightness = max(MIN_DUTY, brightness - STEP)
-            set_backlight(brightness)
-            print(f"Brightness: {brightness}% (burst {events} events, "
-                  f"sum {pending:+d})", flush=True)
-            pending = 0
-            events = 0
+            data = f.read(EVENT_SIZE)
+            if not data:
+                break
+            _sec, _usec, etype, _code, value = struct.unpack(EVENT_FORMAT, data)
+            if etype != EV_REL or value == 0:
+                continue
+
+            accum += value
+            reversing = last_dir and accum * last_dir < 0
+            if abs(accum) < (REVERSE_DEADBAND if reversing else DEADBAND):
+                continue
+
+            last_dir = 1 if accum > 0 else -1
+            level = max(0, min(100, level + accum * LEVEL_PER_COUNT))
+            accum = 0
+            set_backlight(level)
+            print(f"Level: {level}", flush=True)
 
     cleanup()
 
