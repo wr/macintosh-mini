@@ -25,8 +25,13 @@ except ImportError:
 CLK_PIN = 11
 DT_PIN = 10
 PWM_PERIOD_NS = 1_000_000  # 1 kHz
-MIN_DUTY = 0               # the dial can take the backlight all the way off
-MAX_DUTY = 100
+
+# The backlight is driven from an hrtimer, which cannot hold a pulse of much
+# under 10 us. Gamma compresses the dark end hard enough that a naive mapping
+# asks for 39 ns at the first step, so the bottom of the dial is floored here
+# rather than silently landing wherever the timer happens to fire. Level 0
+# still turns the backlight fully off.
+MIN_PULSE_NS = 20_000
 
 # Sampling the pins beats reacting to every edge. The encoder bounces hard —
 # one turn throws hundreds of transitions — and a 1 ms sample steps over the
@@ -44,9 +49,9 @@ DEADBAND = 1
 REVERSE_DEADBAND = 4
 IDLE_RESET_S = 0.4
 
-# Move to a new level over a few milliseconds instead of jumping to it. The
-# encoder only yields around 24 counts per flick, so without this the
-# backlight arrives in visible steps however small they are.
+# Move to a new level over a few milliseconds instead of jumping to it. A
+# flick only yields 8 to 10 counts, so without this the backlight arrives in
+# visible steps however small they are.
 RAMP_PER_TICK = 1.0
 
 # Perceived brightness is closer to the square of the duty cycle, so map the
@@ -55,7 +60,7 @@ RAMP_PER_TICK = 1.0
 GAMMA = 2.2
 
 PWM_SYSFS = "/sys/class/pwm"
-PWM_DEVICE = "pwm_gpio"  # dtoverlay=pwm-gpio,gpio=18
+PWM_DEVICE = "pwm_gpio@12"  # dtoverlay=pwm-gpio,gpio=18 — 0x12 is GPIO 18
 
 # Gray code transitions, indexed by the previous state and the current one
 TRANSITION = [
@@ -68,6 +73,8 @@ TRANSITION = [
 level = 100    # dial position, 0-100
 h = None
 pwm_dir = None
+failed = False
+cleaning = False
 
 
 def write(path, value):
@@ -88,7 +95,7 @@ def find_pwmchip(timeout=30):
     while True:
         for chip in sorted(os.listdir(PWM_SYSFS)):
             device = os.path.realpath(os.path.join(PWM_SYSFS, chip, "device"))
-            if os.path.basename(device).startswith(PWM_DEVICE):
+            if os.path.basename(device) == PWM_DEVICE:
                 return os.path.join(PWM_SYSFS, chip)
         if time.monotonic() > deadline:
             return None
@@ -124,8 +131,10 @@ def open_backlight():
 
 def duty_for(dial):
     """Map a dial position to a duty cycle in nanoseconds."""
-    duty = MIN_DUTY + (MAX_DUTY - MIN_DUTY) * (dial / 100.0) ** GAMMA
-    return int(duty * PWM_PERIOD_NS / 100)
+    if dial <= 0:
+        return 0
+    span = PWM_PERIOD_NS - MIN_PULSE_NS
+    return int(MIN_PULSE_NS + span * (dial / 100.0) ** GAMMA)
 
 
 def set_backlight(dial):
@@ -134,17 +143,24 @@ def set_backlight(dial):
 
 
 def cleanup(*_):
+    # Reachable twice on SIGTERM: once from the handler, then again from the
+    # finally block as SystemExit unwinds. Only the first pass should run.
+    global cleaning
+    if cleaning:
+        return
+    cleaning = True
+
     # Leave the backlight on — an unexported channel drives GPIO 18 low, which
     # reads as a dead screen.
     if pwm_dir is not None:
         set_backlight(100)
     if h is not None:
         lgpio.gpiochip_close(h)
-    sys.exit(0)
+    sys.exit(1 if failed else 0)
 
 
 def main():
-    global level, h, pwm_dir
+    global level, h, pwm_dir, failed
 
     pwm_dir = open_backlight()
     set_backlight(level)
@@ -202,6 +218,7 @@ def main():
 
             time.sleep(POLL_S)
     except Exception as e:
+        failed = True
         print(f"Error: {e}", flush=True)
     finally:
         cleanup()

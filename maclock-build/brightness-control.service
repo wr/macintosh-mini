@@ -2,9 +2,10 @@
 Description=Rotary encoder brightness control
 # The backlight stays dark until this runs, so start it as soon as the root
 # filesystem is up rather than queueing behind sysinit.target (cloud-init
-# alone holds that for ~11s). The script waits for the PWM driver itself.
+# alone holds that for ~11s). The script waits for the PWM driver itself,
+# but udev has to have made /dev/gpiochip0 before the encoder can be read.
 DefaultDependencies=no
-After=local-fs.target
+After=local-fs.target systemd-udevd.service
 Before=sysinit.target getty@tty1.service shutdown.target
 Conflicts=shutdown.target
 
