@@ -55,18 +55,12 @@ The three headers stay through-hole, so the board needs a hand-soldering or sele
 
 ### Worth adding to the next revision
 
-**Pull-ups and filtering on the dial lines.** `Dial A` and `Dial B` run straight from the Pi GPIO header to the encoder with nothing on them — R1, R2, and R3 are series resistors and none of them touch the dial. EC11-class encoders have open-collector outputs and want a 10–50 kΩ pull-up, so today those lines lean on the Pi's weak internal pull-ups and the edges come out ragged. Captured waveforms are in the [maclock guide](../maclock-build/README.md#known-issues).
+**The dial lines need nothing.** `Dial A` and `Dial B` run from the Pi GPIO header to the encoder with no pull-up and no filtering, leaning on the Pi's internal ~50 kΩ. That sounds wrong — EC11-class encoders are usually specced for a 10–50 kΩ pull-up — but it measures fine. A healthy encoder on this board decodes ten flicks out of ten, and an idle dial logs zero interrupts. The fix that mattered was in software: sample the pins every 1 ms instead of reacting to every edge.
 
-Four parts fix it, one pair per channel:
+Adding pull-ups was tried and reverted, for two reasons worth recording:
 
-| Ref      | Qty | Part                                      | Footprint | Connects                    |
-| -------- | --- | ----------------------------------------- | --------- | --------------------------- |
-| R4, R5   | 2   | 10 kΩ ±1% — UNI-ROYAL `0402WGF1002TCE` (LCSC [`C25744`](https://lcsc.com/product-detail/Chip-Resistor-Surface-Mount_Uniroyal-Elec-0402WGF1002TCE_C25744.html)) | 0402 SMD | Dial A → 3V3, Dial B → 3V3 |
-| C2, C3   | 2   | 100 nF X7R — same part as C1 (LCSC [`C1525`](https://jlcpcb.com/partdetail/C1525)) | 0402 SMD | Dial A → GND, Dial B → GND |
-
-10 kΩ with 100 nF gives a 1 ms time constant, which swallows the sub-millisecond contact chatter while leaving a flick — 60 to 300 ms of real movement — untouched.
-
-**This needs a 3V3 pin the board does not have.** Every supply on the board is 5V, and a 5V pull-up would sit above the 3.3 V maximum on a Pi GPIO and damage it. So the next revision has to bring 3V3 in: the tidiest way is an eighth pin on the Pi GPIO header, wired to Pi header pin 1 or 17. Do not be tempted to pull these lines to the 5V that is already there.
+- **A stronger pull-up makes a worn encoder worse, not better.** The low level is a divider against contact resistance. Against a contact gone to 10 kΩ, the internal 50 kΩ still gives 0.55 V and reads low; adding 10 kΩ in parallel gives 1.8 V, which reads high. The weak internal pull-up is the more forgiving choice as contacts age.
+- **100 nF is about 100× too much capacitance.** Real transitions inside a flick arrive 19 µs to 680 µs apart, so a 1 ms time constant smears the signal, not just the bounce. If you ever do want a hardware glitch filter, size it around 10 kΩ and 1 nF — roughly 10 µs — and take the numbers from a fresh capture rather than from generic encoder advice.
 
 **The schematic does not match the board.** [`maclock-breakout.kicad_sch`](./maclock-breakout.kicad_sch) is a reconstruction, and it says so. It draws R1, R2, and R3 as pull-ups to 5V and calls JP1 a rotary encoder. The board wires all three as series resistors and JP1 as the PAM8302 header. Trust the PCB; the schematic needs redrawing before anyone edits from it.
 

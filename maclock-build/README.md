@@ -197,6 +197,6 @@ Anything in that sampling range works, so 1 ms is a middle choice that costs abo
 
 **A worn encoder cannot be fixed in software.** If the dial jumps around or moves the wrong way, capture the raw pins and decode the capture offline before touching the code. On a good encoder each flick nets 8 to 10 counts in one direction. A bad one nets one or two, with no consistent sign, and no sample rate rescues it — the direction is simply not in the signal. Mushy detents are the tell. Clean the contacts or replace the encoder.
 
-Note also that `ENC_A` and `ENC_B` get no pull-up and no filter cap on the breakout board, unlike the buttons and the encoder's push-switch (R1, R2, R3), so they lean on the Pi's weak internal pull-ups. 10K to 3V3 and 100nF to ground on both channels would be worth adding to a board revision.
+`ENC_A` and `ENC_B` get no pull-up and no filter cap on the breakout board — they lean on the Pi's internal ~50 kΩ — and that turns out to be fine. Adding a 10 kΩ pull-up was tried and reverted: against a contact that has gone resistive it makes the low level *worse*, and the 100 nF that usually goes with it has a time constant longer than the gaps between real transitions. Sampling every 1 ms is the fix; the hardware needs nothing.
 
 **Audio buzz at low brightness.** The onboard analogue audio is PWM on a digital pin next to the display's, so it picks up interference. Nothing on the software side fixes it — a USB DAC does.
