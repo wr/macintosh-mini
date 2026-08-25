@@ -22,7 +22,6 @@ I recorded a walkthrough for how I assembled mine that goes into much more detai
 
 | Component       | Pin on breakout board | Pin on Pi Zero | Notes                      |
 | --------------- | --------------------- | -------------- | -------------------------- |
-| 3V3             | 3V3                   | 1              | Feeds the dial pull-ups    |
 | 5V              | 5V                    | 2              |                            |
 | GND             | GND                   | 6              |                            |
 | Button 1        | SW1                   | 13             | Bend or desolder pin on Pi |
