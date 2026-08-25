@@ -25,7 +25,7 @@ except ImportError:
 CLK_PIN = 11
 DT_PIN = 10
 PWM_PERIOD_NS = 1_000_000  # 1 kHz
-MIN_DUTY = 5               # never let the screen go fully dark
+MIN_DUTY = 0               # the dial can take the backlight all the way off
 MAX_DUTY = 100
 
 # Sampling the pins beats reacting to every edge. The encoder bounces hard —
@@ -40,9 +40,14 @@ POLL_S = 0.001
 # range. DEADBAND drops the odd stray count, and reversing takes a longer
 # run than continuing, which keeps a flick going the way it started.
 LEVEL_PER_COUNT = 4
-DEADBAND = 2
+DEADBAND = 1
 REVERSE_DEADBAND = 4
 IDLE_RESET_S = 0.4
+
+# Move to a new level over a few milliseconds instead of jumping to it. The
+# encoder only yields around 24 counts per flick, so without this the
+# backlight arrives in visible steps however small they are.
+RAMP_PER_TICK = 1.0
 
 # Perceived brightness is closer to the square of the duty cycle, so map the
 # dial through a curve. Without it most of the arc is spent up at the bright
@@ -117,9 +122,14 @@ def open_backlight():
     return channel
 
 
-def set_backlight(dial):
+def duty_for(dial):
+    """Map a dial position to a duty cycle in nanoseconds."""
     duty = MIN_DUTY + (MAX_DUTY - MIN_DUTY) * (dial / 100.0) ** GAMMA
-    write(os.path.join(pwm_dir, "duty_cycle"), int(duty * PWM_PERIOD_NS / 100))
+    return int(duty * PWM_PERIOD_NS / 100)
+
+
+def set_backlight(dial):
+    write(os.path.join(pwm_dir, "duty_cycle"), duty_for(dial))
     write(os.path.join(pwm_dir, "enable"), 1)
 
 
@@ -152,6 +162,8 @@ def main():
     accum = 0
     last_dir = 0
     last_move = time.monotonic()
+    shown = float(level)      # where the backlight is, chasing level
+    last_duty = duty_for(level)
 
     try:
         while True:
@@ -170,7 +182,6 @@ def main():
                     accum = 0
                     if moved != level:   # already at a rail
                         level = moved
-                        set_backlight(level)
                         print(f"Level: {level}", flush=True)
 
             elif accum and time.monotonic() - last_move > IDLE_RESET_S:
@@ -178,6 +189,16 @@ def main():
                 # counts add up into a step later.
                 accum = 0
                 last_dir = 0
+
+            if shown != level:
+                if abs(level - shown) <= RAMP_PER_TICK:
+                    shown = float(level)
+                else:
+                    shown += RAMP_PER_TICK if level > shown else -RAMP_PER_TICK
+                duty = duty_for(shown)
+                if duty != last_duty:
+                    write(os.path.join(pwm_dir, "duty_cycle"), duty)
+                    last_duty = duty
 
             time.sleep(POLL_S)
     except Exception as e:
