@@ -1,12 +1,19 @@
 [Unit]
 Description=Rotary encoder brightness control
-After=multi-user.target
+# The backlight stays dark until this runs, so start it as soon as the root
+# filesystem is up rather than queueing behind sysinit.target (cloud-init
+# alone holds that for ~11s). The script waits for the PWM driver itself,
+# but udev has to have made /dev/gpiochip0 before the encoder can be read.
+DefaultDependencies=no
+After=local-fs.target systemd-udevd.service
+Before=sysinit.target getty@tty1.service shutdown.target
+Conflicts=shutdown.target
 
 [Service]
 Type=simple
 ExecStart=/usr/bin/python3 /usr/local/bin/brightness_control.py
-Restart=on-failure
+Restart=always
 RestartSec=2
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=sysinit.target
