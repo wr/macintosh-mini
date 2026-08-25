@@ -1690,7 +1690,7 @@
 			)
 		)
 		(attr through_hole)
-		(duplicate_pad_numbers_are_jumpers no)
+		(duplicate_pad_numbers_are_jumpers yes)
 		(fp_line
 			(start 5.62 -1.37)
 			(end -0.62 -1.37)
@@ -1802,6 +1802,20 @@
 			(remove_unused_layers no)
 			(net "AUDIO")
 			(uuid "d57238a1-496b-4a82-9b25-b18406a3f9e5")
+		)
+		(pad "1" smd rect
+			(at 1.1 0 90)
+			(size 2 1.5)
+			(layers "B.Cu" "B.Paste" "B.Mask")
+			(net "GND")
+			(uuid "7c1a0f42-9b3d-4e18-8a55-1f0c3d7e5a01")
+		)
+		(pad "2" smd rect
+			(at 3.9 0 90)
+			(size 2 1.5)
+			(layers "B.Cu" "B.Paste" "B.Mask")
+			(net "AUDIO")
+			(uuid "7c1a0f42-9b3d-4e18-8a55-1f0c3d7e5a02")
 		)
 		(embedded_fonts no)
 		(model "${KICAD9_3DMODEL_DIR}/Capacitor_THT.3dshapes/C_Disc_D6.0mm_W2.5mm_P5.00mm.step"
