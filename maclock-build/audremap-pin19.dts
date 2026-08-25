@@ -1,0 +1,33 @@
+/dts-v1/;
+/plugin/;
+
+// Maps the PWM audio output to GPIO 19 only.
+//
+// The stock `audremap,pins_18_19` overlay claims GPIO 18 and 19 for the audio
+// firmware. Only 19 is wired to the amp, but the claim on 18 blocks any PWM
+// driver from using it for the backlight:
+//
+//   pinctrl-bcm2835: pin gpio18 already requested by 3f00b840.mailbox;
+//                    cannot claim for pwm_gpio@12
+//
+// Dropping 18 from the group frees it while audio keeps working on 19.
+
+/ {
+    compatible = "brcm,bcm2835";
+
+    fragment@0 {
+        target = <&audio_pins>;
+        __overlay__ {
+            brcm,pins = <19>;
+            brcm,function = <2>;    // Alt5 = PWM1
+            brcm,pull = <0>;
+        };
+    };
+
+    fragment@1 {
+        target = <&chosen>;
+        __overlay__ {
+            bootargs = "snd_bcm2835.enable_headphones=1";
+        };
+    };
+};

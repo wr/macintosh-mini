@@ -703,18 +703,31 @@ if [[ $INSTALL_MACLOCK -eq 1 ]]; then
   }
   run "[maclock] Installing Waveshare overlays" install_waveshare
 
-  install_notouch_overlay() {
-    local src=/tmp/waveshare-28dpi-3b-4b-notouch.dts
-    local dtb=/tmp/waveshare-28dpi-3b-4b-notouch.dtbo
-    curl -fL --retry 3 -o "$src" "$REPO_RAW/maclock-build/waveshare-28dpi-3b-4b-notouch.dts" || return $?
+  compile_overlay() {
+    local name=$1
+    local src=/tmp/$name.dts
+    local dtb=/tmp/$name.dtbo
+    curl -fL --retry 3 -o "$src" "$REPO_RAW/maclock-build/$name.dts" || return $?
     dtc -q -I dts -O dtb -o "$dtb" "$src" || return $?
     sudo install -m644 "$dtb" /boot/firmware/overlays/ || return $?
   }
-  run "[maclock] Compiling no-touch overlay" install_notouch_overlay
+  run "[maclock] Compiling no-touch overlay" \
+    compile_overlay waveshare-28dpi-3b-4b-notouch
+  run "[maclock] Compiling audio-pin overlay" \
+    compile_overlay audremap-pin19
 
   patch_config() {
     local f=/boot/firmware/config.txt
-    grep -qF "# >>> macintosh-mini >>>" "$f" && return 0
+    if grep -qF "# >>> macintosh-mini >>>" "$f"; then
+      # Older installs put audio on GPIO 18+19, which blocked the backlight
+      # PWM on 18. Migrate them. See issue #15.
+      sudo sed -i 's|^dtoverlay=audremap,pins_18_19$|dtoverlay=audremap-pin19|' "$f"
+      grep -q '^dtoverlay=pwm-gpio,gpio=18$' "$f" || sudo sed -i \
+        's|^dtoverlay=audremap-pin19$|dtoverlay=audremap-pin19\ndtoverlay=pwm-gpio,gpio=18|' "$f"
+      grep -q '^dtoverlay=rotary-encoder' "$f" || sudo sed -i \
+        's|^dtoverlay=pwm-gpio,gpio=18$|dtoverlay=pwm-gpio,gpio=18\ndtoverlay=rotary-encoder,pin_a=11,pin_b=10,relative_axis=1|' "$f"
+      return 0
+    fi
     sudo tee -a "$f" >/dev/null <<'EOF'
 
 # >>> macintosh-mini >>>
@@ -726,10 +739,19 @@ dtoverlay=waveshare-28dpi-4b
 dtoverlay=vc4-kms-dpi-2inch8
 display_rotate=3
 
-# Audio — PWM on GPIO 18+19, only 19 is physically wired
+# Audio — PWM on GPIO 19 only, which is the one physically wired. The stock
+# audremap,pins_18_19 also claims GPIO 18 and blocks the backlight PWM.
 dtparam=audio=on
-dtoverlay=audremap,pins_18_19
+dtoverlay=audremap-pin19
 disable_audio_dither=1
+
+# Backlight — kernel software PWM on GPIO 18. The PWM peripheral itself is
+# owned by the audio firmware; enabling it there kills sound until reboot.
+dtoverlay=pwm-gpio,gpio=18
+
+# Brightness dial — the kernel decodes the quadrature, which survives the
+# contact bounce that a userspace poll loop drops.
+dtoverlay=rotary-encoder,pin_a=11,pin_b=10,relative_axis=1
 
 # Boot speed
 initial_turbo=30
