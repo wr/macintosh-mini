@@ -79,10 +79,13 @@ dtoverlay=waveshare-28dpi-4b
 dtoverlay=vc4-kms-dpi-2inch8
 display_rotate=3
 
-# Audio — PWM on GPIO 18+19, only 19 is physically wired
+# Audio — PWM on GPIO 19 only, which is the one physically wired
 dtparam=audio=on
-dtoverlay=audremap,pins_18_19
+dtoverlay=audremap-pin19
 disable_audio_dither=1
+
+# Backlight — kernel software PWM on GPIO 18
+dtoverlay=pwm-gpio,gpio=18
 
 # Boot speed
 initial_turbo=30
@@ -100,14 +103,27 @@ Append to the existing single line:
 quiet logo.nologo
 ```
 
-The stock `waveshare-28dpi-3b-4b` overlay claims GPIO 10, 11 (I2C for touch) and GPIO 18 (backlight driver). The custom overlay in this repo strips those fragments, freeing the pins.
+Two stock overlays get in the way, so this repo replaces both.
 
-Compile and install the overlay (source: [`waveshare-28dpi-3b-4b-notouch.dts`](./waveshare-28dpi-3b-4b-notouch.dts)):
+The stock `waveshare-28dpi-3b-4b` overlay claims GPIO 10, 11 (I2C for touch) and GPIO 18 (backlight driver). [`waveshare-28dpi-3b-4b-notouch.dts`](./waveshare-28dpi-3b-4b-notouch.dts) strips those fragments, freeing the pins.
+
+The stock `audremap,pins_18_19` overlay hands the audio firmware both GPIO 18 and 19, even though only 19 is wired to the amp. That claim on 18 blocks every PWM driver from using it for the backlight:
+
+```
+pinctrl-bcm2835: pin gpio18 already requested by 3f00b840.mailbox;
+                 cannot claim for pwm_gpio@12
+```
+
+[`audremap-pin19.dts`](./audremap-pin19.dts) maps audio to GPIO 19 alone, which leaves 18 free.
+
+Compile and install both:
 
 ```bash
-curl -fLO https://raw.githubusercontent.com/wr/macintosh-mini/main/maclock-build/waveshare-28dpi-3b-4b-notouch.dts
-dtc -I dts -O dtb -o waveshare-28dpi-3b-4b-notouch.dtbo waveshare-28dpi-3b-4b-notouch.dts
-sudo cp waveshare-28dpi-3b-4b-notouch.dtbo /boot/firmware/overlays/
+for o in waveshare-28dpi-3b-4b-notouch audremap-pin19; do
+  curl -fLO https://raw.githubusercontent.com/wr/macintosh-mini/main/maclock-build/$o.dts
+  dtc -I dts -O dtb -o $o.dtbo $o.dts
+  sudo cp $o.dtbo /boot/firmware/overlays/
+done
 sudo reboot
 ```
 
@@ -119,7 +135,7 @@ Once you reboot your Pi, the screen should start working.
 
 Two helpers drive the rotary encoder behind the brightness dial and the two pushbuttons on the front:
 
-- [`brightness_control.py`](./brightness_control.py) — gray-code rotary encoder reader, drives software PWM on GPIO 18 for backlight
+- [`brightness_control.py`](./brightness_control.py) — samples the dial every 1 ms, decodes the gray code, and sets the backlight through the kernel `pwm-gpio` driver on GPIO 18 (`/sys/class/pwm`)
 - [`button_handler.py`](./button_handler.py) — debounced falling-edge handlers for the two front buttons. Edit the `COMMANDS` / `DOUBLE_COMMANDS` dicts to change what each does (defaults: BTN1 = shutdown; BTN2 single-press = restart the emulator, double-press = quit to a prompt)
 
 Install both to `/usr/local/bin/`:
@@ -160,4 +176,27 @@ The hardware side of the maclock is now done. The [setup script](../setup.sh) in
 
 ## Known Issues
 
-**Backlight flicker at low brightness.** Software PWM on the single-core Pi Zero W has CPU jitter. The `audremap` overlay claims both PWM channels (GPIO 18 + 19), blocking hardware PWM on GPIO 18.
+**No hardware PWM for the backlight.** The Pi's PWM peripheral has two channels and the analogue audio output uses both of them, so the backlight cannot have one. Enabling a hardware PWM channel does work — the backlight dims perfectly — but it kills sound for the rest of the boot, and disabling it again does not bring sound back:
+
+```
+aplay: pcm_write:2178: write error: Input/output error
+```
+
+The kernel `pwm-gpio` driver sidesteps this. It toggles GPIO 18 from an hrtimer and never touches the PWM peripheral, so audio keeps both channels. At 1 kHz it costs under 4% CPU and shows no visible flicker down to 5% brightness, even with all four cores pinned.
+
+**Sample the dial, do not chase its edges.** The encoder bounces hard — one flick throws hundreds of transitions, some as close together as 19 microseconds. Sampling the two pins every 1 ms steps over that chatter. Decoding every edge instead, which is what the kernel `rotary-encoder` driver does, reads the direction backwards on roughly one flick in five.
+
+Measured across ten flicks, five each way, on a healthy unit:
+
+| decoder                  | flicks decoded correctly |
+| ------------------------ | ------------------------ |
+| every edge               | 8 / 10                   |
+| sampled 250 us to 6 ms   | 10 / 10                  |
+
+Anything in that sampling range works, so 1 ms is a middle choice that costs about 4% of one core.
+
+**A worn encoder cannot be fixed in software.** If the dial jumps around or moves the wrong way, capture the raw pins and decode the capture offline before touching the code. On a good encoder each flick nets 8 to 10 counts in one direction. A bad one nets one or two, with no consistent sign, and no sample rate rescues it — the direction is simply not in the signal. Mushy detents are the tell. Clean the contacts or replace the encoder.
+
+`ENC_A` and `ENC_B` get no pull-up and no filter cap on the breakout board — they lean on the Pi's internal ~50 kΩ — and that turns out to be fine. Adding a 10 kΩ pull-up was tried and reverted: against a contact that has gone resistive it makes the low level *worse*, and the 100 nF that usually goes with it has a time constant longer than the gaps between real transitions. Sampling every 1 ms is the fix; the hardware needs nothing.
+
+**Audio buzz at low brightness.** The onboard analogue audio is PWM on a digital pin next to the display's, so it picks up interference. Nothing on the software side fixes it — a USB DAC does.
