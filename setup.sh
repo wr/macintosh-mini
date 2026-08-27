@@ -16,6 +16,9 @@
 #   --rom <file>        ROM filename in $HOME (default: ROM)
 #   --hostname <name>   default: leave unchanged
 #   --perf | --no-perf  enable/disable performance optimizations (default: prompt)
+#   --wifi-powersave | --no-wifi-powersave
+#                       leave the wi-fi radio's power saving alone, or turn it
+#                       off so the Pi stays reachable when idle (default: off)
 #   --debug             show all command output instead of capturing to log
 
 set -euo pipefail
@@ -291,6 +294,7 @@ COLOR_MODE=""
 MODELID=""   # BasiliskII only: 5 (Mac IIci) or 14 (Quadra)
 NEW_HOSTNAME=""
 PERF=""   # "" = prompt, 1 = on, 0 = off
+WIFI_POWERSAVE=0   # 0 = turn the radio's power saving off, 1 = leave it alone
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -307,6 +311,8 @@ while [[ $# -gt 0 ]]; do
     --hostname)      NEW_HOSTNAME=$2; shift 2 ;;
     --perf)          PERF=1; shift ;;
     --no-perf)       PERF=0; shift ;;
+    --wifi-powersave)    WIFI_POWERSAVE=1; shift ;;
+    --no-wifi-powersave) WIFI_POWERSAVE=0; shift ;;
     --debug)         DEBUG=1; shift ;;
     *) die "Unknown option: $1" ;;
   esac
@@ -584,6 +590,7 @@ NEW_HOSTNAME=${NEW_HOSTNAME// /-}
 
 # --- Total step count (for gauge) -----------------------------------------
 TOTAL_STEPS=3   # apt update, apt install, patch_cmdline
+[[ $WIFI_POWERSAVE -eq 0 ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
 [[ -n $NEW_HOSTNAME && $NEW_HOSTNAME != "$CUR_HOSTNAME" ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
 [[ $INSTALL_MACLOCK -eq 1 ]] && TOTAL_STEPS=$((TOTAL_STEPS+5))
 if [[ $INSTALL_SHEEPSHAVER -eq 1 ]]; then
@@ -620,7 +627,7 @@ if [[ -n $NEW_HOSTNAME && $NEW_HOSTNAME != "$CUR_HOSTNAME" ]]; then
 fi
 
 # --- apt packages ---------------------------------------------------------
-APT_PKGS=(curl git)
+APT_PKGS=(curl git iw)
 if [[ $INSTALL_SHEEPSHAVER -eq 1 || $INSTALL_BASILISK -eq 1 ]]; then
   APT_PKGS+=(
     build-essential autoconf automake libtool pkg-config
@@ -643,6 +650,46 @@ patch_cmdline() {
   sudo sed -i 's|$| quiet loglevel=0 vt.global_cursor_default=0 console=tty3 logo.nologo|' "$f"
 }
 run "Configuring quiet boot (cmdline.txt)" patch_cmdline
+
+# --- Wi-Fi power saving ---------------------------------------------------
+# The radio parks itself when nothing is talking to it, so the Pi drops off the
+# network while idle and takes a while to answer again. Turn that off three
+# ways: a NetworkManager default, the saved wi-fi profile, and a boot-time unit
+# for anything NetworkManager does not manage. Applied live with iw as well, so
+# it takes effect without restarting NetworkManager and dropping this session.
+if [[ $WIFI_POWERSAVE -eq 0 ]]; then
+  disable_wifi_powersave() {
+    sudo install -d /etc/NetworkManager/conf.d
+    printf '[connection]\nwifi.powersave = 2\n' \
+      | sudo tee /etc/NetworkManager/conf.d/99-wifi-powersave-off.conf >/dev/null
+
+    local c
+    while IFS= read -r c; do
+      [[ -n $c ]] || continue
+      sudo nmcli connection modify "$c" 802-11-wireless.powersave 2 || true
+    done < <(nmcli -t -f NAME,TYPE connection show 2>/dev/null \
+             | awk -F: '$2 == "802-11-wireless" { print $1 }')
+
+    sudo tee /etc/systemd/system/wifi-powersave-off.service >/dev/null <<'UNIT'
+[Unit]
+Description=Disable Wi-Fi power saving
+Wants=sys-subsystem-net-devices-wlan0.device
+After=sys-subsystem-net-devices-wlan0.device NetworkManager.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=-/usr/sbin/iw dev wlan0 set power_save off
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+    sudo systemctl daemon-reload
+    sudo systemctl enable wifi-powersave-off.service
+    sudo systemctl start wifi-powersave-off.service
+  }
+  run "Turning off Wi-Fi power saving" disable_wifi_powersave
+fi
 
 # --- Performance optimizations -------------------------------------------
 if [[ $PERF -eq 1 ]]; then
