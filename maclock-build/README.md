@@ -234,6 +234,24 @@ The hardware side of the maclock is now done. The [setup script](../setup.sh) in
 
 ## Known Issues
 
+**cloud-init owns the hostname, and `hostnamectl` alone will not stick.** Current Pi OS images ship cloud-init, whose `update_hostname` module runs on *every* boot and rewrites the name from its own config. Set the hostname by hand and it comes back as the old one after a reboot.
+
+Editing `hostname:` in `/boot/firmware/user-data` does not help either. cloud-init caches user-data per instance and does not re-read that file unless the instance ID changes, so it keeps applying the name it first saw. The fix is to tell it to stop managing the hostname:
+
+```bash
+printf 'preserve_hostname: true\n' \
+  | sudo tee /etc/cloud/cloud.cfg.d/99-preserve-hostname.cfg
+sudo hostnamectl set-hostname <your-name>
+```
+
+If `/etc/hosts` still shows the old name as an alias on the `127.0.1.1` line, that is cloud-init's `manage_etc_hosts`, which comes from the image's user-data and outranks anything in `cloud.cfg.d`. Comment the module out of the list in `/etc/cloud/cloud.cfg`:
+
+```
+# - update_etc_hosts
+```
+
+The setup script does all of this for you when you give it a hostname.
+
 **No hardware PWM for the backlight.** The Pi's PWM peripheral has two channels and the analogue audio output uses both of them, so the backlight cannot have one. Enabling a hardware PWM channel does work — the backlight dims perfectly — but it kills sound for the rest of the boot, and disabling it again does not bring sound back:
 
 ```
