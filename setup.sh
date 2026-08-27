@@ -617,10 +617,36 @@ trap 'stop_gauge' EXIT
 if [[ -n $NEW_HOSTNAME && $NEW_HOSTNAME != "$CUR_HOSTNAME" ]]; then
   set_host() {
     sudo hostnamectl set-hostname "$NEW_HOSTNAME" || return $?
-    if grep -qE "^127\.0\.1\.1[[:space:]]+$CUR_HOSTNAME" /etc/hosts; then
-      sudo sed -i "s/^127\.0\.1\.1[[:space:]]\+$CUR_HOSTNAME.*/127.0.1.1\t$NEW_HOSTNAME/" /etc/hosts
-    else
-      printf '127.0.1.1\t%s\n' "$NEW_HOSTNAME" | sudo tee -a /etc/hosts >/dev/null
+    # Collapse every 127.0.1.1 line into a single one carrying the new name.
+    # Matching on the old hostname instead would append a second line whenever
+    # /etc/hosts and the running hostname disagree, which is exactly what
+    # cloud-init leaves behind.
+    local tmp; tmp=$(mktemp)
+    awk -v name="$NEW_HOSTNAME" '
+      /^127\.0\.1\.1[ \t]/ { if (!seen++) print "127.0.1.1\t" name; next }
+      { print }
+      END { if (!seen) print "127.0.1.1\t" name }
+    ' /etc/hosts > "$tmp"
+    sudo cp "$tmp" /etc/hosts
+    rm -f "$tmp"
+
+    # Current Pi OS images ship cloud-init, which rewrites the hostname from
+    # its own cached config on every boot and puts the old name straight back.
+    # Tell it to leave the hostname alone.
+    [[ -f /etc/cloud/cloud.cfg ]] || return 0
+    sudo install -d /etc/cloud/cloud.cfg.d
+    printf '# Hostname is set locally; do not let cloud-init reset it each boot.\npreserve_hostname: true\n' \
+      | sudo tee /etc/cloud/cloud.cfg.d/99-preserve-hostname.cfg >/dev/null
+
+    # cloud-init also regenerates /etc/hosts when manage_etc_hosts is on, which
+    # re-adds the old short name as an alias. That setting comes from the image's
+    # user-data, which outranks anything dropped in cloud.cfg.d, so switch the
+    # module off instead.
+    if grep -qE '^[[:space:]]*-[[:space:]]+update_etc_hosts[[:space:]]*$' /etc/cloud/cloud.cfg; then
+      [[ -f /etc/cloud/cloud.cfg.orig ]] \
+        || sudo cp /etc/cloud/cloud.cfg /etc/cloud/cloud.cfg.orig
+      sudo sed -i -E 's|^([[:space:]]*)-[[:space:]]+update_etc_hosts[[:space:]]*$|\1# - update_etc_hosts   # disabled by macintosh-mini: /etc/hosts is managed locally|' \
+        /etc/cloud/cloud.cfg
     fi
   }
   run "Setting hostname: $CUR_HOSTNAME → $NEW_HOSTNAME" set_host
