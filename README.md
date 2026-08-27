@@ -79,6 +79,7 @@ The Pi boots straight into the Mac. A few controls:
 - **Shut Down** from inside Mac OS (Special → Shut Down) quits to the Pi prompt; **Restart** reboots the Mac in place; a crash auto-reboots.
 - **`macintosh`** — run this from the prompt to boot the Mac again.
 - **Networking** works out of the box (slirp NAT). In the Mac, set TCP/IP to **DHCP**.
+- **Wi-fi stays awake.** The Pi's radio sleeps when idle by default, which makes it drop off the network and answer slowly when you come back to it. The installer turns that off. Pass `--wifi-powersave` to skip that step on a fresh install — it does not undo an install that already turned power saving off.
 
 Re-run the installer any time to **update** an existing install — it keeps your disk image and settings. To **switch emulator**, pick the other one (Basilisk II ⇄ SheepShaver); each core's prefs are preserved.
 

@@ -168,7 +168,65 @@ sudo systemctl enable --now brightness-control button-handler
 
 ---
 
-### 4. Install the emulator
+### 4. Keep the wi-fi awake
+
+The Pi Zero 2 W ships with wi-fi power saving on. The radio parks itself when
+nothing is talking to it, so the Pi falls off the network while idle and is slow
+to answer when you come back — ssh hangs for a while before it wakes up.
+
+Turn it off in three places, so it holds whether NetworkManager is driving the
+link or not:
+
+```bash
+# 1. NetworkManager's default for new connections
+printf '[connection]\nwifi.powersave = 2\n' \
+  | sudo tee /etc/NetworkManager/conf.d/99-wifi-powersave-off.conf
+
+# 2. the wi-fi profile you are already on
+sudo nmcli connection modify "<your-ssid>" 802-11-wireless.powersave 2
+
+# 3. a boot-time unit, for anything NetworkManager does not manage
+sudo tee /etc/systemd/system/wifi-powersave-off.service <<'UNIT'
+[Unit]
+Description=Disable Wi-Fi power saving
+Wants=sys-subsystem-net-devices-wlan0.device
+After=sys-subsystem-net-devices-wlan0.device NetworkManager.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=-/usr/sbin/iw dev wlan0 set power_save off
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now wifi-powersave-off
+```
+
+Apply it to the running radio too, so you do not have to reboot:
+
+```bash
+sudo iw dev wlan0 set power_save off
+```
+
+Check it took:
+
+```bash
+iw dev wlan0 get power_save
+```
+
+You want `Power save: off`. Note `iw` lives in `/usr/sbin`, which is not on a
+normal user's `PATH` over ssh — use the full path or `sudo` if the command is
+not found.
+
+Do **not** restart NetworkManager to apply this. It drops the wi-fi, which cuts
+the ssh session you are running these commands over.
+
+---
+
+### 5. Install the emulator
 
 The hardware side of the maclock is now done. The [setup script](../setup.sh) installs **Basilisk II**; manual build steps are in the [Basilisk II guide](../emulators/BasiliskII.md) (or the [SheepShaver guide](../emulators/SheepShaver.md) for PowerPC).
 
