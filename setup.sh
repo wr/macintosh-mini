@@ -627,7 +627,11 @@ if [[ -n $NEW_HOSTNAME && $NEW_HOSTNAME != "$CUR_HOSTNAME" ]]; then
       { print }
       END { if (!seen) print "127.0.1.1\t" name }
     ' /etc/hosts > "$tmp"
-    sudo cp "$tmp" /etc/hosts
+    # Never copy a short write over /etc/hosts: losing it breaks localhost
+    # resolution and every later sudo on a machine with no console.
+    if [[ -s $tmp ]] && grep -qE "^127\.0\.1\.1[[:space:]]" "$tmp"; then
+      sudo cp "$tmp" /etc/hosts
+    fi
     rm -f "$tmp"
 
     # Current Pi OS images ship cloud-init, which rewrites the hostname from
