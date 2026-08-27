@@ -663,11 +663,14 @@ if [[ $WIFI_POWERSAVE -eq 0 ]]; then
     printf '[connection]\nwifi.powersave = 2\n' \
       | sudo tee /etc/NetworkManager/conf.d/99-wifi-powersave-off.conf >/dev/null
 
-    local c
-    while IFS= read -r c; do
-      [[ -n $c ]] || continue
-      sudo nmcli connection modify "$c" 802-11-wireless.powersave 2 || true
-    done < <(nmcli -t -f NAME,TYPE connection show 2>/dev/null \
+    # Match on UUID, not name: nmcli's terse output escapes a colon in a
+    # profile name as \:, which splits wrong on -F: and drops the profile, and
+    # two profiles can share a name but never a UUID.
+    local uuid
+    while IFS= read -r uuid; do
+      [[ -n $uuid ]] || continue
+      sudo nmcli connection modify "$uuid" 802-11-wireless.powersave 2 || true
+    done < <(nmcli -t -f UUID,TYPE connection show 2>/dev/null \
              | awk -F: '$2 == "802-11-wireless" { print $1 }')
 
     sudo tee /etc/systemd/system/wifi-powersave-off.service >/dev/null <<'UNIT'
