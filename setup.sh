@@ -686,7 +686,7 @@ WantedBy=multi-user.target
 UNIT
     sudo systemctl daemon-reload
     sudo systemctl enable wifi-powersave-off.service
-    sudo systemctl start wifi-powersave-off.service
+    sudo systemctl restart wifi-powersave-off.service
   }
   run "Turning off Wi-Fi power saving" disable_wifi_powersave
 fi
