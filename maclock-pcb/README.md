@@ -16,14 +16,15 @@ To populate one board:
 | ----------- | --- | ----------------------------------------- | ---------------------------------- | ---------------------------------------------------- |
 | R1, R2      | 2   | 1 kΩ ±1% — UNI-ROYAL `0402WGF1001TCE` (LCSC [`C11702`](https://www.lcsc.com/product-detail/C11702.html)) | 0402 (1005 metric) SMD | In series with the SW1 and SW2 button lines          |
 | R3          | 1   | 1 kΩ ±1% — same as above                  | 0402 (1005 metric) SMD             | With C1, the low-pass that smooths the Pi's PWM audio — about 1.6 kHz |
-| C1          | 1   | 100 nF X7R — Samsung `CL05B104KO5NNNC` (LCSC [`C1525`](https://jlcpcb.com/partdetail/C1525)) | 0402 SMD (land also takes 0603 / 0805 / 1206, or a through-hole disc) | Audio low-pass with R3 |
+| C1          | 1   | 100 nF X7R — 1206 chip ceramic (e.g. Samsung `CL31B104KBCNNNC`) | `maclock:C_Chip_or_Disc_P5mm_SMD` — SMD chip (0402–1206) **or** a through-hole disc | Audio low-pass with R3 |
 | PiInput     | 1   | 1×7 **male** pin header, 2.54 mm, straight | through-hole, 1.0 mm holes         | Silkscreened "Pi GPIO". Pin order: Dial B, GND, Dial A, 5V, A+, SW2, SW1 |
 | JP1         | 1   | 1×5 **female** socket, 2.54 mm, straight  | through-hole, 1.0 mm holes          | Silkscreened "Adafruit PAM8302" — the amp's own male pins plug in here |
+| ENC1        | 1   | Rotary encoder, EC11-class **horizontal SMD** — F-SWITCH `E8E8-3.2C60-9B34` | `maclock:RotaryEncoder_E8E8-3.2C60-9B34_SMD` — 5 pads + two Ø1.5 mm posts | The "Dial". A real board footprint on the silkscreened "Dial" land; ENC_A / ENC_B / GND also break out on the Pi header |
 | BAT+, BAT−  | 2   | **male** pins, 2.54 mm                    | through-hole, 1.0 mm holes          | Silkscreened "Input": 5V and GND. Two single pins, 3 mm apart |
 | —           | 1   | **PAM8302 audio amplifier breakout**      | external module                    | Plugs into JP1; output to speaker                    |
 | —           | 1   | Small speaker, 8 Ω, ~0.5 W                | —                                  | Whatever fits behind the original Maclock grille     |
 
-The dial is not a board-mounted part. The [F-SWITCH `E8E8-3.2C60-9B34`](#) encoder — or any EC11-class encoder — wires to the **Dial A**, **Dial B**, and **GND** pins of the Pi GPIO header.
+The dial (**ENC1**) mounts on the board's "Dial" land — the F-SWITCH `E8E8-3.2C60-9B34` horizontal SMD encoder, or any part matching that land. Its **ENC_A**, **ENC_B**, and **GND** lines also appear on the Pi GPIO header's **Dial A**, **Dial B**, and **GND** pins, so the encoder can be board-mounted here or wired from the header.
 
 ### C1 takes either a chip or a disc
 
@@ -33,7 +34,7 @@ C1's land is a hybrid: two SMD pads overlapping the original through-holes. The 
 
 | Ref         | Qty | Part                                      | Footprint           | Notes                                              |
 | ----------- | --- | ----------------------------------------- | ------------------- | -------------------------------------------------- |
-| SW1, SW2    | 2   | [Same Sky `TS32-7-35-BK-160-RA-SMT-TR`](https://www.digikey.com/en/products/detail/same-sky-formerly-cui-devices/TS32-7-35-BK-160-RA-SMT-TR/26253029) | 7.0 × 3.5 mm SMT, side actuated | 160 gf, 0.25 mm travel, 2.5 mm body, 1.1 mm plunger. Skip if you're wiring the Maclock's existing buttons to the SW1/SW2 pads |
+| SW1, SW2    | 2   | [Same Sky `TS32-7-35-BK-160-RA-SMT-TR`](https://www.digikey.com/en/products/detail/same-sky-formerly-cui-devices/TS32-7-35-BK-160-RA-SMT-TR/26253029), or any 5 × 7.8 × 3.8 mm side-press SMD tactile that fits the land | `maclock:SW_Push_5x7.8x3.8mm_SMD` — side actuated, no-boss | 160 gf, side plunger. The land also fits generic 5 × 7.8 × 3.8 mm SMD samples. Skip if you're wiring the Maclock's existing buttons to the SW1/SW2 pads |
 
 The board carries the **no-boss** land pattern: six SMD pads and no drilled holes under the switch. Order the plain part, not the `B` (boss) variant — a boss switch has two Ø0.8 mm locating pins with nothing to sit in, so it will not seat.
 
@@ -44,12 +45,12 @@ PCBWay assembles from LCSC stock, so the BOM leans on parts LCSC carries.
 | Ref            | LCSC                                                        | Notes                                    |
 | -------------- | ----------------------------------------------------------- | ---------------------------------------- |
 | R1, R2, R3     | [`C11702`](https://www.lcsc.com/product-detail/C11702.html)  | UNI-ROYAL 0402WGF1001TCE, 1 kΩ ±1%       |
-| C1             | [`C1525`](https://jlcpcb.com/partdetail/C1525)               | Samsung CL05B104KO5NNNC, 100 nF X7R 0402 — for an 0603 land use the 0603 equivalent |
+| C1             | pick a 1206 100 nF X7R                                        | e.g. Samsung CL31B104KBCNNNC (1206) — confirm the LCSC part; the land also takes 0402–1206 or a through-hole disc |
 
 Two parts still need picking by hand:
 
-- **SW1, SW2.** The Same Sky part above is the Western reference; LCSC stocks the same 7.0 × 3.5 × 2.5 mm side-press body from domestic brands far cheaper. Filter for side-press SMD, 7 × 3.5 mm, 160 gf, 4 terminals, no boss. Order a sample first — this body size comes in several incompatible pad layouts.
-- **The dial.** F-SWITCH is China-domestic and not on LCSC. ALPS EC11 parts are stocked, for example [`C202365`](https://www.lcsc.com/product-detail/C202365.html), but cost more than a dollar each. Since the dial wires to the header rather than mounting to the board, any EC11-class encoder works.
+- **SW1, SW2.** The Same Sky `TS32-7-35-BK-160-RA-SMT-TR` is the reference and the only confirmed fit for the land, but LCSC/JLCPCB doesn't stock it. The nearest LCSC side-press part is XKB [`C609853`](https://www.lcsc.com/product-detail/C609853.html) (TS-1101S), but its body is 6 mm — about 1.8 mm shorter than this land — so it needs a shorter footprint before it seats. For a guaranteed fit, order the genuine TS32 from DigiKey/Mouser and consign it. Order a sample first — this body size comes in several incompatible pad layouts.
+- **The dial (ENC1).** F-SWITCH `E8E8-3.2C60-9B34` is China-domestic and not on LCSC. Any encoder matching the horizontal-SMD land works; ALPS EC11 parts are stocked, for example [`C202365`](https://www.lcsc.com/product-detail/C202365.html), but cost more than a dollar each and use a different (vertical, through-hole) body.
 
 The three headers stay through-hole, so the board needs a hand-soldering or selective-solder pass whichever way C1 goes.
 
