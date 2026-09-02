@@ -16,11 +16,12 @@ To populate one board:
 | ----------- | --- | ----------------------------------------- | ---------------------------------- | ---------------------------------------------------- |
 | R1, R2      | 2   | 1 kΩ ±1% — UNI-ROYAL `0402WGF1001TCE` (LCSC [`C11702`](https://www.lcsc.com/product-detail/C11702.html)) | 0402 (1005 metric) SMD | In series with the SW1 and SW2 button lines          |
 | R3          | 1   | 1 kΩ ±1% — same as above                  | 0402 (1005 metric) SMD             | With C1, the low-pass that smooths the Pi's PWM audio — about 1.6 kHz |
-| C1          | 1   | 100 nF X7R — 1206 chip ceramic (e.g. Samsung `CL31B104KBCNNNC`) | `maclock:C_Chip_or_Disc_P5mm_SMD` — SMD chip (0402–1206) **or** a through-hole disc | Audio low-pass with R3 |
-| PiInput     | 1   | 1×7 **male** pin header, 2.54 mm, straight | through-hole, 1.0 mm holes         | Silkscreened "Pi GPIO". Pin order: Dial B, GND, Dial A, 5V, A+, SW2, SW1 |
-| JP1         | 1   | 1×5 **female** socket, 2.54 mm, straight  | through-hole, 1.0 mm holes          | Silkscreened "Adafruit PAM8302" — the amp's own male pins plug in here |
-| ENC1        | 1   | Rotary encoder, EC11-class **horizontal SMD** — F-SWITCH `E8E8-3.2C60-9B34` | `maclock:RotaryEncoder_E8E8-3.2C60-9B34_SMD` — 5 pads + two Ø1.5 mm posts | The "Dial". A real board footprint on the silkscreened "Dial" land; ENC_A / ENC_B / GND also break out on the Pi header |
-| BAT+, BAT−  | 2   | **male** pins, 2.54 mm                    | through-hole, 1.0 mm holes          | Silkscreened "Input": 5V and GND. Two single pins, 3 mm apart |
+| C1          | 1   | 100 nF X7R — 1206 chip ceramic — Samsung `CL31B104KBCNNNC` (LCSC [`C24497`](https://www.lcsc.com/product-detail/C24497.html)) | `maclock:C_Chip_or_Disc_P5mm_SMD` — SMD chip (0402–1206) **or** a through-hole disc | Audio low-pass with R3 |
+| PiInput     | 1   | 1×7 **male** pin header, 2.54 mm, straight — LCSC [`C492406`](https://www.lcsc.com/product-detail/C492406.html) | through-hole, 1.0 mm holes         | Silkscreened "Pi GPIO". Pin order: Dial B, GND, Dial A, 5V, A+, SW2, SW1 |
+| JP1         | 1   | 1×5 **female** socket, 2.54 mm, straight — LCSC [`C50950`](https://www.lcsc.com/product-detail/C50950.html) | through-hole, 1.0 mm holes          | Silkscreened "Adafruit PAM8302" — the amp's own male pins plug in here |
+| ENC1        | 1   | Rotary encoder, **horizontal SMD mouse-wheel** — HOAUC `HYCW03-2.8D-5P-S` (LCSC [`C55218995`](https://www.lcsc.com/product-detail/C55218995.html)) | `maclock:RotaryEncoder_HYCW03-2.8D-5P-S_SMD` — 3 quadrature pads (2 mm pitch) + 2 solder tabs + two NPTH Ø0.7/Ø0.9 locating holes | The "Dial". Hex 1.78 mm bore, 3.2 mm mount height, 12 pulse / 12 detent. Drops onto the silkscreened "Dial" land; ENC_A / ENC_B / GND also break out on the Pi header. LCSC-stocked equivalent of the F-SWITCH `E8E8-3.2C60-9B34` (hex 1.74 mm, 9 P/18 D — not on LCSC; order from F-Switch/Dicomon and consign if you want the exact feel) |
+| J1          | 1   | JST ZH 1×2, 1.5 mm — `B2B-ZR` (LCSC [`C158011`](https://www.lcsc.com/product-detail/C158011.html)) | through-hole, vertical | **Power switch** connector, inline in the 5V rail (5V_IN ↔ 5V). Wire an SPST switch here: closed = board on |
+| J2          | 1   | JST ZH 1×4, 1.5 mm — `B4B-ZR` (LCSC [`C157997`](https://www.lcsc.com/product-detail/C157997.html)) | through-hole, vertical | **Power input** from USB-C or battery: pin 1 = 5V (3.7 V on battery), pin 2 = GND. Pins 3–4 unused (legacy Maclock, not needed) |
 | —           | 1   | **PAM8302 audio amplifier breakout**      | external module                    | Plugs into JP1; output to speaker                    |
 | —           | 1   | Small speaker, 8 Ω, ~0.5 W                | —                                  | Whatever fits behind the original Maclock grille     |
 
@@ -34,9 +35,9 @@ C1's land is a hybrid: two SMD pads overlapping the original through-holes. The 
 
 | Ref         | Qty | Part                                      | Footprint           | Notes                                              |
 | ----------- | --- | ----------------------------------------- | ------------------- | -------------------------------------------------- |
-| SW1, SW2    | 2   | [Same Sky `TS32-7-35-BK-160-RA-SMT-TR`](https://www.digikey.com/en/products/detail/same-sky-formerly-cui-devices/TS32-7-35-BK-160-RA-SMT-TR/26253029), or any 5 × 7.8 × 3.8 mm side-press SMD tactile that fits the land | `maclock:SW_Push_5x7.8x3.8mm_SMD` — side actuated, no-boss | 160 gf, side plunger. The land also fits generic 5 × 7.8 × 3.8 mm SMD samples. Skip if you're wiring the Maclock's existing buttons to the SW1/SW2 pads |
+| SW1, SW2    | 2   | BZCN `TSB001A3518A` (LCSC [`C2888448`](https://www.lcsc.com/product-detail/C2888448.html)) — 7.7 × 3.55 mm side-press SMD tactile, 180 gf | `maclock:SW_TSB001_7.7x3.55_SideSMD` — side actuated + bracket, two Ø0.9 mm NPTH locators | The two front buttons. **LCSC-stocked.** Same land fits any TSB001 variant (120 / 180 / 260 gf, 3.2 / 3.5 / 3.8 mm heights). Skip if wiring the Maclock's existing buttons to the SW pads |
 
-The board carries the **no-boss** land pattern: six SMD pads and no drilled holes under the switch. Order the plain part, not the `B` (boss) variant — a boss switch has two Ø0.8 mm locating pins with nothing to sit in, so it will not seat.
+The SW1/SW2 land is the TSB001 pattern: four SMD pads (pad 1 = the signal contact, pads 2–4 to GND) plus two Ø0.9 mm NPTH locators. Earlier revisions used a Same Sky `TS32-7-35-BK-160-RA-SMT-TR` (160 gf) on a custom 6-pad land; the board now carries the LCSC-stocked TSB001.
 
 ## Sourcing for Chinese assembly
 
@@ -47,10 +48,10 @@ PCBWay assembles from LCSC stock, so the BOM leans on parts LCSC carries.
 | R1, R2, R3     | [`C11702`](https://www.lcsc.com/product-detail/C11702.html)  | UNI-ROYAL 0402WGF1001TCE, 1 kΩ ±1%       |
 | C1             | pick a 1206 100 nF X7R                                        | e.g. Samsung CL31B104KBCNNNC (1206) — confirm the LCSC part; the land also takes 0402–1206 or a through-hole disc |
 
-Two parts still need picking by hand:
+The two parts that used to need hand-picking are now LCSC-stocked:
 
-- **SW1, SW2.** The Same Sky `TS32-7-35-BK-160-RA-SMT-TR` is the reference and the only confirmed fit for the land, but LCSC/JLCPCB doesn't stock it. The nearest LCSC side-press part is XKB [`C609853`](https://www.lcsc.com/product-detail/C609853.html) (TS-1101S), but its body is 6 mm — about 1.8 mm shorter than this land — so it needs a shorter footprint before it seats. For a guaranteed fit, order the genuine TS32 from DigiKey/Mouser and consign it. Order a sample first — this body size comes in several incompatible pad layouts.
-- **The dial (ENC1).** F-SWITCH `E8E8-3.2C60-9B34` is China-domestic and not on LCSC. Any encoder matching the horizontal-SMD land works; ALPS EC11 parts are stocked, for example [`C202365`](https://www.lcsc.com/product-detail/C202365.html), but cost more than a dollar each and use a different (vertical, through-hole) body.
+- **SW1, SW2.** BZCN `TSB001A3518A` (LCSC [`C2888448`](https://www.lcsc.com/product-detail/C2888448.html)) — a 180 gf, 7.7 × 3.55 mm side-press SMD tactile that matches the board's TSB001 land. Want the exact original feel? The Same Sky `TS32-7-35-BK-160-RA-SMT-TR` is 160 gf but isn't on LCSC — order it from DigiKey/Mouser and consign against a rebuilt TS32 land.
+- **The dial (ENC1).** HOAUC `HYCW03-2.8D-5P-S` (LCSC [`C55218995`](https://www.lcsc.com/product-detail/C55218995.html)) sits on the Dial land. The original F-SWITCH `E8E8-3.2C60-9B34` (9 pulse / 18 detent, hex 1.74 mm) is China-domestic — consign it if you want that exact feel.
 
 The three headers stay through-hole, so the board needs a hand-soldering or selective-solder pass whichever way C1 goes.
 
@@ -63,7 +64,7 @@ Adding pull-ups was tried and reverted, for two reasons worth recording:
 - **A stronger pull-up makes a worn encoder worse, not better.** The low level is a divider against contact resistance. Against a contact gone to 10 kΩ, the internal 50 kΩ still gives 0.55 V and reads low; adding 10 kΩ in parallel gives 1.8 V, which reads high. The weak internal pull-up is the more forgiving choice as contacts age.
 - **100 nF is about 100× too much capacitance.** Real transitions inside a flick arrive 19 µs to 680 µs apart, so a 1 ms time constant smears the signal, not just the bounce. If you ever do want a hardware glitch filter, size it around 10 kΩ and 1 nF — roughly 10 µs — and take the numbers from a fresh capture rather than from generic encoder advice.
 
-**The schematic does not match the board.** [`maclock-breakout.kicad_sch`](./maclock-breakout.kicad_sch) is a reconstruction, and it says so. It draws R1, R2, and R3 as pull-ups to 5V and calls JP1 a rotary encoder. The board wires all three as series resistors and JP1 as the PAM8302 header. Trust the PCB; the schematic needs redrawing before anyone edits from it.
+**The schematic now matches the board.** [`maclock-breakout.kicad_sch`](./maclock-breakout.kicad_sch) was rebuilt from the PCB (the source of truth) — all 11 parts with correct footprints, LCSC numbers, and pin-for-pin nets, drawn in net-label style (connectivity by labels, not wires). ERC is clean and it passes board↔schematic parity apart from benign symbol-metadata differences. R1/R2/R3 are series resistors (button lines feed `SW1`/`SW2` → `BTN1`/`BTN2`; R3 filters `AUDIO` → `A+`), and JP1 is the PAM8302 socket.
 
 ## License
 
