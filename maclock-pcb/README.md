@@ -16,7 +16,7 @@ To populate one board:
 | ----------- | --- | ----------------------------------------- | ---------------------------------- | ---------------------------------------------------- |
 | R1, R2      | 2   | 1 kΩ ±1% — UNI-ROYAL `0402WGF1001TCE` (LCSC [`C11702`](https://www.lcsc.com/product-detail/C11702.html)) | 0402 (1005 metric) SMD | In series with the SW1 and SW2 button lines          |
 | R3          | 1   | 1 kΩ ±1% — same as above                  | 0402 (1005 metric) SMD             | With C1, the low-pass that smooths the Pi's PWM audio — about 16 kHz |
-| C1          | 1   | 10 nF X7R — 1206 chip ceramic — `1206B103K500NT` (LCSC [`C1846`](https://www.lcsc.com/product-detail/C1846.html)) | `maclock:C_Chip_or_Disc_P5mm_SMD` — SMD chip (0603–1206) **or** a through-hole disc | Audio low-pass with R3 |
+| C1          | 1   | 10 nF X7R 0603 — `0603B103K500NT` (LCSC [`C57112`](https://www.lcsc.com/product-detail/C57112.html)) | 0603 | Audio low-pass with R3 |
 | PiInput     | 1   | 1×8 **male** pin header, 2.54 mm, straight — LCSC [`C492407`](https://www.lcsc.com/product-detail/C492407.html) | through-hole, 1.0 mm holes         | Silkscreened "Pi GPIO". Pin order: Dial B, GND, Dial A, 5V, A+, SW2, SW1, MUTE. MUTE is optional (see below) |
 | U1          | 1   | PAM8302A 2.5 W class-D mono amp — Diodes `PAM8302AASCR` (LCSC [`C113367`](https://www.lcsc.com/product-detail/C113367.html)) | MSOP-8 | The amplifier, bottom side. Same chip as the Adafruit module |
 | C2, C3      | 2   | 220 nF X7R 0603 — `CL10B224KA8NNNC` (LCSC [`C21120`](https://www.lcsc.com/product-detail/C21120.html)) | 0603 | Amp input coupling caps (IN+ and IN−) |
@@ -31,10 +31,6 @@ To populate one board:
 | —           | 1   | Small speaker, 8 Ω, ~0.5 W                | —                                  | Plugs into J3. Whatever fits behind the original Maclock grille |
 
 The dial (**ENC1**) mounts on the board's "Dial" land — the F-SWITCH `E8E8-3.2C60-9B34` horizontal SMD encoder, or any part matching that land. Its **ENC_A**, **ENC_B**, and **GND** lines also appear on the Pi GPIO header's **Dial A**, **Dial B**, and **GND** pins, so the encoder can be board-mounted here or wired from the header.
-
-### C1 takes either a chip or a disc
-
-C1's land is a hybrid: two SMD pads overlapping the original through-holes. The default is a chip capacitor across the 0.8 mm gap — 0603 through 1206 land correctly (an 0402 only overlaps each pad by 0.1 mm) — and the footprint is typed SMD, so it exports as SMT in the position and BOM files. The holes are still there if you would rather fit a through-hole disc; populate one or the other, never both.
 
 ### Optional (only if not reusing the Maclock's original parts)
 
@@ -51,14 +47,14 @@ PCBWay assembles from LCSC stock, so the BOM leans on parts LCSC carries.
 | Ref            | LCSC                                                        | Notes                                    |
 | -------------- | ----------------------------------------------------------- | ---------------------------------------- |
 | R1, R2, R3     | [`C11702`](https://www.lcsc.com/product-detail/C11702.html)  | UNI-ROYAL 0402WGF1001TCE, 1 kΩ ±1%       |
-| C1             | [`C1846`](https://www.lcsc.com/product-detail/C1846.html)     | 1206B103K500NT, 10 nF X7R 1206 (Basic); the land also takes 0603–1206 or a through-hole disc |
+| C1             | [`C57112`](https://www.lcsc.com/product-detail/C57112.html)   | 0603B103K500NT, 10 nF X7R 0603 (Basic)   |
 
 The two parts that used to need hand-picking are now LCSC-stocked:
 
 - **SW1, SW2.** BZCN `TSB001A3518A` (LCSC [`C2888448`](https://www.lcsc.com/product-detail/C2888448.html)) — a 180 gf, 7.7 × 3.55 mm side-press SMD tactile that matches the board's TSB001 land. Want the exact original feel? The Same Sky `TS32-7-35-BK-160-RA-SMT-TR` is 160 gf but isn't on LCSC — order it from DigiKey/Mouser and consign against a rebuilt TS32 land.
 - **The dial (ENC1).** HOAUC `HYCW03-2.8D-5P-S` (LCSC [`C55218995`](https://www.lcsc.com/product-detail/C55218995.html)) sits on the Dial land. The original F-SWITCH `E8E8-3.2C60-9B34` (9 pulse / 18 detent, hex 1.74 mm) is China-domestic — consign it if you want that exact feel.
 
-The Pi header and the three JST connectors stay through-hole, so the board needs a hand-soldering or selective-solder pass whichever way C1 goes.
+Every passive and the amp are SMD; only the Pi header and the three JST connectors are through-hole, so the board needs one hand-soldering or selective-solder pass for those.
 
 ### The on-board amp (rev 2)
 

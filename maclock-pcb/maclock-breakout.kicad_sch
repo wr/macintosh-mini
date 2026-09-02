@@ -3138,7 +3138,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "maclock:C_Chip_or_Disc_P5mm_SMD"
+		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
 			(at 185.42 54.61 0)
 			(hide yes)
 			(effects
@@ -3165,7 +3165,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C1846"
+		(property "LCSC" "C57112"
 			(at 185.42 54.61 0)
 			(hide yes)
 			(effects
