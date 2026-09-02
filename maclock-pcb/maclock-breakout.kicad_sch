@@ -2246,7 +2246,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "100nF"
+		(property "Value" "10nF"
 			(at 186.055 57.15 0)
 			(effects
 				(font
@@ -2282,7 +2282,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C24497"
+		(property "LCSC" "C1846"
 			(at 185.42 54.61 0)
 			(hide yes)
 			(effects

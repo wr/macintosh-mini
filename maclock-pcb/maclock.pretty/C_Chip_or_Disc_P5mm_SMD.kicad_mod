@@ -14,7 +14,7 @@
   (fp_circle (center -1.3500 0.0000) (end -1.2000 0.0000) (stroke (width 0.1) (type solid)) (fill solid) (layer "F.SilkS"))
   (fp_text reference "REF**" (at 2.5000 -2.0500 0) (layer "F.SilkS") (effects (font (size 1 1) (thickness 0.15))))
   (fp_text value "C_Chip_or_Disc_P5mm_SMD" (at 2.5000 2.0500 0) (layer "F.Fab") (effects (font (size 1 1) (thickness 0.15))))
-  (model "${KICAD9_3DMODEL_DIR}/Capacitor_SMD.3dshapes/C_1206_3216Metric.step"
+  (model "${KICAD10_3DMODEL_DIR}/Capacitor_SMD.3dshapes/C_1206_3216Metric.step"
     (offset (xyz 2.5 0 0))
     (scale (xyz 1 1 1))
     (rotate (xyz 0 0 0)))

@@ -142,7 +142,7 @@
 				)
 			)
 		)
-		(property "Value" "SW_TSB001_7.7x3.55_SideSMD"
+		(property "Value" "TSB001A3518A"
 			(at 0 2.82 0)
 			(layer "F.Fab")
 			(uuid "46301e3d-3e93-4738-af48-9813adace038")
@@ -172,6 +172,18 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C2888448"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "06fbcc4b-e812-45f5-8666-5e444d6253a1")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -635,7 +647,7 @@
 				)
 			)
 		)
-		(property "Value" "SW_TSB001_7.7x3.55_SideSMD"
+		(property "Value" "TSB001A3518A"
 			(at 0 2.82 0)
 			(layer "F.Fab")
 			(uuid "b5952f10-ed15-4e02-9714-531fa119db20")
@@ -665,6 +677,18 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C2888448"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "a589aa4a-9fad-4ef4-912d-c608ecea4939")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -1912,7 +1936,7 @@
 				(justify mirror)
 			)
 		)
-		(property "Value" "100nF"
+		(property "Value" "10nF"
 			(at 2.5 -2.05 270)
 			(layer "B.Fab")
 			(uuid "04188b79-f590-4640-a3f7-e787a5b5cf58")
@@ -1948,7 +1972,7 @@
 				(justify mirror)
 			)
 		)
-		(property "LCSC" "C24497"
+		(property "LCSC" "C1846"
 			(at 0 0 0)
 			(layer "B.SilkS")
 			(hide yes)
@@ -2040,7 +2064,7 @@
 			(uuid "f7a24c14-7cc0-4d65-86aa-498f8f66daf0")
 		)
 		(embedded_fonts no)
-		(model "${KICAD9_3DMODEL_DIR}/Capacitor_SMD.3dshapes/C_0402_1005Metric.step"
+		(model "${KICAD10_3DMODEL_DIR}/Capacitor_SMD.3dshapes/C_1206_3216Metric.step"
 			(offset
 				(xyz 2.5 0 0)
 			)
@@ -3686,6 +3710,30 @@
 			(justify left bottom)
 		)
 	)
+	(gr_text "+"
+		(at 146.1 99.15 0)
+		(layer "B.SilkS")
+		(uuid "2995f8ba-08be-4500-ae28-b0102bb388ca")
+		(effects
+			(font
+				(size 0.8 0.8)
+				(thickness 0.15)
+			)
+			(justify mirror)
+		)
+	)
+	(gr_text "-"
+		(at 147.6 99.15 0)
+		(layer "B.SilkS")
+		(uuid "223c41e0-e789-4d29-a0c0-589b4ab0e416")
+		(effects
+			(font
+				(size 0.8 0.8)
+				(thickness 0.15)
+			)
+			(justify mirror)
+		)
+	)
 	(gr_text "Pi GPIO"
 		(at 127.5 81 0)
 		(layer "B.SilkS")
@@ -4167,6 +4215,22 @@
 		(layer "B.SilkS")
 		(uuid "68a04e41-e788-4bd1-a4a0-687e2c2bd300")
 	)
+	(segment
+		(start 178.0625 96.65)
+		(end 156.845 96.65)
+		(width 0.5)
+		(layer "F.Cu")
+		(net "/SW1")
+		(uuid "6b0ff7e2-527d-48a6-9a31-1e0de3fef079")
+	)
+	(segment
+		(start 183.0875 101.675)
+		(end 178.0625 96.65)
+		(width 0.5)
+		(layer "F.Cu")
+		(net "/SW1")
+		(uuid "bf7804df-cbcb-4081-9575-f166da2f99f6")
+	)
 	(via
 		(at 186.25 93.875)
 		(size 0.6)
@@ -4317,6 +4381,22 @@
 		(uuid "7ee9e0a8-3a7c-4c59-83d0-812aa14bb96a")
 	)
 	(segment
+		(start 152.5 97.5)
+		(end 157.445 97.5)
+		(width 0.5)
+		(layer "F.Cu")
+		(net "/SW2")
+		(uuid "59680904-6612-41b8-a21d-63ab2438c87a")
+	)
+	(segment
+		(start 157.445 97.5)
+		(end 161.6 101.655)
+		(width 0.5)
+		(layer "F.Cu")
+		(net "/SW2")
+		(uuid "c6f5378d-b2c4-4d79-a29c-0452f6bb3617")
+	)
+	(segment
 		(start 149.425 97.5)
 		(end 151.305 97.5)
 		(width 0.5)
@@ -4347,38 +4427,6 @@
 		(layer "F.Cu")
 		(net "/BTN2")
 		(uuid "c3e3fb7a-9b0b-47e7-96bd-34d151d10cff")
-	)
-	(segment
-		(start 152.5 97.5)
-		(end 157.445 97.5)
-		(width 0.5)
-		(layer "F.Cu")
-		(net "/SW2")
-		(uuid "59680904-6612-41b8-a21d-63ab2438c87a")
-	)
-	(segment
-		(start 157.445 97.5)
-		(end 161.6 101.655)
-		(width 0.5)
-		(layer "F.Cu")
-		(net "/SW2")
-		(uuid "c6f5378d-b2c4-4d79-a29c-0452f6bb3617")
-	)
-	(segment
-		(start 178.0625 96.65)
-		(end 156.845 96.65)
-		(width 0.5)
-		(layer "F.Cu")
-		(net "/SW1")
-		(uuid "6b0ff7e2-527d-48a6-9a31-1e0de3fef079")
-	)
-	(segment
-		(start 183.0875 101.675)
-		(end 178.0625 96.65)
-		(width 0.5)
-		(layer "F.Cu")
-		(net "/SW1")
-		(uuid "bf7804df-cbcb-4081-9575-f166da2f99f6")
 	)
 	(segment
 		(start 148.15 95.23505)

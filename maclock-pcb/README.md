@@ -15,13 +15,13 @@ To populate one board:
 | Ref         | Qty | Part                                      | Footprint                          | Notes                                                |
 | ----------- | --- | ----------------------------------------- | ---------------------------------- | ---------------------------------------------------- |
 | R1, R2      | 2   | 1 kΩ ±1% — UNI-ROYAL `0402WGF1001TCE` (LCSC [`C11702`](https://www.lcsc.com/product-detail/C11702.html)) | 0402 (1005 metric) SMD | In series with the SW1 and SW2 button lines          |
-| R3          | 1   | 1 kΩ ±1% — same as above                  | 0402 (1005 metric) SMD             | With C1, the low-pass that smooths the Pi's PWM audio — about 1.6 kHz |
-| C1          | 1   | 100 nF X7R — 1206 chip ceramic — Samsung `CL31B104KBCNNNC` (LCSC [`C24497`](https://www.lcsc.com/product-detail/C24497.html)) | `maclock:C_Chip_or_Disc_P5mm_SMD` — SMD chip (0402–1206) **or** a through-hole disc | Audio low-pass with R3 |
+| R3          | 1   | 1 kΩ ±1% — same as above                  | 0402 (1005 metric) SMD             | With C1, the low-pass that smooths the Pi's PWM audio — about 16 kHz |
+| C1          | 1   | 10 nF X7R — 1206 chip ceramic — `1206B103K500NT` (LCSC [`C1846`](https://www.lcsc.com/product-detail/C1846.html)) | `maclock:C_Chip_or_Disc_P5mm_SMD` — SMD chip (0603–1206) **or** a through-hole disc | Audio low-pass with R3 |
 | PiInput     | 1   | 1×7 **male** pin header, 2.54 mm, straight — LCSC [`C492406`](https://www.lcsc.com/product-detail/C492406.html) | through-hole, 1.0 mm holes         | Silkscreened "Pi GPIO". Pin order: Dial B, GND, Dial A, 5V, A+, SW2, SW1 |
 | JP1         | 1   | 1×5 **female** socket, 2.54 mm, straight — LCSC [`C50950`](https://www.lcsc.com/product-detail/C50950.html) | through-hole, 1.0 mm holes          | Silkscreened "Adafruit PAM8302" — the amp's own male pins plug in here |
 | ENC1        | 1   | Rotary encoder, **horizontal SMD mouse-wheel** — HOAUC `HYCW03-2.8D-5P-S` (LCSC [`C55218995`](https://www.lcsc.com/product-detail/C55218995.html)) | `maclock:RotaryEncoder_HYCW03-2.8D-5P-S_SMD` — 3 quadrature pads (2 mm pitch) + 2 solder tabs + two NPTH Ø0.7/Ø0.9 locating holes | The "Dial". Hex 1.78 mm bore, 3.2 mm mount height, 12 pulse / 12 detent. Drops onto the silkscreened "Dial" land; ENC_A / ENC_B / GND also break out on the Pi header. LCSC-stocked equivalent of the F-SWITCH `E8E8-3.2C60-9B34` (hex 1.74 mm, 9 P/18 D — not on LCSC; order from F-Switch/Dicomon and consign if you want the exact feel) |
 | J1          | 1   | JST ZH 1×2, 1.5 mm — `B2B-ZR` (LCSC [`C158011`](https://www.lcsc.com/product-detail/C158011.html)) | through-hole, vertical | **Power switch** connector, inline in the 5V rail (5V_IN ↔ 5V). Wire an SPST switch here: closed = board on |
-| J2          | 1   | JST ZH 1×4, 1.5 mm — `B4B-ZR` (LCSC [`C157997`](https://www.lcsc.com/product-detail/C157997.html)) | through-hole, vertical | **Power input** from USB-C or battery: pin 1 = 5V (3.7 V on battery), pin 2 = GND. Pins 3–4 unused (legacy Maclock, not needed) |
+| J2          | 1   | JST ZH 1×4, 1.5 mm — `B4B-ZR` (LCSC [`C157997`](https://www.lcsc.com/product-detail/C157997.html)) | through-hole, vertical | **Power input** from USB-C or battery: pin 4 (silk `+`) = 5V (3.7 V on battery), pin 3 (silk `-`) = GND. Pins 1–2 unused (legacy Maclock, not needed). Pin 1 is the end nearest J1 |
 | —           | 1   | **PAM8302 audio amplifier breakout**      | external module                    | Plugs into JP1; output to speaker                    |
 | —           | 1   | Small speaker, 8 Ω, ~0.5 W                | —                                  | Whatever fits behind the original Maclock grille     |
 
@@ -29,7 +29,7 @@ The dial (**ENC1**) mounts on the board's "Dial" land — the F-SWITCH `E8E8-3.2
 
 ### C1 takes either a chip or a disc
 
-C1's land is a hybrid: two SMD pads overlapping the original through-holes. The default is a chip capacitor across the 0.8 mm gap — 0402 through 1206 all land correctly — and the footprint is typed SMD, so it exports as SMT in the position and BOM files. The holes are still there if you would rather fit a through-hole disc; populate one or the other, never both.
+C1's land is a hybrid: two SMD pads overlapping the original through-holes. The default is a chip capacitor across the 0.8 mm gap — 0603 through 1206 land correctly (an 0402 only overlaps each pad by 0.1 mm) — and the footprint is typed SMD, so it exports as SMT in the position and BOM files. The holes are still there if you would rather fit a through-hole disc; populate one or the other, never both.
 
 ### Optional (only if not reusing the Maclock's original parts)
 
@@ -46,7 +46,7 @@ PCBWay assembles from LCSC stock, so the BOM leans on parts LCSC carries.
 | Ref            | LCSC                                                        | Notes                                    |
 | -------------- | ----------------------------------------------------------- | ---------------------------------------- |
 | R1, R2, R3     | [`C11702`](https://www.lcsc.com/product-detail/C11702.html)  | UNI-ROYAL 0402WGF1001TCE, 1 kΩ ±1%       |
-| C1             | pick a 1206 100 nF X7R                                        | e.g. Samsung CL31B104KBCNNNC (1206) — confirm the LCSC part; the land also takes 0402–1206 or a through-hole disc |
+| C1             | [`C1846`](https://www.lcsc.com/product-detail/C1846.html)     | 1206B103K500NT, 10 nF X7R 1206 (Basic); the land also takes 0603–1206 or a through-hole disc |
 
 The two parts that used to need hand-picking are now LCSC-stocked:
 
