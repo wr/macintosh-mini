@@ -14,3 +14,6 @@ plot/
 # Project-local library tables ARE part of this project (root .gitignore hides them)
 !fp-lib-table
 !sym-lib-table
+
+# KiCad DRC/ERC report output
+*.rpt
