@@ -12,7 +12,7 @@ I recorded a walkthrough for how I assembled mine that goes into much more detai
 - [Maclock](https://amzn.to/4e7FKrw)
 - [Raspberry Pi Zero 2 W](https://amzn.to/4ac7FVR)
 - [Waveshare 2.8 inch IPS LCD](https://amzn.to/4ue5GaP)
-- [Adafruit PAM8302 audio amp](https://amzn.to/4uITeAP) + small speaker
+- Small 8 Ω speaker (the audio amp is on the breakout board)
 - [3D printed screen bezel](../maclock-screen-bezel)
 - [Macintosh Mini breakout board](https://www.pcbway.com/project/shareproject/W654223ASS41_Untitled_kicad_pcb_95cca7e3.html) (if you want brightness, buttons, and sound). Full [bill of materials here](../maclock-pcb).
 
@@ -27,8 +27,10 @@ I recorded a walkthrough for how I assembled mine that goes into much more detai
 | Button 1        | SW1                   | 13             | Bend or desolder pin on Pi |
 | Rotary DT       | Dial B                | 19             | Bend or desolder pin on Pi |
 | Rotary CLK      | Dial A                | 23             | Bend or desolder pin on Pi |
-| Audio (PAM8302) | A+                    | 35             | Bend or desolder pin on Pi |
+| Audio           | A+                    | 35             | Bend or desolder pin on Pi |
 | Button 2        | SW2                   | 37             | Bend or desolder pin on Pi |
+| Amp mute        | MUTE                  | optional       | Leave unwired for always-on; any spare GPIO driven low mutes the amp |
+| Speaker         | J3 (`+` / `-`)        | —              | JST ZH 2-pin; polarity doesn't matter |
 
 Bend, cut, or desolder pins 13, 19, 23, 35, and 37 so they don't plug into the Waveshare display board. Leaving them in can cause odd issues with the buttons and dial on the front of the Mac.
 
