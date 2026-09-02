@@ -2385,7 +2385,7 @@
 				)
 			)
 		)
-		(property "Value" "PAM8302_Socket_1x5"
+		(property "Value" "2.54-1*5PFemale"
 			(at 54.61 217.17 0)
 			(effects
 				(font
@@ -2454,7 +2454,7 @@
 				)
 			)
 		)
-		(property "Value" "JST_ZH_B2B-ZR_1x02_P1.50mm_Vertical"
+		(property "Value" "B2B-ZR(LF)(SN)"
 			(at 119.38 214.63 0)
 			(effects
 				(font
@@ -2523,7 +2523,7 @@
 				)
 			)
 		)
-		(property "Value" "JST_ZH_B4B-ZR_1x04_P1.50mm_Vertical"
+		(property "Value" "B4B-ZR(LF)(SN)"
 			(at 175.26 217.17 0)
 			(effects
 				(font
@@ -2592,7 +2592,7 @@
 				)
 			)
 		)
-		(property "Value" "PinHeader_1x07_P2.54mm_Vertical"
+		(property "Value" "PZ254V-11-07P"
 			(at 260.35 214.63 0)
 			(effects
 				(font
