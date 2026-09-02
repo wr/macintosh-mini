@@ -2883,16 +2883,6 @@
 		)
 		(uuid "d1c7ce03-4696-4e3e-a334-f8aef3037d35")
 	)
-	(label "AMP_SD"
-		(at 255.27 214.63 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "fb99154e-793b-4d50-b6dc-3950e2337ffb")
-	)
   (label "5V"
     (at 350.52 63.5 0)
     (fields_autoplaced yes)
@@ -3391,7 +3381,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Connector_Generic:Conn_01x08")
+		(lib_id "Connector_Generic:Conn_01x07")
 		(at 260.35 204.47 0)
 		(unit 1)
 		(in_bom yes)
@@ -3406,7 +3396,7 @@
 				)
 			)
 		)
-		(property "Value" "PZ254V-11-08P"
+		(property "Value" "PZ254V-11-07P"
 			(at 260.35 214.63 0)
 			(effects
 				(font
@@ -3414,7 +3404,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical"
+		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x07_P2.54mm_Vertical"
 			(at 260.35 204.47 0)
 			(hide yes)
 			(effects
@@ -3441,7 +3431,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C492407"
+		(property "LCSC" "C492406"
 			(at 260.35 204.47 0)
 			(hide yes)
 			(effects

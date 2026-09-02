@@ -17,13 +17,13 @@ To populate one board:
 | R1, R2      | 2   | 1 kΩ ±1% — UNI-ROYAL `0402WGF1001TCE` (LCSC [`C11702`](https://www.lcsc.com/product-detail/C11702.html)) | 0402 (1005 metric) SMD | In series with the SW1 and SW2 button lines          |
 | R3          | 1   | 1 kΩ ±1% — same as above                  | 0402 (1005 metric) SMD             | With C1, the low-pass that smooths the Pi's PWM audio — about 16 kHz |
 | C1          | 1   | 10 nF X7R 0603 — `0603B103K500NT` (LCSC [`C57112`](https://www.lcsc.com/product-detail/C57112.html)) | 0603 | Audio low-pass with R3 |
-| PiInput     | 1   | 1×8 **male** pin header, 2.54 mm, straight — LCSC [`C492407`](https://www.lcsc.com/product-detail/C492407.html) | through-hole, 1.0 mm holes         | Silkscreened "Pi GPIO". Pin order: Dial B, GND, Dial A, 5V, A+, SW2, SW1, MUTE. MUTE is optional (see below) |
+| PiInput     | 1   | 1×7 **male** pin header, 2.54 mm, straight — LCSC [`C492406`](https://www.lcsc.com/product-detail/C492406.html) | through-hole, 1.0 mm holes         | Silkscreened "Pi GPIO". Pin order: Dial B, GND, Dial A, 5V, A+, SW2, SW1 |
 | U1          | 1   | PAM8302A 2.5 W class-D mono amp — Diodes `PAM8302AASCR` (LCSC [`C113367`](https://www.lcsc.com/product-detail/C113367.html)) | MSOP-8 | The amplifier, bottom side. Same chip as the Adafruit module |
 | C2, C3      | 2   | 220 nF X7R 0603 — `CL10B224KA8NNNC` (LCSC [`C21120`](https://www.lcsc.com/product-detail/C21120.html)) | 0603 | Amp input coupling caps (IN+ and IN−) |
 | C4          | 1   | 1 µF X5R 0603 — `CL10A105KB8NNNC` (LCSC [`C15849`](https://www.lcsc.com/product-detail/C15849.html)) | 0603 | Amp supply decoupling |
 | C5          | 1   | 10 µF X5R 0805 — `CL21A106KAYNNNE` (LCSC [`C15850`](https://www.lcsc.com/product-detail/C15850.html)) | 0805 | Amp bulk decoupling |
 | R4, R5      | 2   | 47 kΩ ±1% 0402 — `0402WGF4702TCE` (LCSC [`C25792`](https://www.lcsc.com/product-detail/C25792.html)) | 0402 | Amp input resistors: set the gain to about 9 dB |
-| R6          | 1   | 100 kΩ ±1% 0402 — `0402WGF1003TCE` (LCSC [`C25741`](https://www.lcsc.com/product-detail/C25741.html)) | 0402 | Pull-up on the amp's shutdown pin: amp is on unless MUTE is pulled low |
+| R6          | 1   | 100 kΩ ±1% 0402 — `0402WGF1003TCE` (LCSC [`C25741`](https://www.lcsc.com/product-detail/C25741.html)) | 0402 | Pull-up on the amp's shutdown pin (amp always on) |
 | J3          | 1   | JST ZH 1×2, 1.5 mm — `B2B-ZR` (LCSC [`C158011`](https://www.lcsc.com/product-detail/C158011.html)) | through-hole, vertical | **Speaker** connector, silkscreened `+` / `-` |
 | ENC1        | 1   | Rotary encoder, **horizontal SMD mouse-wheel** — HOAUC `HYCW03-2.8D-5P-S` (LCSC [`C55218995`](https://www.lcsc.com/product-detail/C55218995.html)) | `maclock:RotaryEncoder_HYCW03-2.8D-5P-S_SMD` — 3 quadrature pads (2 mm pitch) + 2 solder tabs + two NPTH Ø0.7/Ø0.9 locating holes | The "Dial". Hex 1.78 mm bore, 3.2 mm mount height, 12 pulse / 12 detent. Drops onto the silkscreened "Dial" land; ENC_A / ENC_B / GND also break out on the Pi header. LCSC-stocked equivalent of the F-SWITCH `E8E8-3.2C60-9B34` (hex 1.74 mm, 9 P/18 D — not on LCSC; order from F-Switch/Dicomon and consign if you want the exact feel) |
 | J1          | 1   | JST ZH 1×2, 1.5 mm — `B2B-ZR` (LCSC [`C158011`](https://www.lcsc.com/product-detail/C158011.html)) | through-hole, vertical | **Power switch** connector, inline in the 5V rail (5V_IN ↔ 5V). Wire an SPST switch here: closed = board on |
@@ -62,7 +62,7 @@ The Adafruit PAM8302 module used to plug into a 5-pin socket. Rev 2 puts the sam
 
 - **Signal path.** Pi PWM audio → R3/C1 low-pass (16 kHz) → C2 (220 nF) → R4 (47 kΩ) → PAM8302A IN+. IN− is tied to ground through the matching R5/C3 pair. R4 adds to the chip's internal 10 kΩ input resistor, which brings the fixed 24 dB gain down to about 9 dB, roughly where the module's trim pot was set. Fine volume is a software setting.
 - **Power.** VDD runs from the 5V rail with 1 µF + 10 µF decoupling, so it works down to the 3.7 V battery.
-- **MUTE.** The chip's shutdown pin is pulled up to 5V through R6 (100 kΩ), so the amp is on by default and Pi pin 8 can stay unconnected. Wire it to a spare GPIO and drive it low to silence the amp when idle, which is the real fix for hiss.
+- **Shutdown pin.** Pulled up to 5V through R6 (100 kΩ), so the amp is always on. A GPIO-driven mute was considered and dropped: the Waveshare DPI overlay claims GPIO 0–9, 12–17 and 20–25, and the dial, backlight, audio and buttons use the rest, so no header GPIO is free. Running the chip at 9 dB instead of the module's 24 dB is what cuts the idle hiss.
 - **Speaker.** J3 is a JST ZH 2-pin: pin 1 (`+`) and pin 2 (`-`). Speaker polarity does not matter for a single speaker.
 - **Layout.** Everything sits on the bottom side where the socket was, so the top-side dial and buttons are unchanged.
 
