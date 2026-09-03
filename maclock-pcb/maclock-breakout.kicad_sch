@@ -3258,7 +3258,7 @@
 				)
 			)
 		)
-		(property "Value" "B2B-ZR(LF)(SN)"
+		(property "Value" "BM02B-SRSS-TB(LF)(SN)"
 			(at 119.38 214.63 0)
 			(effects
 				(font
@@ -3266,7 +3266,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Connector_JST:JST_ZH_B2B-ZR_1x02_P1.50mm_Vertical"
+		(property "Footprint" "Connector_JST:JST_SH_BM02B-SRSS-TB_1x02-1MP_P1.00mm_Vertical"
 			(at 119.38 209.55 0)
 			(hide yes)
 			(effects
@@ -3293,7 +3293,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C158011"
+		(property "LCSC" "C160388"
 			(at 119.38 209.55 0)
 			(hide yes)
 			(effects
@@ -3327,7 +3327,7 @@
 				)
 			)
 		)
-		(property "Value" "B4B-ZR(LF)(SN)"
+		(property "Value" "BM04B-SRSS-TB(LF)(SN)"
 			(at 175.26 217.17 0)
 			(effects
 				(font
@@ -3335,7 +3335,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Connector_JST:JST_ZH_B4B-ZR_1x04_P1.50mm_Vertical"
+		(property "Footprint" "Connector_JST:JST_SH_BM04B-SRSS-TB_1x04-1MP_P1.00mm_Vertical"
 			(at 175.26 209.55 0)
 			(hide yes)
 			(effects
@@ -3362,7 +3362,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C157997"
+		(property "LCSC" "C160390"
 			(at 175.26 209.55 0)
 			(hide yes)
 			(effects

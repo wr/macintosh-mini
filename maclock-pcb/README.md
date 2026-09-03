@@ -26,8 +26,8 @@ To populate one board:
 | R6          | 1   | 100 kΩ ±1% 0402 — `0402WGF1003TCE` (LCSC [`C25741`](https://www.lcsc.com/product-detail/C25741.html)) | 0402 | Pull-up on the amp's shutdown pin (amp always on) |
 | J3          | 1   | JST ZH 1×2, 1.5 mm — `B2B-ZR` (LCSC [`C158011`](https://www.lcsc.com/product-detail/C158011.html)) | through-hole, vertical | **Speaker** connector, silkscreened `+` / `-` |
 | ENC1        | 1   | Rotary encoder, **horizontal SMD mouse-wheel** — HOAUC `HYCW03-2.8D-5P-S` (LCSC [`C55218995`](https://www.lcsc.com/product-detail/C55218995.html)) | `maclock:RotaryEncoder_HYCW03-2.8D-5P-S_SMD` — 3 quadrature pads (2 mm pitch) + 2 solder tabs + two NPTH Ø0.7/Ø0.9 locating holes | The "Dial". Hex 1.78 mm bore, 3.2 mm mount height, 12 pulse / 12 detent. Drops onto the silkscreened "Dial" land; ENC_A / ENC_B / GND also break out on the Pi header. LCSC-stocked equivalent of the F-SWITCH `E8E8-3.2C60-9B34` (hex 1.74 mm, 9 P/18 D — not on LCSC; order from F-Switch/Dicomon and consign if you want the exact feel) |
-| J1          | 1   | JST ZH 1×2, 1.5 mm — `B2B-ZR` (LCSC [`C158011`](https://www.lcsc.com/product-detail/C158011.html)) | through-hole, vertical | **Power switch** connector, inline in the 5V rail (5V_IN ↔ 5V). Wire an SPST switch here: closed = board on |
-| J2          | 1   | JST ZH 1×4, 1.5 mm — `B4B-ZR` (LCSC [`C157997`](https://www.lcsc.com/product-detail/C157997.html)) | through-hole, vertical | **Power input** from USB-C or battery: pin 4 (silk `+`) = 5V (3.7 V on battery), pin 3 (silk `-`) = GND. Pins 1–2 unused (legacy Maclock, not needed). Pin 1 is the end nearest J1 |
+| J1          | 1   | JST SH 1×2, 1.0 mm — `BM02B-SRSS-TB` (LCSC [`C160388`](https://www.lcsc.com/product-detail/C160388.html)) | SMD, top entry | **Power switch** connector, inline in the 5V rail (5V_IN ↔ 5V). Takes the Maclock's original 2-wire switch plug; closed = board on |
+| J2          | 1   | JST SH 1×4, 1.0 mm — `BM04B-SRSS-TB` (LCSC [`C160390`](https://www.lcsc.com/product-detail/C160390.html)) | SMD, top entry | **Power input** from USB-C or battery — takes the Maclock's original 4-wire power plug: pin 4 (silk `+`) = 5V (3.7 V on battery), pin 3 (silk `-`) = GND. Pins 1–2 unused (legacy Maclock, not needed). Pin 1 is the end nearest J1 |
 | —           | 1   | Small speaker, 8 Ω, ~0.5 W                | —                                  | Plugs into J3. Whatever fits behind the original Maclock grille |
 
 The dial (**ENC1**) mounts on the board's "Dial" land — the F-SWITCH `E8E8-3.2C60-9B34` horizontal SMD encoder, or any part matching that land. Its **ENC_A**, **ENC_B**, and **GND** lines also appear on the Pi GPIO header's **Dial A**, **Dial B**, and **GND** pins, so the encoder can be board-mounted here or wired from the header.
@@ -54,7 +54,7 @@ The two parts that used to need hand-picking are now LCSC-stocked:
 - **SW1, SW2.** BZCN `TSB001A3518A` (LCSC [`C2888448`](https://www.lcsc.com/product-detail/C2888448.html)) — a 180 gf, 7.7 × 3.55 mm side-press SMD tactile that matches the board's TSB001 land. Want the exact original feel? The Same Sky `TS32-7-35-BK-160-RA-SMT-TR` is 160 gf but isn't on LCSC — order it from DigiKey/Mouser and consign against a rebuilt TS32 land.
 - **The dial (ENC1).** HOAUC `HYCW03-2.8D-5P-S` (LCSC [`C55218995`](https://www.lcsc.com/product-detail/C55218995.html)) sits on the Dial land. The original F-SWITCH `E8E8-3.2C60-9B34` (9 pulse / 18 detent, hex 1.74 mm) is China-domestic — consign it if you want that exact feel.
 
-Every passive and the amp are SMD; only the Pi header and the three JST connectors are through-hole, so the board needs one hand-soldering or selective-solder pass for those.
+Every passive, the amp, and the two JST SH connectors are SMD; only the Pi header and the speaker connector J3 are through-hole, so the board needs one hand-soldering or selective-solder pass for those.
 
 ### The on-board amp (rev 2)
 
