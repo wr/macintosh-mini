@@ -23,7 +23,8 @@
 
 set -euo pipefail
 
-REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/main"
+REPO_BRANCH="main"   # --branch: test an unmerged branch on a real Pi
+REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/$REPO_BRANCH"
 VERSION="1.1.0"
 
 # SheepShaver paths (DISK_IMAGE is auto-discovered or set via --disk)
@@ -295,6 +296,9 @@ MODELID=""   # BasiliskII only: 5 (Mac IIci) or 14 (Quadra)
 NEW_HOSTNAME=""
 PERF=""   # "" = prompt, 1 = on, 0 = off
 WIFI_POWERSAVE=0   # 0 = turn the radio's power saving off, 1 = leave it alone
+NIGHT_DIM=""       # "" = prompt, 1 = dim the screen at night, 0 = don't
+TIMEZONE=""        # Area/City to set; the night schedule needs a real one
+NIGHT_CONF=/etc/default/brightness-control
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -313,6 +317,10 @@ while [[ $# -gt 0 ]]; do
     --no-perf)       PERF=0; shift ;;
     --wifi-powersave)    WIFI_POWERSAVE=1; shift ;;
     --no-wifi-powersave) WIFI_POWERSAVE=0; shift ;;
+    --night-dim)     NIGHT_DIM=1; shift ;;
+    --no-night-dim)  NIGHT_DIM=0; shift ;;
+    --timezone)      TIMEZONE=$2; shift 2 ;;
+    --branch)        REPO_BRANCH=$2; REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/$REPO_BRANCH"; shift 2 ;;
     --debug)         DEBUG=1; shift ;;
     *) die "Unknown option: $1" ;;
   esac
@@ -587,11 +595,55 @@ if [[ -z $NEW_HOSTNAME ]]; then
 fi
 NEW_HOSTNAME=${NEW_HOSTNAME// /-}
 
+# Night dimming (maclock only). Sunset to sunrise the backlight runs at half
+# the dial level and goes dark from NIGHT_OFF_AT; see brightness_control.py.
+# The script takes its location from the timezone, so a Pi still on UTC gets
+# a picker like raspi-config's. A re-run defaults to whatever the last run chose.
+conf_get() { sed -n "s/^$1=//p" "$NIGHT_CONF" 2>/dev/null | head -1; }
+
+current_timezone() {
+  local tz
+  tz=$(timedatectl show -p Timezone --value 2>/dev/null) || tz=$(cat /etc/timezone 2>/dev/null) || true
+  case "$tz" in ""|UTC|Etc/UTC|Universal|Etc/Universal|GMT|Etc/GMT) return 1 ;; esac
+  printf '%s' "$tz"
+}
+
+pick_timezone() {
+  # zone1970.tab lists every Area/City tzdata knows, one per line
+  local tab=/usr/share/zoneinfo/zone1970.tab
+  [[ -f $tab ]] || tab=/usr/share/zoneinfo/zone.tab
+  [[ -f $tab ]] || die "No tzdata zone table at /usr/share/zoneinfo"
+  local areas=() cities=() item area city
+  while read -r item; do areas+=("$item" ""); done \
+    < <(awk -F'\t' '!/^#/ { split($3, p, "/"); print p[1] }' "$tab" | sort -u)
+  area=$(wt_menu "Timezone" "The Pi is on UTC. Pick your area:" "${areas[0]}" 12 "${areas[@]}") \
+    || return 1
+  while read -r item; do cities+=("$item" ""); done \
+    < <(awk -F'\t' -v a="$area/" '!/^#/ && index($3, a) == 1 { print substr($3, length(a) + 1) }' "$tab" | sort)
+  city=$(wt_menu "Timezone" "Pick the nearest city in $area:" "${cities[0]}" 14 "${cities[@]}") \
+    || return 1
+  TIMEZONE="$area/$city"
+}
+
+if [[ $INSTALL_MACLOCK -eq 1 ]]; then
+  if [[ -z $NIGHT_DIM ]]; then
+    cur=No; [[ $(conf_get NIGHT_DIM) == 1 ]] && cur=Yes
+    NIGHT_CHOICE=$(wt_menu "Night Dimming" "" "$cur" 2 \
+      "Yes"  "Dim the screen at sunset, dark from 10pm, back at sunrise" \
+      "No"   "Leave brightness to the dial") || die "Cancelled"
+    case "$NIGHT_CHOICE" in Yes) NIGHT_DIM=1 ;; No) NIGHT_DIM=0 ;; esac
+  fi
+  if [[ $NIGHT_DIM -eq 1 && -z $TIMEZONE ]] && ! current_timezone >/dev/null; then
+    pick_timezone || die "Cancelled"
+  fi
+fi
+
 
 # --- Total step count (for gauge) -----------------------------------------
 TOTAL_STEPS=3   # apt update, apt install, patch_cmdline
 [[ $WIFI_POWERSAVE -eq 0 ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
 [[ -n $NEW_HOSTNAME && $NEW_HOSTNAME != "$CUR_HOSTNAME" ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
+[[ -n $TIMEZONE ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
 [[ $INSTALL_MACLOCK -eq 1 ]] && TOTAL_STEPS=$((TOTAL_STEPS+5))
 if [[ $INSTALL_SHEEPSHAVER -eq 1 ]]; then
   if [[ -x /usr/local/bin/SheepShaver ]]; then
@@ -654,6 +706,12 @@ if [[ -n $NEW_HOSTNAME && $NEW_HOSTNAME != "$CUR_HOSTNAME" ]]; then
     fi
   }
   run "Setting hostname: $CUR_HOSTNAME → $NEW_HOSTNAME" set_host
+fi
+
+# --- Timezone -------------------------------------------------------------
+if [[ -n $TIMEZONE ]]; then
+  [[ -f /usr/share/zoneinfo/$TIMEZONE ]] || die "Unknown timezone: $TIMEZONE"
+  run "Setting timezone: $TIMEZONE" sudo timedatectl set-timezone "$TIMEZONE"
 fi
 
 # --- apt packages ---------------------------------------------------------
@@ -839,6 +897,34 @@ EOF
   }
   run "[maclock] Patching config.txt" patch_config
 
+  write_night_conf() {
+    [[ -n $NIGHT_DIM ]] || return 0
+    local lat lon factor off_at
+    # A hand-set location survives re-runs
+    lat=$(conf_get LAT); lon=$(conf_get LON)
+    factor=$(conf_get NIGHT_FACTOR); factor=${factor:-0.5}
+    # Blank is a valid setting (dim, never dark), so only fall back to the
+    # default when the key is absent entirely.
+    if grep -q '^NIGHT_OFF_AT=' "$NIGHT_CONF" 2>/dev/null; then
+      off_at=$(conf_get NIGHT_OFF_AT)
+    else
+      off_at=22:00
+    fi
+    sudo tee "$NIGHT_CONF" >/dev/null <<EOF
+# Night dimming for the maclock backlight. Read by brightness-control.service;
+# after editing: sudo systemctl restart brightness-control
+NIGHT_DIM=$NIGHT_DIM
+# Optional. Blank, the location is the timezone's reference city from tzdata.
+# Set both in decimal degrees (north and east positive) for a closer fix.
+LAT=$lat
+LON=$lon
+# Sunset to sunrise, the dial level is multiplied by this
+NIGHT_FACTOR=$factor
+# From this time until sunrise the screen goes fully dark. Blank to only dim.
+NIGHT_OFF_AT=$off_at
+EOF
+  }
+
   install_gpio_helpers() {
     for f in brightness_control.py button_handler.py; do
       curl -fL --retry 3 -o "/tmp/$f" "$REPO_RAW/maclock-build/$f" || return $?
@@ -848,12 +934,15 @@ EOF
       curl -fL --retry 3 -o "/tmp/$f" "$REPO_RAW/maclock-build/$f" || return $?
       sudo install -m644 "/tmp/$f" "/etc/systemd/system/$f" || return $?
     done
+    write_night_conf || return $?
     sudo systemctl daemon-reload
     # reenable, not enable: the unit moved from multi-user.target to
     # sysinit.target, and plain enable only adds the new symlink.
     sudo systemctl reenable brightness-control.service button-handler.service
-    sudo systemctl start brightness-control.service button-handler.service
+    # restart, not start: on an update the old script is still running
+    sudo systemctl restart brightness-control.service button-handler.service
   }
+
   run "[maclock] Installing GPIO helpers + systemd units" install_gpio_helpers
 
   install_restart_wrapper() {
