@@ -32,7 +32,7 @@ set -euo pipefail
 
 REPO_BRANCH="main"   # --branch: test an unmerged branch on a real Pi
 REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/$REPO_BRANCH"
-VERSION="1.2.0"
+VERSION="1.3.0"
 
 # SheepShaver paths (DISK_IMAGE is auto-discovered or set via --disk)
 DISK_IMAGE=""
@@ -357,7 +357,7 @@ ensure_whiptail
 
 # --- Existing install? -----------------------------------------------------
 # The installer records what it set up so a re-run knows it is an update.
-# Installs before 1.2.0 left no record, so fall back to what is on disk.
+# Installs before 1.3.0 left no record, so fall back to what is on disk.
 INSTALL_STATE=/etc/macintosh-mini.conf
 state_get() { { sed -n "s/^$1=//p" "$INSTALL_STATE" | head -1; } 2>/dev/null || true; }
 INSTALLED_VERSION=$(state_get VERSION)
@@ -377,7 +377,7 @@ if [[ $INSTALL_MACLOCK -eq 0 && $INSTALL_SHEEPSHAVER -eq 0 && $INSTALL_BASILISK 
   opt_up="Update to version $VERSION"
   opt_edit="Update and edit settings"
   CHOICE=$(wt_menu "Macintosh Mini Installer v$VERSION" \
-    "Version ${INSTALLED_VERSION:-1.1.0 or earlier} is installed." "$opt_up" 3 \
+    "Version ${INSTALLED_VERSION:-1.2.0 or earlier} is installed." "$opt_up" 3 \
     "$opt_up"   "" \
     "$opt_edit" "" \
     "Exit"      "") || exit 0
