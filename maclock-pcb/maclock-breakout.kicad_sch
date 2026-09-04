@@ -4163,7 +4163,7 @@
 				)
 			)
 		)
-		(property "Value" "B2B-ZR(LF)(SN)"
+		(property "Value" "B2B-PH-K-S(LF)(SN)"
 			(at 363.22 66.04 0)
 			(effects
 				(font
@@ -4171,7 +4171,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Connector_JST:JST_ZH_B2B-ZR_1x02_P1.50mm_Vertical"
+		(property "Footprint" "maclock:JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical_SolderPads"
 			(at 363.22 71.12 0)
 			(hide yes)
 			(effects
@@ -4198,7 +4198,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C158011"
+		(property "LCSC" "C131337"
 			(at 363.22 71.12 0)
 			(hide yes)
 			(effects

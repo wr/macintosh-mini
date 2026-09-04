@@ -31,7 +31,7 @@ A [Maclock](https://www.aliexpress.us/w/wholesale-maclock.html) is a cheap alarm
 - [Maclock](https://amzn.to/4e7FKrw)
 - [Raspberry Pi Zero 2 W](https://amzn.to/4ac7FVR)
 - [Waveshare 2.8 inch IPS LCD](https://amzn.to/4ue5GaP)
-- Small 8 Ω speaker (the audio amp is built into the breakout board)
+- Small 8 Ω 1 W speaker with a JST PH 2.0 mm plug, like Adafruit's (the audio amp is built into the breakout board)
 - [3D printed screen bezel](./maclock-screen-bezel)
 - Macintosh Mini breakout board — for brightness, buttons, and sound. Order from [PCBway](https://www.pcbway.com/project/shareproject/W654223ASS41_Untitled_kicad_pcb_95cca7e3.html).
     -  You can [use my referral code](https://pcbway.com/g/AsfKU9) to get $5 off your order, if you want.

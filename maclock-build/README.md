@@ -12,7 +12,7 @@ I recorded a walkthrough for how I assembled mine that goes into much more detai
 - [Maclock](https://amzn.to/4e7FKrw)
 - [Raspberry Pi Zero 2 W](https://amzn.to/4ac7FVR)
 - [Waveshare 2.8 inch IPS LCD](https://amzn.to/4ue5GaP)
-- Small 8 Ω speaker (the audio amp is on the breakout board)
+- Small 8 Ω 1 W speaker with a JST PH 2.0 mm plug, or bare leads (the audio amp is on the breakout board)
 - [3D printed screen bezel](../maclock-screen-bezel)
 - [Macintosh Mini breakout board](https://www.pcbway.com/project/shareproject/W654223ASS41_Untitled_kicad_pcb_95cca7e3.html) (if you want brightness, buttons, and sound). Full [bill of materials here](../maclock-pcb).
 
@@ -29,7 +29,7 @@ I recorded a walkthrough for how I assembled mine that goes into much more detai
 | Rotary CLK      | Dial A                | 23             | Bend or desolder pin on Pi |
 | Audio           | A+                    | 35             | Bend or desolder pin on Pi |
 | Button 2        | SW2                   | 37             | Bend or desolder pin on Pi |
-| Speaker         | J3 (`+` / `-`)        | —              | JST ZH 2-pin; polarity doesn't matter |
+| Speaker         | J3 (`+` / `-`)        | —              | JST PH 2.0 mm 2-pin, or solder bare leads to the two pads beside it; polarity doesn't matter |
 
 Bend, cut, or desolder pins 13, 19, 23, 35, and 37 so they don't plug into the Waveshare display board. Leaving them in can cause odd issues with the buttons and dial on the front of the Mac.
 
