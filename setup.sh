@@ -609,14 +609,16 @@ current_timezone() {
 }
 
 pick_timezone() {
-  # zone1970.tab lists every Area/City tzdata knows, one per line
-  local tab=/usr/share/zoneinfo/zone1970.tab
-  [[ -f $tab ]] || tab=/usr/share/zoneinfo/zone.tab
+  # zone.tab, not zone1970.tab: the latter folds Oslo, Stockholm, Amsterdam
+  # and a hundred others into one zone each, and nobody will find their
+  # city under Berlin. raspi-config reads the same table.
+  local tab=/usr/share/zoneinfo/zone.tab
+  [[ -f $tab ]] || tab=/usr/share/zoneinfo/zone1970.tab
   [[ -f $tab ]] || die "No tzdata zone table at /usr/share/zoneinfo"
   local areas=() cities=() item area city
   while read -r item; do areas+=("$item" ""); done \
     < <(awk -F'\t' '!/^#/ { split($3, p, "/"); print p[1] }' "$tab" | sort -u)
-  area=$(wt_menu "Timezone" "The Pi is on UTC. Pick your area:" "${areas[0]}" 12 "${areas[@]}") \
+  area=$(wt_menu "Timezone" "Pick your area:" "${areas[0]}" 12 "${areas[@]}") \
     || return 1
   while read -r item; do cities+=("$item" ""); done \
     < <(awk -F'\t' -v a="$area/" '!/^#/ && index($3, a) == 1 { print substr($3, length(a) + 1) }' "$tab" | sort)
@@ -625,14 +627,26 @@ pick_timezone() {
   TIMEZONE="$area/$city"
 }
 
+if [[ -n $TIMEZONE && ! -f /usr/share/zoneinfo/$TIMEZONE ]]; then
+  die "Unknown timezone: $TIMEZONE (see: timedatectl list-timezones)"
+fi
 if [[ $INSTALL_MACLOCK -eq 1 ]]; then
   if [[ -z $NIGHT_DIM ]]; then
     cur=No; [[ $(conf_get NIGHT_DIM) == 1 ]] && cur=Yes
-    NIGHT_CHOICE=$(wt_menu "Night Dimming" "" "$cur" 2 \
-      "Yes"  "Dim the screen at sunset, dark from 10pm, back at sunrise" \
-      "No"   "Leave brightness to the dial") || die "Cancelled"
-    case "$NIGHT_CHOICE" in Yes) NIGHT_DIM=1 ;; No) NIGHT_DIM=0 ;; esac
+    tz=${TIMEZONE:-$(current_timezone || echo "not set")}
+    # Stock Pi OS images ship Europe/London, so a zone that looks set may
+    # not be. Show it and offer the picker either way.
+    NIGHT_CHOICE=$(wt_menu "Night Dimming" "Sunset to sunrise the screen dims; from 10pm it goes dark." "$cur" 3 \
+      "Yes"       "Follow the sun for the timezone: $tz" \
+      "Timezone"  "Same, but pick the timezone first" \
+      "No"        "Leave brightness to the dial") || die "Cancelled"
+    case "$NIGHT_CHOICE" in
+      Yes)      NIGHT_DIM=1 ;;
+      Timezone) NIGHT_DIM=1; pick_timezone || die "Cancelled" ;;
+      No)       NIGHT_DIM=0 ;;
+    esac
   fi
+  # The schedule needs a real zone: UTC has no reference city
   if [[ $NIGHT_DIM -eq 1 && -z $TIMEZONE ]] && ! current_timezone >/dev/null; then
     pick_timezone || die "Cancelled"
   fi
@@ -644,7 +658,7 @@ TOTAL_STEPS=3   # apt update, apt install, patch_cmdline
 [[ $WIFI_POWERSAVE -eq 0 ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
 [[ -n $NEW_HOSTNAME && $NEW_HOSTNAME != "$CUR_HOSTNAME" ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
 [[ -n $TIMEZONE ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
-[[ $INSTALL_MACLOCK -eq 1 ]] && TOTAL_STEPS=$((TOTAL_STEPS+5))
+[[ $INSTALL_MACLOCK -eq 1 ]] && TOTAL_STEPS=$((TOTAL_STEPS+6))
 if [[ $INSTALL_SHEEPSHAVER -eq 1 ]]; then
   if [[ -x /usr/local/bin/SheepShaver ]]; then
     TOTAL_STEPS=$((TOTAL_STEPS+9))
@@ -710,7 +724,6 @@ fi
 
 # --- Timezone -------------------------------------------------------------
 if [[ -n $TIMEZONE ]]; then
-  [[ -f /usr/share/zoneinfo/$TIMEZONE ]] || die "Unknown timezone: $TIMEZONE"
   run "Setting timezone: $TIMEZONE" sudo timedatectl set-timezone "$TIMEZONE"
 fi
 

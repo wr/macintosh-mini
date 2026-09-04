@@ -8,10 +8,13 @@ under test touches GPIO.
 
 import contextlib
 import io
+import os
 import sys
+import tempfile
 import types
 import unittest
 from datetime import date, datetime, time, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 sys.modules.setdefault("lgpio", types.ModuleType("lgpio"))
 
@@ -85,12 +88,60 @@ class NightFactor(unittest.TestCase):
         self.assertEqual(self.factor(self.at(23), off_at=time(1, 0)), 0.5)
         self.assertEqual(self.factor(self.at(1, 30), off_at=time(1, 0)), 0.0)
 
+    def test_cutoff_before_sunset_goes_dark_at_sunset(self):
+        # High-latitude summer: 22:00 comes before a 22:08 sunset. Here the
+        # fixture sets at 18:00, so a 17:00 cutoff stands in for it.
+        self.assertEqual(self.factor(self.at(18, 30), off_at=time(17, 0)), 0.0)
+        self.assertEqual(self.factor(self.at(16, 0), off_at=time(17, 0)), 1.0)
+
     def test_no_cutoff_dims_all_night(self):
         self.assertEqual(self.factor(self.at(3), off_at=None), 0.5)
 
-    def test_polar_day_never_dims(self):
-        cfg = bc.NightConfig(lat=0, lon=0, factor=0.5, off_at=time(22))
-        self.assertEqual(bc.night_factor(self.at(3), cfg, sun_times=lambda *a: None), 1.0)
+
+
+def local_now(zone, y, mo, d, hh, mm=0):
+    """Build `now` the way the daemon sees it on a Pi set to `zone`: an
+    aware datetime carrying a fixed offset, as datetime.now().astimezone()
+    returns."""
+    dt = datetime(y, mo, d, hh, mm, tzinfo=ZoneInfo(zone))
+    return dt.astimezone(timezone(dt.utcoffset()))
+
+
+class NightFactorRealSun(unittest.TestCase):
+    """Real sun_times at places where clock time and solar time disagree."""
+
+    def factor(self, zone, lat, lon, *when, off_at=time(22, 0)):
+        cfg = bc.NightConfig(lat=lat, lon=lon, factor=0.5, off_at=off_at)
+        return bc.night_factor(local_now(zone, *when), cfg)
+
+    def test_stockholm_midsummer_dark_after_late_sunset(self):
+        # Sunset 22:08 CEST is after the 22:00 cutoff: dark from sunset on
+        stockholm = ("Europe/Stockholm", 59.33, 18.07)
+        self.assertEqual(self.factor(*stockholm, 2024, 6, 21, 21, 30), 1.0)
+        self.assertEqual(self.factor(*stockholm, 2024, 6, 21, 22, 30), 0.0)
+        self.assertEqual(self.factor(*stockholm, 2024, 6, 22, 1, 0), 0.0)
+        self.assertEqual(self.factor(*stockholm, 2024, 6, 22, 4, 0), 1.0)
+
+    def test_nome_sunset_after_local_midnight(self):
+        # Alaska's clock runs ~3 h ahead of the sun: June sunset is 01:47
+        nome = ("America/Nome", 64.50, -165.41)
+        self.assertEqual(self.factor(*nome, 2024, 6, 22, 0, 30), 1.0)
+        self.assertEqual(self.factor(*nome, 2024, 6, 22, 2, 30), 0.5)
+        self.assertEqual(self.factor(*nome, 2024, 6, 22, 5, 0), 1.0)
+
+    def test_utc_plus_14_midday_is_day(self):
+        self.assertEqual(self.factor("Pacific/Kiritimati", 1.87, -157.4,
+                                     2024, 6, 21, 12, 0), 1.0)
+
+    def test_polar_night_dims(self):
+        # No sunrise to end a cutoff, so polar night only dims, all day
+        tromso = ("Europe/Oslo", 69.65, 18.96)
+        self.assertEqual(self.factor(*tromso, 2024, 12, 21, 12, 0), 0.5)
+        self.assertEqual(self.factor(*tromso, 2024, 12, 21, 23, 0), 0.5)
+
+    def test_midnight_sun_never_dims(self):
+        self.assertEqual(self.factor("Europe/Oslo", 69.65, 18.96,
+                                     2024, 6, 21, 23, 0), 1.0)
 
 
 class DialOverride(unittest.TestCase):
@@ -133,6 +184,18 @@ class ZoneCoords(unittest.TestCase):
     def test_unknown_zone(self):
         self.assertIsNone(bc.zone_coords("Etc/UTC", ZONE_TAB))
 
+    def test_zone_only_in_second_table_is_found(self):
+        # Since 2022 zone1970.tab folds Oslo, Stockholm, Amsterdam and ~100
+        # others into one representative zone; only zone.tab still lists them.
+        with tempfile.TemporaryDirectory() as d:
+            first = os.path.join(d, "zone1970.tab")
+            second = os.path.join(d, "zone.tab")
+            open(first, "w").write(ZONE_TAB)
+            open(second, "w").write("NO\t+5955+01045\tEurope/Oslo\n")
+            lat, lon = bc.zone_coords("Europe/Oslo", bc.read_zone_tab((first, second)))
+        self.assertAlmostEqual(lat, 59.917, places=3)
+        self.assertAlmostEqual(lon, 10.75, places=3)
+
     def test_real_tzdata_has_coordinates(self):
         # tzdata ships the table this relies on; make sure the parser copes
         # with the real thing, not just the fixture.
@@ -173,6 +236,14 @@ class Config(unittest.TestCase):
     def test_blank_off_at_disables_cutoff(self):
         cfg = self.load({"NIGHT_DIM": "1", "NIGHT_OFF_AT": ""})
         self.assertIsNone(cfg.off_at)
+
+    def test_bad_values_disable_instead_of_crashing(self):
+        # A typo in the config must not take the dial down with a crash loop
+        for bad in ({"NIGHT_FACTOR": "half"}, {"NIGHT_OFF_AT": "10pm"},
+                    {"LAT": "40,7", "LON": "1"}):
+            with contextlib.redirect_stdout(io.StringIO()) as out:
+                self.assertIsNone(self.load({"NIGHT_DIM": "1", **bad}), bad)
+            self.assertIn("night dimming off", out.getvalue())
 
     def test_unknown_timezone_and_no_location_disables(self):
         with contextlib.redirect_stdout(io.StringIO()):

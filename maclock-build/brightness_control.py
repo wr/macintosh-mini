@@ -110,14 +110,19 @@ def write(path, value):
         f.write(str(value))
 
 
-def read_zone_tab():
-    for path in ZONE_TABS:
+def read_zone_tab(paths=ZONE_TABS):
+    """Every zone table tzdata ships, joined. zone1970.tab alone is not
+    enough: since 2022 it folds Oslo, Stockholm, Amsterdam and a hundred
+    others into one representative zone, and only zone.tab still lists
+    them."""
+    tabs = []
+    for path in paths:
         try:
             with open(path) as f:
-                return f.read()
+                tabs.append(f.read())
         except OSError:
             continue
-    return None
+    return "\n".join(tabs) if tabs else None
 
 
 def zone_coords(zone, tab):
@@ -164,6 +169,15 @@ def load_night_config(env, zone=None, zone_tab=None):
     """Read the night schedule from the environment, or None when it is off."""
     if env.get("NIGHT_DIM", "0").strip().lower() not in ("1", "true", "yes"):
         return None
+    try:
+        return _parse_night_config(env, zone, zone_tab)
+    except ValueError as e:
+        # A typo here must not take the dial down in a restart loop
+        print(f"Bad value in night config ({e}); night dimming off", flush=True)
+        return None
+
+
+def _parse_night_config(env, zone, zone_tab):
     if env.get("LAT", "").strip() and env.get("LON", "").strip():
         lat, lon = float(env["LAT"]), float(env["LON"])
     else:
@@ -182,12 +196,12 @@ def load_night_config(env, zone=None, zone_tab=None):
     return NightConfig(lat, lon, factor, off_at)
 
 
-def sun_times(lat, lon, day):
-    """Sunrise and sunset on `day` as aware UTC datetimes.
+def _sun_geometry(lat, lon, day):
+    """Solar transit on `day` in days since J2000, and the cosine of the
+    sunrise hour angle: outside [-1, 1] the sun never crosses the horizon.
 
-    None where the sun never rises or never sets that day. This is the
-    sunrise equation with NOAA's corrections: good to a couple of minutes,
-    which is plenty for a backlight.
+    This is the sunrise equation with NOAA's corrections: good to a couple
+    of minutes, which is plenty for a backlight.
     """
     sin, cos, rad = math.sin, math.cos, math.radians
     # Days since J2000, shifted so the numbers below refer to local solar noon
@@ -203,6 +217,13 @@ def sun_times(lat, lon, day):
     # -0.833 degrees: the sun's upper limb at the horizon, through refraction
     cos_hour = ((sin(rad(-0.833)) - sin(rad(lat)) * sin(declination))
                 / (cos(rad(lat)) * cos(declination)))
+    return transit, cos_hour
+
+
+def sun_times(lat, lon, day):
+    """Sunrise and sunset on `day` as aware UTC datetimes, or None where
+    the sun never rises or never sets that day."""
+    transit, cos_hour = _sun_geometry(lat, lon, day)
     if not -1 <= cos_hour <= 1:
         return None
     half_day = math.degrees(math.acos(cos_hour)) / 360
@@ -210,38 +231,45 @@ def sun_times(lat, lon, day):
             J2000 + timedelta(days=transit + half_day))
 
 
+def midnight_sun(lat, lon, day):
+    """True when the sun stays above the horizon all of `day`."""
+    return _sun_geometry(lat, lon, day)[1] < -1
+
+
 def night_factor(now, cfg, sun_times=sun_times):
     """Scale for the dial level at `now` (an aware local datetime).
 
     1.0 by day, cfg.factor after sunset, 0.0 from cfg.off_at until sunrise.
     """
-    def local(day):
-        times = sun_times(cfg.lat, cfg.lon, day)
-        if times is None:
-            return None
-        return tuple(t.astimezone(now.tzinfo) for t in times)
-
-    today = local(now.date())
-    if today is None:
+    # Work from the most recent sunrise and sunset instants rather than
+    # "today's": where the clock runs far from solar time (Alaska, UTC+14)
+    # the sun can set after local midnight, on the next calendar date.
+    rises, sets = [], []
+    for days in (-1, 0, 1):
+        times = sun_times(cfg.lat, cfg.lon, now.date() + timedelta(days=days))
+        if times is not None:
+            rises.append(times[0])
+            sets.append(times[1])
+    last_rise = max((t for t in rises if t <= now), default=None)
+    last_set = max((t for t in sets if t <= now), default=None)
+    if last_rise is None and last_set is None:
+        # Polar: nothing crossed the horizon for days
+        return 1.0 if midnight_sun(cfg.lat, cfg.lon, now.date()) else cfg.factor
+    if last_set is None or (last_rise is not None and last_rise > last_set):
         return 1.0
-    rise, set_ = today
-    if rise <= now < set_:
-        return 1.0
 
-    # Which night is this: the one ending at today's sunrise, or the one
-    # starting at today's sunset? The cutoff hangs off the night's start so
-    # a time after midnight still lands in the right night.
-    if now < rise:
-        yesterday = local(now.date() - timedelta(days=1))
-        night_start = yesterday[1] if yesterday else None
-    else:
-        night_start = set_
-    if cfg.off_at is None or night_start is None:
+    if cfg.off_at is None:
         return cfg.factor
-    off = datetime.combine(night_start.date(), cfg.off_at, now.tzinfo)
-    if off < night_start:
-        off += timedelta(days=1)
-    return 0.0 if now >= off else cfg.factor
+    # The cutoff belongs to the night that began at last_set: the first
+    # occurrence of that clock time from a few hours before sunset on, so a
+    # time after midnight lands in this night and one before sunset (a 22:00
+    # cutoff under a 22:08 midsummer sunset) means dark from sunset.
+    sunset = last_set.astimezone(now.tzinfo)
+    off = min(t for t in (datetime.combine(sunset.date() + timedelta(days=days),
+                                           cfg.off_at, now.tzinfo)
+                          for days in (0, 1))
+              if t > sunset - timedelta(hours=6))
+    return 0.0 if now >= max(off, sunset) else cfg.factor
 
 
 def clock_synced():
@@ -368,8 +396,8 @@ def main():
     shown = float(level)      # where the backlight is, chasing level
     factor = 1.0              # what the schedule wants the level scaled by
     eased = 1.0               # where the scaling is, chasing factor
-    factor_step = POLL_S / NIGHT_FADE_S
     next_check = 0.0
+    last_tick = time.monotonic()
     last_duty = duty_for(level)
 
     try:
@@ -410,14 +438,20 @@ def main():
                 if wanted != factor:
                     factor = wanted
                     print(f"Night: x{factor:g}", flush=True)
-                if state.awake:
-                    eased = factor   # the dial was touched: no slow fade
+                if state.awake and eased != factor:
+                    # The dial was touched: skip the slow fade and let the
+                    # dial's own quick ramp bring the backlight up
+                    shown *= eased
+                    eased = factor
 
+            now = time.monotonic()
             if eased != factor:
-                if abs(factor - eased) <= factor_step:
+                step = (now - last_tick) / NIGHT_FADE_S
+                if abs(factor - eased) <= step:
                     eased = factor
                 else:
-                    eased += factor_step if factor > eased else -factor_step
+                    eased += step if factor > eased else -step
+            last_tick = now
 
             if shown != level:
                 if abs(level - shown) <= RAMP_PER_TICK:
