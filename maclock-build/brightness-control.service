@@ -11,6 +11,8 @@ Conflicts=shutdown.target
 
 [Service]
 Type=simple
+# Night dimming schedule; optional, see brightness_control.py
+EnvironmentFile=-/etc/default/brightness-control
 ExecStart=/usr/bin/python3 /usr/local/bin/brightness_control.py
 Restart=always
 RestartSec=2

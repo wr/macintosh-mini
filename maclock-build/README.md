@@ -166,6 +166,37 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now brightness-control button-handler
 ```
 
+#### Night dimming (optional)
+
+The dial script can follow the sun. From sunset the backlight runs at half the
+dial level, from 10pm it goes fully dark until an hour before sunrise, and at
+sunrise it comes back to wherever the dial was. Turning the dial at night
+wakes the screen until the next sunset. Sunrise and sunset are computed on the
+Pi, offline, for the reference city of the system timezone, using the
+coordinates tzdata ships in its zone tables. Stock Pi OS images come set to Europe/London, so check that
+first; the [setup script](../setup.sh) shows the zone and offers a picker. By
+hand:
+
+```bash
+sudo timedatectl set-timezone America/New_York   # timedatectl list-timezones
+sudo tee /etc/default/brightness-control >/dev/null <<'EOF'
+NIGHT_DIM=1
+LAT=
+LON=
+NIGHT_FACTOR=0.5
+NIGHT_OFF_AT=22:00
+EOF
+sudo systemctl restart brightness-control
+```
+
+`LAT`/`LON` are optional: fill both in (decimal degrees) if the zone's city is
+far from you. `NIGHT_FACTOR` scales the dial level between sunset and sunrise.
+`NIGHT_OFF_AT` is when the screen goes dark; leave it blank to only ever dim.
+A cutoff earlier than sunset (a midsummer 22:08 sunset under the 22:00
+default) means dark from sunset. In polar night the screen only dims, since
+no sunrise would end the dark. The Pi has no clock battery, so the schedule
+stays off until NTP has set the time.
+
 ---
 
 ### 4. Keep the wi-fi awake

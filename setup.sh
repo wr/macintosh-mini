@@ -19,12 +19,20 @@
 #   --wifi-powersave | --no-wifi-powersave
 #                       leave the wi-fi radio's power saving alone, or turn it
 #                       off so the Pi stays reachable when idle (default: off)
+#   --night-dim | --no-night-dim
+#                       dim the screen from sunset to sunrise (default: prompt)
+#   --night-off <t>     when the screen turns off at night: never, or HH:MM
+#                       (default: prompt; 22:00 on a fresh install)
+#   --timezone <zone>   Area/City for the sunrise schedule (default: keep, or
+#                       prompt when the Pi is still on UTC)
+#   --branch <name>     fetch the helper files from a branch other than main
 #   --debug             show all command output instead of capturing to log
 
 set -euo pipefail
 
-REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/main"
-VERSION="1.1.0"
+REPO_BRANCH="main"   # --branch: test an unmerged branch on a real Pi
+REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/$REPO_BRANCH"
+VERSION="1.2.0"
 
 # SheepShaver paths (DISK_IMAGE is auto-discovered or set via --disk)
 DISK_IMAGE=""
@@ -71,6 +79,9 @@ dump_log_on_failure() {
 # --- Progress gauge --------------------------------------------------------
 PROGRESS_FIFO=""
 GAUGE_PID=""
+GAUGE_NOTE="
+This will take a while. Go make yourself a coffee :)
+Your device will automatically reboot when finished."
 USE_GAUGE=0
 TOTAL_STEPS=1
 CURRENT_STEP=0
@@ -80,7 +91,9 @@ start_gauge() {
   PROGRESS_FIFO=$(mktemp -u /tmp/macintosh-mini-progress.XXXXXX)
   mkfifo "$PROGRESS_FIFO"
   whiptail --backtitle "macintosh-mini" --title "Installing" \
-    --gauge "Starting…" 8 72 0 < "$PROGRESS_FIFO" &
+    --gauge "$GAUGE_NOTE
+
+Starting…" 11 72 0 < "$PROGRESS_FIFO" &
   GAUGE_PID=$!
   exec 9> "$PROGRESS_FIFO"
   USE_GAUGE=1
@@ -97,7 +110,7 @@ stop_gauge() {
 emit_gauge() {
   local pct=$1 msg=$2
   [[ $USE_GAUGE -eq 1 ]] || return 0
-  printf 'XXX\n%s\n%s\nXXX\n' "$pct" "$msg" >&9
+  printf 'XXX\n%s\n%s\n\n%s\nXXX\n' "$pct" "$GAUGE_NOTE" "$msg" >&9
 }
 
 step_pct() { echo $(( CURRENT_STEP * 100 / TOTAL_STEPS )); }
@@ -167,6 +180,7 @@ wt_menu() {
   local title=$1 prompt=$2 default=$3 list_height=$4
   shift 4
   local extra=8; [[ -z $prompt ]] && extra=7
+  local newlines=${prompt//[!$'\n']/}; extra=$(( extra + ${#newlines} ))
   local total_height=$(( list_height + extra ))
   whiptail --backtitle "macintosh-mini" --title "$title" \
     --default-item "$default" \
@@ -295,6 +309,10 @@ MODELID=""   # BasiliskII only: 5 (Mac IIci) or 14 (Quadra)
 NEW_HOSTNAME=""
 PERF=""   # "" = prompt, 1 = on, 0 = off
 WIFI_POWERSAVE=0   # 0 = turn the radio's power saving off, 1 = leave it alone
+NIGHT_DIM=""       # "" = prompt, 1 = dim the screen at night, 0 = don't
+NIGHT_OFF=""       # "" = prompt, "never", or HH:MM to turn the screen off
+TIMEZONE=""        # Area/City to set; the night schedule needs a real one
+NIGHT_CONF=/etc/default/brightness-control
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -313,6 +331,11 @@ while [[ $# -gt 0 ]]; do
     --no-perf)       PERF=0; shift ;;
     --wifi-powersave)    WIFI_POWERSAVE=1; shift ;;
     --no-wifi-powersave) WIFI_POWERSAVE=0; shift ;;
+    --night-dim)     NIGHT_DIM=1; shift ;;
+    --no-night-dim)  NIGHT_DIM=0; shift ;;
+    --night-off)     NIGHT_OFF=$2; shift 2 ;;
+    --timezone)      TIMEZONE=$2; shift 2 ;;
+    --branch)        REPO_BRANCH=$2; REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/$REPO_BRANCH"; shift 2 ;;
     --debug)         DEBUG=1; shift ;;
     *) die "Unknown option: $1" ;;
   esac
@@ -331,6 +354,49 @@ printf '  log: %s%s\n' "$LOG_FILE" "$([[ $DEBUG -eq 1 ]] && echo '  [debug mode:
 
 ensure_sudo
 ensure_whiptail
+
+# --- Existing install? -----------------------------------------------------
+# The installer records what it set up so a re-run knows it is an update.
+# Installs before 1.2.0 left no record, so fall back to what is on disk.
+INSTALL_STATE=/etc/macintosh-mini.conf
+state_get() { { sed -n "s/^$1=//p" "$INSTALL_STATE" | head -1; } 2>/dev/null || true; }
+INSTALLED_VERSION=$(state_get VERSION)
+INSTALLED_MACLOCK=$(state_get MACLOCK)
+INSTALLED_EMULATOR=$(state_get EMULATOR)
+INSTALLED_PERF=$(state_get PERF)
+if [[ -z $INSTALLED_VERSION ]]; then
+  [[ -f /etc/systemd/system/brightness-control.service ]] && INSTALLED_MACLOCK=1
+  grep -qsF "# >>> basilisk-autostart >>>" "$HOME/.profile" && INSTALLED_EMULATOR=basilisk
+  grep -qsF "# >>> sheepshaver-autostart >>>" "$HOME/.profile" && INSTALLED_EMULATOR=sheepshaver
+  grep -qs "fsck.mode=skip" /boot/firmware/cmdline.txt && INSTALLED_PERF=1
+fi
+
+UPDATE_MODE=""   # "" = fresh install or flags given, quick = keep settings, edit = re-prompt
+if [[ $INSTALL_MACLOCK -eq 0 && $INSTALL_SHEEPSHAVER -eq 0 && $INSTALL_BASILISK -eq 0 \
+      && ( -n $INSTALLED_MACLOCK || -n $INSTALLED_EMULATOR ) ]]; then
+  opt_up="Update to version $VERSION"
+  opt_edit="Update and edit settings"
+  CHOICE=$(wt_menu "Macintosh Mini Installer v$VERSION" \
+    "Version ${INSTALLED_VERSION:-1.1.0 or earlier} is installed." "$opt_up" 3 \
+    "$opt_up"   "" \
+    "$opt_edit" "" \
+    "Exit"      "") || exit 0
+  case "$CHOICE" in
+    "$opt_up")   UPDATE_MODE=quick ;;
+    "$opt_edit") UPDATE_MODE=edit ;;
+    *)           exit 0 ;;
+  esac
+  [[ $INSTALLED_MACLOCK == 1 ]] && INSTALL_MACLOCK=1
+  case "$INSTALLED_EMULATOR" in
+    basilisk)    INSTALL_BASILISK=1 ;;
+    sheepshaver) INSTALL_SHEEPSHAVER=1 ;;
+  esac
+  if [[ $UPDATE_MODE == quick ]]; then
+    # Keep every setting: no prompts, nothing rewritten
+    [[ -z $PERF ]] && PERF=${INSTALLED_PERF:-0}
+    [[ -z $NEW_HOSTNAME ]] && NEW_HOSTNAME=$(hostname)
+  fi
+fi
 
 # --- Whiptail prompts ------------------------------------------------------
 if [[ $INSTALL_MACLOCK -eq 0 && $INSTALL_SHEEPSHAVER -eq 0 && $INSTALL_BASILISK -eq 0 ]]; then
@@ -565,7 +631,9 @@ configure_existing() {  # $1=prefs  $2=is_basilisk
   done
 }
 
-if [[ $NEED_PREFS -eq 0 && $INSTALL_BASILISK -eq 1 ]]; then
+if [[ $UPDATE_MODE == quick ]]; then
+  :
+elif [[ $NEED_PREFS -eq 0 && $INSTALL_BASILISK -eq 1 ]]; then
   configure_existing "$HOME/.basilisk_ii_prefs" 1
 elif [[ $NEED_PREFS -eq 0 && $INSTALL_SHEEPSHAVER -eq 1 ]]; then
   configure_existing "$HOME/.sheepshaver_prefs" 0
@@ -573,7 +641,8 @@ fi
 
 # Performance optimizations
 if [[ -z $PERF ]]; then
-  PERF_CHOICE=$(wt_menu "Performance Optimizations" "" "Yes" 2 \
+  def=Yes; [[ ${INSTALLED_PERF:-1} == 0 ]] && def=No
+  PERF_CHOICE=$(wt_menu "Performance Optimizations" "" "$def" 2 \
     "Yes"  "Faster — more RAM, fewer background services" \
     "No"   "Stock install") || die "Cancelled"
   case "$PERF_CHOICE" in Yes) PERF=1 ;; No) PERF=0 ;; esac
@@ -587,12 +656,101 @@ if [[ -z $NEW_HOSTNAME ]]; then
 fi
 NEW_HOSTNAME=${NEW_HOSTNAME// /-}
 
+# Night dimming (maclock only). Sunset to sunrise the backlight runs at half
+# the dial level and goes dark from NIGHT_OFF_AT; see brightness_control.py.
+# The script takes its location from the timezone, so a Pi still on UTC gets
+# a picker like raspi-config's. A re-run defaults to whatever the last run chose.
+conf_get() { { sed -n "s/^$1=//p" "$NIGHT_CONF" | head -1; } 2>/dev/null || true; }
+
+current_timezone() {
+  local tz
+  tz=$(timedatectl show -p Timezone --value 2>/dev/null) || tz=$(cat /etc/timezone 2>/dev/null) || true
+  # Etc/* zones (UTC, GMT+5 ...) have no city, so no place to compute a
+  # sunrise for
+  case "$tz" in ""|UTC|Universal|GMT|Etc/*) return 1 ;; esac
+  printf '%s' "$tz"
+}
+
+pick_timezone() {
+  # zone.tab, not zone1970.tab: the latter folds Oslo, Stockholm, Amsterdam
+  # and a hundred others into one zone each, and nobody will find their
+  # city under Berlin. raspi-config reads the same table.
+  local tab=/usr/share/zoneinfo/zone.tab
+  [[ -f $tab ]] || tab=/usr/share/zoneinfo/zone1970.tab
+  [[ -f $tab ]] || die "No tzdata zone table at /usr/share/zoneinfo"
+  local areas=() cities=() item area city
+  while read -r item; do areas+=("$item" ""); done \
+    < <(awk -F'\t' '!/^#/ { split($3, p, "/"); print p[1] }' "$tab" | sort -u)
+  area=$(wt_menu "Timezone" "Pick your area:" "${areas[0]}" 12 "${areas[@]}") \
+    || return 1
+  while read -r item; do cities+=("$item" ""); done \
+    < <(awk -F'\t' -v a="$area/" '!/^#/ && index($3, a) == 1 { print substr($3, length(a) + 1) }' "$tab" | sort)
+  city=$(wt_menu "Timezone" "Pick the nearest city in $area:" "${cities[0]}" 14 "${cities[@]}") \
+    || return 1
+  TIMEZONE="$area/$city"
+}
+
+if [[ -n $TIMEZONE && ! -f /usr/share/zoneinfo/$TIMEZONE ]]; then
+  die "Unknown timezone: $TIMEZONE (see: timedatectl list-timezones)"
+fi
+if [[ -n $NIGHT_OFF && ! $NIGHT_OFF =~ ^(never|([01][0-9]|2[0-3]):[0-5][0-9])$ ]]; then
+  die "--night-off takes 'never' or HH:MM, not '$NIGHT_OFF'"
+fi
+if [[ $INSTALL_MACLOCK -eq 1 && $UPDATE_MODE != quick ]]; then
+  if [[ -z $NIGHT_DIM ]]; then
+    # Stock Pi OS images ship Europe/London, so a zone that looks set may
+    # not be. Show it and offer the picker either way.
+    tz=${TIMEZONE:-$(current_timezone || echo "not set")}
+    yes_tag="Yes (timezone: $tz)"
+    cur=No; [[ $(conf_get NIGHT_DIM) == 1 ]] && cur=$yes_tag
+    NIGHT_CHOICE=$(wt_menu "Night Dimming" \
+      "Do you want your screen to dim automatically from sunset to sunrise?
+Useful if your Macintosh Mini is a desk accessory or display piece." "$cur" 3 \
+      "$yes_tag"          "" \
+      "Update timezone"   "" \
+      "No"                "") || die "Cancelled"
+    case "$NIGHT_CHOICE" in
+      "Yes"*)            NIGHT_DIM=1 ;;
+      "Update timezone") NIGHT_DIM=1; pick_timezone || die "Cancelled" ;;
+      No)                NIGHT_DIM=0 ;;
+    esac
+  fi
+  # The schedule needs a real zone: UTC has no reference city
+  if [[ $NIGHT_DIM -eq 1 && -z $TIMEZONE ]] && ! current_timezone >/dev/null; then
+    pick_timezone || die "Cancelled"
+  fi
+  if [[ $NIGHT_DIM -eq 1 && -z $NIGHT_OFF ]]; then
+    # A hand-edited time that is not one of the presets gets its own entry,
+    # so pressing Enter keeps it
+    off_now=$(conf_get NIGHT_OFF_AT); keep=()
+    case "$off_now" in
+      21:00) cur="9 PM" ;;  22:00) cur="10 PM" ;;  23:00) cur="11 PM" ;;
+      00:00) cur="12 AM" ;; 01:00) cur="1 AM" ;;
+      "") if grep -q '^NIGHT_OFF_AT=$' "$NIGHT_CONF" 2>/dev/null; then cur=Never; else cur="10 PM"; fi ;;
+      *) cur="Keep $off_now"; keep=("$cur" "") ;;
+    esac
+    OFF_CHOICE=$(wt_menu "Night Dimming" "Do you want your screen to turn off at night?
+(It comes back on 1 hour before sunrise.)" "$cur" $(( 6 + ${#keep[@]} / 2 )) \
+      "Never" "" "9 PM" "" "10 PM" "" "11 PM" "" "12 AM" "" "1 AM" "" ${keep[@]+"${keep[@]}"}) || die "Cancelled"
+    case "$OFF_CHOICE" in
+      Keep*)   NIGHT_OFF=$off_now ;;
+      Never)   NIGHT_OFF=never ;;
+      "9 PM")  NIGHT_OFF=21:00 ;;
+      "10 PM") NIGHT_OFF=22:00 ;;
+      "11 PM") NIGHT_OFF=23:00 ;;
+      "12 AM") NIGHT_OFF=00:00 ;;
+      "1 AM")  NIGHT_OFF=01:00 ;;
+    esac
+  fi
+fi
+
 
 # --- Total step count (for gauge) -----------------------------------------
-TOTAL_STEPS=3   # apt update, apt install, patch_cmdline
+TOTAL_STEPS=4   # apt update, apt install, patch_cmdline, record_install
 [[ $WIFI_POWERSAVE -eq 0 ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
 [[ -n $NEW_HOSTNAME && $NEW_HOSTNAME != "$CUR_HOSTNAME" ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
-[[ $INSTALL_MACLOCK -eq 1 ]] && TOTAL_STEPS=$((TOTAL_STEPS+5))
+[[ -n $TIMEZONE ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
+[[ $INSTALL_MACLOCK -eq 1 ]] && TOTAL_STEPS=$((TOTAL_STEPS+6))
 if [[ $INSTALL_SHEEPSHAVER -eq 1 ]]; then
   if [[ -x /usr/local/bin/SheepShaver ]]; then
     TOTAL_STEPS=$((TOTAL_STEPS+9))
@@ -654,6 +812,11 @@ if [[ -n $NEW_HOSTNAME && $NEW_HOSTNAME != "$CUR_HOSTNAME" ]]; then
     fi
   }
   run "Setting hostname: $CUR_HOSTNAME → $NEW_HOSTNAME" set_host
+fi
+
+# --- Timezone -------------------------------------------------------------
+if [[ -n $TIMEZONE ]]; then
+  run "Setting timezone: $TIMEZONE" sudo timedatectl set-timezone "$TIMEZONE"
 fi
 
 # --- apt packages ---------------------------------------------------------
@@ -839,6 +1002,39 @@ EOF
   }
   run "[maclock] Patching config.txt" patch_config
 
+  write_night_conf() {
+    [[ -n $NIGHT_DIM ]] || return 0
+    local lat lon factor off_at
+    # A hand-set location survives re-runs
+    lat=$(conf_get LAT); lon=$(conf_get LON)
+    factor=$(conf_get NIGHT_FACTOR); factor=${factor:-0.5}
+    if [[ $NIGHT_OFF == never ]]; then
+      off_at=""
+    elif [[ -n $NIGHT_OFF ]]; then
+      off_at=$NIGHT_OFF
+    elif grep -q '^NIGHT_OFF_AT=' "$NIGHT_CONF" 2>/dev/null; then
+      # Blank is a valid setting (dim, never dark), so only fall back to
+      # the default when the key is absent entirely.
+      off_at=$(conf_get NIGHT_OFF_AT)
+    else
+      off_at=22:00
+    fi
+    sudo tee "$NIGHT_CONF" >/dev/null <<EOF
+# Night dimming for the maclock backlight. Read by brightness-control.service;
+# after editing: sudo systemctl restart brightness-control
+NIGHT_DIM=$NIGHT_DIM
+# Optional. Blank, the location is the timezone's reference city from tzdata.
+# Set both in decimal degrees (north and east positive) for a closer fix.
+LAT=$lat
+LON=$lon
+# Sunset to sunrise, the dial level is multiplied by this
+NIGHT_FACTOR=$factor
+# From this time the screen goes fully dark, until an hour before sunrise.
+# Blank to only dim.
+NIGHT_OFF_AT=$off_at
+EOF
+  }
+
   install_gpio_helpers() {
     for f in brightness_control.py button_handler.py; do
       curl -fL --retry 3 -o "/tmp/$f" "$REPO_RAW/maclock-build/$f" || return $?
@@ -848,12 +1044,15 @@ EOF
       curl -fL --retry 3 -o "/tmp/$f" "$REPO_RAW/maclock-build/$f" || return $?
       sudo install -m644 "/tmp/$f" "/etc/systemd/system/$f" || return $?
     done
+    write_night_conf || return $?
     sudo systemctl daemon-reload
     # reenable, not enable: the unit moved from multi-user.target to
     # sysinit.target, and plain enable only adds the new symlink.
     sudo systemctl reenable brightness-control.service button-handler.service
-    sudo systemctl start brightness-control.service button-handler.service
+    # restart, not start: on an update the old script is still running
+    sudo systemctl restart brightness-control.service button-handler.service
   }
+
   run "[maclock] Installing GPIO helpers + systemd units" install_gpio_helpers
 
   install_restart_wrapper() {
@@ -1223,6 +1422,17 @@ EOF
   }
   run "[basilisk] Appending autostart to ~/.profile" patch_profile_basilisk
 fi
+
+# --- Record what was installed, so the next run knows it is an update -----
+record_install() {
+  local emulator=$INSTALLED_EMULATOR maclock=${INSTALLED_MACLOCK:-0}
+  [[ $INSTALL_BASILISK -eq 1 ]] && emulator=basilisk
+  [[ $INSTALL_SHEEPSHAVER -eq 1 ]] && emulator=sheepshaver
+  [[ $INSTALL_MACLOCK -eq 1 ]] && maclock=1
+  printf 'VERSION=%s\nMACLOCK=%s\nEMULATOR=%s\nPERF=%s\n' \
+    "$VERSION" "$maclock" "$emulator" "${PERF:-0}" | sudo tee "$INSTALL_STATE" >/dev/null
+}
+run "Recording the install" record_install
 
 # --- Done -----------------------------------------------------------------
 emit_gauge 100 "Done"
