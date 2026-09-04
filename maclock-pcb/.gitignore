@@ -11,9 +11,7 @@ fp-info-cache
 gerbers/
 plot/
 
-# Project-local library tables ARE part of this project (root .gitignore hides them)
+# root .gitignore hides the lib tables; this project needs them
 !fp-lib-table
 !sym-lib-table
-
-# KiCad DRC/ERC report output
 *.rpt
