@@ -4163,7 +4163,7 @@
 				)
 			)
 		)
-		(property "Value" "B2B-PH-K-S(LF)(SN)"
+		(property "Value" "B2B-PH-SM4-TB(LF)(SN)"
 			(at 363.22 66.04 0)
 			(effects
 				(font
@@ -4171,7 +4171,7 @@
 				)
 			)
 		)
-		(property "Footprint" "maclock:JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical_SolderPads"
+		(property "Footprint" "Connector_JST:JST_PH_B2B-PH-SM4-TB_1x02-1MP_P2.00mm_Vertical"
 			(at 363.22 71.12 0)
 			(hide yes)
 			(effects
@@ -4198,7 +4198,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C131337"
+		(property "LCSC" "C160352"
 			(at 363.22 71.12 0)
 			(hide yes)
 			(effects
