@@ -140,8 +140,8 @@
 		(uuid "8a338e0b-cb46-4ef9-ac9b-76aa66e4cbc5")
 	)
 	(embedded_fonts no)
-	(model "${KIPRJMOD}/maclock.3dshapes/RotaryEncoder_HYCW03-2.8D-5P-S.wrl"
-    (offset (xyz 0 0 0))
-    (scale (xyz 1 1 1))
+	(model "${KICAD10_3DMODEL_DIR}/Potentiometer_SMD.3dshapes/Potentiometer_Bourns_3314J_Vertical.step"
+    (offset (xyz 0 0.895 0))
+    (scale (xyz 1.4 1.33 1.27))
     (rotate (xyz 0 0 0)))
 )
