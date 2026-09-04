@@ -25,7 +25,7 @@ set -euo pipefail
 
 REPO_BRANCH="main"   # --branch: test an unmerged branch on a real Pi
 REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/$REPO_BRANCH"
-VERSION="1.1.0"
+VERSION="1.2.0"
 
 # SheepShaver paths (DISK_IMAGE is auto-discovered or set via --disk)
 DISK_IMAGE=""
@@ -72,7 +72,8 @@ dump_log_on_failure() {
 # --- Progress gauge --------------------------------------------------------
 PROGRESS_FIFO=""
 GAUGE_PID=""
-GAUGE_NOTE="This will take a while. Go make yourself a coffee :)
+GAUGE_NOTE="
+This will take a while. Go make yourself a coffee :)
 Your device will automatically reboot when finished."
 USE_GAUGE=0
 TOTAL_STEPS=1
@@ -347,6 +348,49 @@ printf '  log: %s%s\n' "$LOG_FILE" "$([[ $DEBUG -eq 1 ]] && echo '  [debug mode:
 ensure_sudo
 ensure_whiptail
 
+# --- Existing install? -----------------------------------------------------
+# The installer records what it set up so a re-run knows it is an update.
+# Installs before 1.2.0 left no record, so fall back to what is on disk.
+INSTALL_STATE=/etc/macintosh-mini.conf
+state_get() { { sed -n "s/^$1=//p" "$INSTALL_STATE" | head -1; } 2>/dev/null || true; }
+INSTALLED_VERSION=$(state_get VERSION)
+INSTALLED_MACLOCK=$(state_get MACLOCK)
+INSTALLED_EMULATOR=$(state_get EMULATOR)
+INSTALLED_PERF=$(state_get PERF)
+if [[ -z $INSTALLED_VERSION ]]; then
+  [[ -f /etc/systemd/system/brightness-control.service ]] && INSTALLED_MACLOCK=1
+  grep -qsF "# >>> basilisk-autostart >>>" "$HOME/.profile" && INSTALLED_EMULATOR=basilisk
+  grep -qsF "# >>> sheepshaver-autostart >>>" "$HOME/.profile" && INSTALLED_EMULATOR=sheepshaver
+  grep -qs "fsck.mode=skip" /boot/firmware/cmdline.txt && INSTALLED_PERF=1
+fi
+
+UPDATE_MODE=""   # "" = fresh install or flags given, quick = keep settings, edit = re-prompt
+if [[ $INSTALL_MACLOCK -eq 0 && $INSTALL_SHEEPSHAVER -eq 0 && $INSTALL_BASILISK -eq 0 \
+      && ( -n $INSTALLED_MACLOCK || -n $INSTALLED_EMULATOR ) ]]; then
+  opt_up="Update to version $VERSION"
+  opt_edit="Update and edit settings"
+  CHOICE=$(wt_menu "Macintosh Mini Installer v$VERSION" \
+    "Version ${INSTALLED_VERSION:-1.1.0 or earlier} is installed." "$opt_up" 3 \
+    "$opt_up"   "" \
+    "$opt_edit" "" \
+    "Exit"      "") || exit 0
+  case "$CHOICE" in
+    "$opt_up")   UPDATE_MODE=quick ;;
+    "$opt_edit") UPDATE_MODE=edit ;;
+    *)           exit 0 ;;
+  esac
+  [[ $INSTALLED_MACLOCK == 1 ]] && INSTALL_MACLOCK=1
+  case "$INSTALLED_EMULATOR" in
+    basilisk)    INSTALL_BASILISK=1 ;;
+    sheepshaver) INSTALL_SHEEPSHAVER=1 ;;
+  esac
+  if [[ $UPDATE_MODE == quick ]]; then
+    # Keep every setting: no prompts, nothing rewritten
+    [[ -z $PERF ]] && PERF=${INSTALLED_PERF:-0}
+    [[ -z $NEW_HOSTNAME ]] && NEW_HOSTNAME=$(hostname)
+  fi
+fi
+
 # --- Whiptail prompts ------------------------------------------------------
 if [[ $INSTALL_MACLOCK -eq 0 && $INSTALL_SHEEPSHAVER -eq 0 && $INSTALL_BASILISK -eq 0 ]]; then
   # Single-column menu (label = tag, blank item).
@@ -580,7 +624,9 @@ configure_existing() {  # $1=prefs  $2=is_basilisk
   done
 }
 
-if [[ $NEED_PREFS -eq 0 && $INSTALL_BASILISK -eq 1 ]]; then
+if [[ $UPDATE_MODE == quick ]]; then
+  :
+elif [[ $NEED_PREFS -eq 0 && $INSTALL_BASILISK -eq 1 ]]; then
   configure_existing "$HOME/.basilisk_ii_prefs" 1
 elif [[ $NEED_PREFS -eq 0 && $INSTALL_SHEEPSHAVER -eq 1 ]]; then
   configure_existing "$HOME/.sheepshaver_prefs" 0
@@ -588,7 +634,8 @@ fi
 
 # Performance optimizations
 if [[ -z $PERF ]]; then
-  PERF_CHOICE=$(wt_menu "Performance Optimizations" "" "Yes" 2 \
+  def=Yes; [[ ${INSTALLED_PERF:-1} == 0 ]] && def=No
+  PERF_CHOICE=$(wt_menu "Performance Optimizations" "" "$def" 2 \
     "Yes"  "Faster — more RAM, fewer background services" \
     "No"   "Stock install") || die "Cancelled"
   case "$PERF_CHOICE" in Yes) PERF=1 ;; No) PERF=0 ;; esac
@@ -637,7 +684,7 @@ pick_timezone() {
 if [[ -n $TIMEZONE && ! -f /usr/share/zoneinfo/$TIMEZONE ]]; then
   die "Unknown timezone: $TIMEZONE (see: timedatectl list-timezones)"
 fi
-if [[ $INSTALL_MACLOCK -eq 1 ]]; then
+if [[ $INSTALL_MACLOCK -eq 1 && $UPDATE_MODE != quick ]]; then
   if [[ -z $NIGHT_DIM ]]; then
     # Stock Pi OS images ship Europe/London, so a zone that looks set may
     # not be. Show it and offer the picker either way.
@@ -666,7 +713,7 @@ Useful if your Macintosh Mini is a desk accessory or display piece." "$cur" 3 \
       00:00) cur="12 AM" ;; 01:00) cur="1 AM" ;;
       *) if grep -q '^NIGHT_OFF_AT=$' "$NIGHT_CONF" 2>/dev/null; then cur=Never; else cur="10 PM"; fi ;;
     esac
-    OFF_CHOICE=$(wt_menu "Night Dimming" "Do you want your screen to turn off at night?" "$cur" 6 \
+    OFF_CHOICE=$(wt_menu "Night Dimming" "Do you want your screen to turn off at night (until 1 hour before sunrise)?" "$cur" 6 \
       "Never" "" "9 PM" "" "10 PM" "" "11 PM" "" "12 AM" "" "1 AM" "") || die "Cancelled"
     case "$OFF_CHOICE" in
       Never)   NIGHT_OFF=never ;;
@@ -1356,6 +1403,17 @@ EOF
   }
   run "[basilisk] Appending autostart to ~/.profile" patch_profile_basilisk
 fi
+
+# --- Record what was installed, so the next run knows it is an update -----
+record_install() {
+  local emulator=$INSTALLED_EMULATOR maclock=${INSTALLED_MACLOCK:-0}
+  [[ $INSTALL_BASILISK -eq 1 ]] && emulator=basilisk
+  [[ $INSTALL_SHEEPSHAVER -eq 1 ]] && emulator=sheepshaver
+  [[ $INSTALL_MACLOCK -eq 1 ]] && maclock=1
+  printf 'VERSION=%s\nMACLOCK=%s\nEMULATOR=%s\nPERF=%s\n' \
+    "$VERSION" "$maclock" "$emulator" "${PERF:-0}" | sudo tee "$INSTALL_STATE" >/dev/null
+}
+record_install
 
 # --- Done -----------------------------------------------------------------
 emit_gauge 100 "Done"

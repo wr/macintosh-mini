@@ -87,10 +87,11 @@ cleaning = False
 #                           timezone's reference city from tzdata, which puts
 #                           sunrise within a few minutes for most people
 #   NIGHT_FACTOR=0.5        sunset to sunrise, the dial level is scaled by this
-#   NIGHT_OFF_AT=22:00      from here until sunrise the backlight goes fully
-#                           dark. Leave blank to only ever dim.
+#   NIGHT_OFF_AT=22:00      from here the backlight goes fully dark, until an
+#                           hour before sunrise. Leave blank to only ever dim.
 # Turning the dial at night wakes the screen until the next sunset.
 NIGHT_FADE_S = 30      # scheduled changes ease in over this long
+WAKE_BEFORE_SUNRISE = timedelta(hours=1)   # dark ends this long before dawn
 NIGHT_CHECK_S = 1.0    # how often the schedule is consulted
 
 # The Zero has no clock battery, so until NTP answers the time is whatever
@@ -239,7 +240,8 @@ def midnight_sun(lat, lon, day):
 def night_factor(now, cfg, sun_times=sun_times):
     """Scale for the dial level at `now` (an aware local datetime).
 
-    1.0 by day, cfg.factor after sunset, 0.0 from cfg.off_at until sunrise.
+    1.0 by day, cfg.factor after sunset, 0.0 from cfg.off_at until an hour
+    before sunrise, then cfg.factor again until the sun is up.
     """
     # Work from the most recent sunrise and sunset instants rather than
     # "today's": where the clock runs far from solar time (Alaska, UTC+14)
@@ -259,6 +261,9 @@ def night_factor(now, cfg, sun_times=sun_times):
         return 1.0
 
     if cfg.off_at is None:
+        return cfg.factor
+    next_rise = min((t for t in rises if t > now), default=None)
+    if next_rise is not None and now >= next_rise - WAKE_BEFORE_SUNRISE:
         return cfg.factor
     # The cutoff belongs to the night that began at last_set: the first
     # occurrence of that clock time from a few hours before sunset on, so a

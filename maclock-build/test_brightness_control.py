@@ -81,6 +81,11 @@ class NightFactor(unittest.TestCase):
     def test_after_midnight_stays_dark(self):
         self.assertEqual(self.factor(self.at(3)), 0.0)
 
+    def test_dark_ends_an_hour_before_sunrise(self):
+        self.assertEqual(self.factor(self.at(4, 59)), 0.0)
+        self.assertEqual(self.factor(self.at(5, 0)), 0.5)
+        self.assertEqual(self.factor(self.at(5, 59)), 0.5)
+
     def test_sunrise_restores_full_brightness(self):
         self.assertEqual(self.factor(self.at(6, 1)), 1.0)
 
@@ -120,6 +125,7 @@ class NightFactorRealSun(unittest.TestCase):
         self.assertEqual(self.factor(*stockholm, 2024, 6, 21, 21, 30), 1.0)
         self.assertEqual(self.factor(*stockholm, 2024, 6, 21, 22, 30), 0.0)
         self.assertEqual(self.factor(*stockholm, 2024, 6, 22, 1, 0), 0.0)
+        self.assertEqual(self.factor(*stockholm, 2024, 6, 22, 3, 0), 0.5)  # sunrise 03:30
         self.assertEqual(self.factor(*stockholm, 2024, 6, 22, 4, 0), 1.0)
 
     def test_nome_sunset_after_local_midnight(self):
