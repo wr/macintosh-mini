@@ -72,6 +72,8 @@ dump_log_on_failure() {
 # --- Progress gauge --------------------------------------------------------
 PROGRESS_FIFO=""
 GAUGE_PID=""
+GAUGE_NOTE="This will take a while. Go make yourself a coffee :)
+Your device will automatically reboot when finished."
 USE_GAUGE=0
 TOTAL_STEPS=1
 CURRENT_STEP=0
@@ -81,7 +83,9 @@ start_gauge() {
   PROGRESS_FIFO=$(mktemp -u /tmp/macintosh-mini-progress.XXXXXX)
   mkfifo "$PROGRESS_FIFO"
   whiptail --backtitle "macintosh-mini" --title "Installing" \
-    --gauge "Starting…" 8 72 0 < "$PROGRESS_FIFO" &
+    --gauge "$GAUGE_NOTE
+
+Starting…" 11 72 0 < "$PROGRESS_FIFO" &
   GAUGE_PID=$!
   exec 9> "$PROGRESS_FIFO"
   USE_GAUGE=1
@@ -98,7 +102,7 @@ stop_gauge() {
 emit_gauge() {
   local pct=$1 msg=$2
   [[ $USE_GAUGE -eq 1 ]] || return 0
-  printf 'XXX\n%s\n%s\nXXX\n' "$pct" "$msg" >&9
+  printf 'XXX\n%s\n%s\n\n%s\nXXX\n' "$pct" "$GAUGE_NOTE" "$msg" >&9
 }
 
 step_pct() { echo $(( CURRENT_STEP * 100 / TOTAL_STEPS )); }
@@ -168,6 +172,7 @@ wt_menu() {
   local title=$1 prompt=$2 default=$3 list_height=$4
   shift 4
   local extra=8; [[ -z $prompt ]] && extra=7
+  local newlines=${prompt//[!$'\n']/}; extra=$(( extra + ${#newlines} ))
   local total_height=$(( list_height + extra ))
   whiptail --backtitle "macintosh-mini" --title "$title" \
     --default-item "$default" \
@@ -297,6 +302,7 @@ NEW_HOSTNAME=""
 PERF=""   # "" = prompt, 1 = on, 0 = off
 WIFI_POWERSAVE=0   # 0 = turn the radio's power saving off, 1 = leave it alone
 NIGHT_DIM=""       # "" = prompt, 1 = dim the screen at night, 0 = don't
+NIGHT_OFF=""       # "" = prompt, "never", or HH:MM to turn the screen off
 TIMEZONE=""        # Area/City to set; the night schedule needs a real one
 NIGHT_CONF=/etc/default/brightness-control
 
@@ -319,6 +325,7 @@ while [[ $# -gt 0 ]]; do
     --no-wifi-powersave) WIFI_POWERSAVE=0; shift ;;
     --night-dim)     NIGHT_DIM=1; shift ;;
     --no-night-dim)  NIGHT_DIM=0; shift ;;
+    --night-off)     NIGHT_OFF=$2; shift 2 ;;
     --timezone)      TIMEZONE=$2; shift 2 ;;
     --branch)        REPO_BRANCH=$2; REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/$REPO_BRANCH"; shift 2 ;;
     --debug)         DEBUG=1; shift ;;
@@ -599,7 +606,7 @@ NEW_HOSTNAME=${NEW_HOSTNAME// /-}
 # the dial level and goes dark from NIGHT_OFF_AT; see brightness_control.py.
 # The script takes its location from the timezone, so a Pi still on UTC gets
 # a picker like raspi-config's. A re-run defaults to whatever the last run chose.
-conf_get() { sed -n "s/^$1=//p" "$NIGHT_CONF" 2>/dev/null | head -1; }
+conf_get() { { sed -n "s/^$1=//p" "$NIGHT_CONF" | head -1; } 2>/dev/null || true; }
 
 current_timezone() {
   local tz
@@ -632,23 +639,43 @@ if [[ -n $TIMEZONE && ! -f /usr/share/zoneinfo/$TIMEZONE ]]; then
 fi
 if [[ $INSTALL_MACLOCK -eq 1 ]]; then
   if [[ -z $NIGHT_DIM ]]; then
-    cur=No; [[ $(conf_get NIGHT_DIM) == 1 ]] && cur=Yes
-    tz=${TIMEZONE:-$(current_timezone || echo "not set")}
     # Stock Pi OS images ship Europe/London, so a zone that looks set may
     # not be. Show it and offer the picker either way.
-    NIGHT_CHOICE=$(wt_menu "Night Dimming" "Sunset to sunrise the screen dims; from 10pm it goes dark." "$cur" 3 \
-      "Yes"       "Follow the sun for the timezone: $tz" \
-      "Timezone"  "Same, but pick the timezone first" \
-      "No"        "Leave brightness to the dial") || die "Cancelled"
+    tz=${TIMEZONE:-$(current_timezone || echo "not set")}
+    yes_tag="Yes (timezone: $tz)"
+    cur=No; [[ $(conf_get NIGHT_DIM) == 1 ]] && cur=$yes_tag
+    NIGHT_CHOICE=$(wt_menu "Night Dimming" \
+      "Do you want your screen to dim automatically from sunset to sunrise?
+Useful if your Macintosh Mini is a desk accessory or display piece." "$cur" 3 \
+      "$yes_tag"          "" \
+      "Update timezone"   "" \
+      "No"                "") || die "Cancelled"
     case "$NIGHT_CHOICE" in
-      Yes)      NIGHT_DIM=1 ;;
-      Timezone) NIGHT_DIM=1; pick_timezone || die "Cancelled" ;;
-      No)       NIGHT_DIM=0 ;;
+      "Yes"*)            NIGHT_DIM=1 ;;
+      "Update timezone") NIGHT_DIM=1; pick_timezone || die "Cancelled" ;;
+      No)                NIGHT_DIM=0 ;;
     esac
   fi
   # The schedule needs a real zone: UTC has no reference city
   if [[ $NIGHT_DIM -eq 1 && -z $TIMEZONE ]] && ! current_timezone >/dev/null; then
     pick_timezone || die "Cancelled"
+  fi
+  if [[ $NIGHT_DIM -eq 1 && -z $NIGHT_OFF ]]; then
+    case "$(conf_get NIGHT_OFF_AT)" in
+      21:00) cur="9 PM" ;;  22:00) cur="10 PM" ;;  23:00) cur="11 PM" ;;
+      00:00) cur="12 AM" ;; 01:00) cur="1 AM" ;;
+      *) if grep -q '^NIGHT_OFF_AT=$' "$NIGHT_CONF" 2>/dev/null; then cur=Never; else cur="10 PM"; fi ;;
+    esac
+    OFF_CHOICE=$(wt_menu "Night Dimming" "Do you want your screen to turn off at night?" "$cur" 6 \
+      "Never" "" "9 PM" "" "10 PM" "" "11 PM" "" "12 AM" "" "1 AM" "") || die "Cancelled"
+    case "$OFF_CHOICE" in
+      Never)   NIGHT_OFF=never ;;
+      "9 PM")  NIGHT_OFF=21:00 ;;
+      "10 PM") NIGHT_OFF=22:00 ;;
+      "11 PM") NIGHT_OFF=23:00 ;;
+      "12 AM") NIGHT_OFF=00:00 ;;
+      "1 AM")  NIGHT_OFF=01:00 ;;
+    esac
   fi
 fi
 
@@ -916,9 +943,13 @@ EOF
     # A hand-set location survives re-runs
     lat=$(conf_get LAT); lon=$(conf_get LON)
     factor=$(conf_get NIGHT_FACTOR); factor=${factor:-0.5}
-    # Blank is a valid setting (dim, never dark), so only fall back to the
-    # default when the key is absent entirely.
-    if grep -q '^NIGHT_OFF_AT=' "$NIGHT_CONF" 2>/dev/null; then
+    if [[ $NIGHT_OFF == never ]]; then
+      off_at=""
+    elif [[ -n $NIGHT_OFF ]]; then
+      off_at=$NIGHT_OFF
+    elif grep -q '^NIGHT_OFF_AT=' "$NIGHT_CONF" 2>/dev/null; then
+      # Blank is a valid setting (dim, never dark), so only fall back to
+      # the default when the key is absent entirely.
       off_at=$(conf_get NIGHT_OFF_AT)
     else
       off_at=22:00
