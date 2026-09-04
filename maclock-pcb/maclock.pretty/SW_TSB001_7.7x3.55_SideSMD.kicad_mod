@@ -134,4 +134,8 @@
 		(uuid "f0f832a0-bf13-4950-ab7b-90735eb45193")
 	)
 	(embedded_fonts no)
+	(model "${KIPRJMOD}/maclock.3dshapes/SW_TSB001_7.7x3.55_SideSMD.wrl"
+    (offset (xyz 0 0 0))
+    (scale (xyz 1 1 1))
+    (rotate (xyz 0 0 0)))
 )

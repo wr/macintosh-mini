@@ -1,0 +1,52 @@
+#VRML V2.0 utf8
+# Simple block model — dimensions from the part footprint/datasheet; no vendor model exists.
+Transform {
+  translation 0.00000 0.54921 0.53150
+  children [ Shape {
+    appearance Appearance { material Material { diffuseColor 0.25 0.25 0.25 } }
+    geometry Box { size 2.48031 2.22441 1.06299 }
+  } ]
+}
+Transform {
+  translation -1.41732 0.92913 0.05906
+  children [ Shape {
+    appearance Appearance { material Material { diffuseColor 0.25 0.25 0.25 } }
+    geometry Box { size 0.35433 0.24409 0.11811 }
+  } ]
+}
+Transform {
+  translation 1.41732 0.92913 0.05906
+  children [ Shape {
+    appearance Appearance { material Material { diffuseColor 0.25 0.25 0.25 } }
+    geometry Box { size 0.35433 0.24409 0.11811 }
+  } ]
+}
+Transform {
+  translation 0.00000 0.53937 1.16142
+  rotation 1 0 0 1.5708
+  children [ Shape {
+    appearance Appearance { material Material { diffuseColor 0.55 0.55 0.55 } }
+    geometry Cylinder { radius 0.78740 height 0.19685 }
+  } ]
+}
+Transform {
+  translation -0.78740 -0.75984 0.05906
+  children [ Shape {
+    appearance Appearance { material Material { diffuseColor 0.25 0.25 0.25 } }
+    geometry Box { size 0.31496 0.39370 0.11811 }
+  } ]
+}
+Transform {
+  translation 0.00000 -0.75984 0.05906
+  children [ Shape {
+    appearance Appearance { material Material { diffuseColor 0.25 0.25 0.25 } }
+    geometry Box { size 0.31496 0.39370 0.11811 }
+  } ]
+}
+Transform {
+  translation 0.78740 -0.75984 0.05906
+  children [ Shape {
+    appearance Appearance { material Material { diffuseColor 0.25 0.25 0.25 } }
+    geometry Box { size 0.31496 0.39370 0.11811 }
+  } ]
+}
