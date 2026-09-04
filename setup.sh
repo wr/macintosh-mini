@@ -713,7 +713,8 @@ Useful if your Macintosh Mini is a desk accessory or display piece." "$cur" 3 \
       00:00) cur="12 AM" ;; 01:00) cur="1 AM" ;;
       *) if grep -q '^NIGHT_OFF_AT=$' "$NIGHT_CONF" 2>/dev/null; then cur=Never; else cur="10 PM"; fi ;;
     esac
-    OFF_CHOICE=$(wt_menu "Night Dimming" "Do you want your screen to turn off at night (until 1 hour before sunrise)?" "$cur" 6 \
+    OFF_CHOICE=$(wt_menu "Night Dimming" "Do you want your screen to turn off at night?
+(It comes back on 1 hour before sunrise.)" "$cur" 6 \
       "Never" "" "9 PM" "" "10 PM" "" "11 PM" "" "12 AM" "" "1 AM" "") || die "Cancelled"
     case "$OFF_CHOICE" in
       Never)   NIGHT_OFF=never ;;
