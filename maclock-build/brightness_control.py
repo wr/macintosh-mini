@@ -260,19 +260,23 @@ def night_factor(now, cfg, sun_times=sun_times):
     if last_set is None or (last_rise is not None and last_rise > last_set):
         return 1.0
 
-    if cfg.off_at is None:
-        return cfg.factor
     next_rise = min((t for t in rises if t > now), default=None)
-    if next_rise is not None and now >= next_rise - WAKE_BEFORE_SUNRISE:
+    if next_rise is None:
+        # The sun has just stopped rising or setting: the first day of a
+        # polar stretch, with the last sunset still inside the window
+        return 1.0 if midnight_sun(cfg.lat, cfg.lon, now.date()) else cfg.factor
+    if cfg.off_at is None or now >= next_rise - WAKE_BEFORE_SUNRISE:
         return cfg.factor
     # The cutoff belongs to the night that began at last_set: the first
     # occurrence of that clock time from a few hours before sunset on, so a
     # time after midnight lands in this night and one before sunset (a 22:00
-    # cutoff under a 22:08 midsummer sunset) means dark from sunset.
+    # cutoff under a 22:08 midsummer sunset) means dark from sunset. The day
+    # before is a candidate too, for a sunset that itself falls after
+    # midnight (Nome, Reykjavik in June).
     sunset = last_set.astimezone(now.tzinfo)
     off = min(t for t in (datetime.combine(sunset.date() + timedelta(days=days),
                                            cfg.off_at, now.tzinfo)
-                          for days in (0, 1))
+                          for days in (-1, 0, 1))
               if t > sunset - timedelta(hours=6))
     return 0.0 if now >= max(off, sunset) else cfg.factor
 

@@ -19,6 +19,13 @@
 #   --wifi-powersave | --no-wifi-powersave
 #                       leave the wi-fi radio's power saving alone, or turn it
 #                       off so the Pi stays reachable when idle (default: off)
+#   --night-dim | --no-night-dim
+#                       dim the screen from sunset to sunrise (default: prompt)
+#   --night-off <t>     when the screen turns off at night: never, or HH:MM
+#                       (default: prompt; 22:00 on a fresh install)
+#   --timezone <zone>   Area/City for the sunrise schedule (default: keep, or
+#                       prompt when the Pi is still on UTC)
+#   --branch <name>     fetch the helper files from a branch other than main
 #   --debug             show all command output instead of capturing to log
 
 set -euo pipefail
@@ -658,7 +665,9 @@ conf_get() { { sed -n "s/^$1=//p" "$NIGHT_CONF" | head -1; } 2>/dev/null || true
 current_timezone() {
   local tz
   tz=$(timedatectl show -p Timezone --value 2>/dev/null) || tz=$(cat /etc/timezone 2>/dev/null) || true
-  case "$tz" in ""|UTC|Etc/UTC|Universal|Etc/Universal|GMT|Etc/GMT) return 1 ;; esac
+  # Etc/* zones (UTC, GMT+5 ...) have no city, so no place to compute a
+  # sunrise for
+  case "$tz" in ""|UTC|Universal|GMT|Etc/*) return 1 ;; esac
   printf '%s' "$tz"
 }
 
@@ -684,6 +693,9 @@ pick_timezone() {
 if [[ -n $TIMEZONE && ! -f /usr/share/zoneinfo/$TIMEZONE ]]; then
   die "Unknown timezone: $TIMEZONE (see: timedatectl list-timezones)"
 fi
+if [[ -n $NIGHT_OFF && ! $NIGHT_OFF =~ ^(never|([01][0-9]|2[0-3]):[0-5][0-9])$ ]]; then
+  die "--night-off takes 'never' or HH:MM, not '$NIGHT_OFF'"
+fi
 if [[ $INSTALL_MACLOCK -eq 1 && $UPDATE_MODE != quick ]]; then
   if [[ -z $NIGHT_DIM ]]; then
     # Stock Pi OS images ship Europe/London, so a zone that looks set may
@@ -708,15 +720,20 @@ Useful if your Macintosh Mini is a desk accessory or display piece." "$cur" 3 \
     pick_timezone || die "Cancelled"
   fi
   if [[ $NIGHT_DIM -eq 1 && -z $NIGHT_OFF ]]; then
-    case "$(conf_get NIGHT_OFF_AT)" in
+    # A hand-edited time that is not one of the presets gets its own entry,
+    # so pressing Enter keeps it
+    off_now=$(conf_get NIGHT_OFF_AT); keep=()
+    case "$off_now" in
       21:00) cur="9 PM" ;;  22:00) cur="10 PM" ;;  23:00) cur="11 PM" ;;
       00:00) cur="12 AM" ;; 01:00) cur="1 AM" ;;
-      *) if grep -q '^NIGHT_OFF_AT=$' "$NIGHT_CONF" 2>/dev/null; then cur=Never; else cur="10 PM"; fi ;;
+      "") if grep -q '^NIGHT_OFF_AT=$' "$NIGHT_CONF" 2>/dev/null; then cur=Never; else cur="10 PM"; fi ;;
+      *) cur="Keep $off_now"; keep=("$cur" "") ;;
     esac
     OFF_CHOICE=$(wt_menu "Night Dimming" "Do you want your screen to turn off at night?
-(It comes back on 1 hour before sunrise.)" "$cur" 6 \
-      "Never" "" "9 PM" "" "10 PM" "" "11 PM" "" "12 AM" "" "1 AM" "") || die "Cancelled"
+(It comes back on 1 hour before sunrise.)" "$cur" $(( 6 + ${#keep[@]} / 2 )) \
+      "Never" "" "9 PM" "" "10 PM" "" "11 PM" "" "12 AM" "" "1 AM" "" ${keep[@]+"${keep[@]}"}) || die "Cancelled"
     case "$OFF_CHOICE" in
+      Keep*)   NIGHT_OFF=$off_now ;;
       Never)   NIGHT_OFF=never ;;
       "9 PM")  NIGHT_OFF=21:00 ;;
       "10 PM") NIGHT_OFF=22:00 ;;
@@ -729,7 +746,7 @@ fi
 
 
 # --- Total step count (for gauge) -----------------------------------------
-TOTAL_STEPS=3   # apt update, apt install, patch_cmdline
+TOTAL_STEPS=4   # apt update, apt install, patch_cmdline, record_install
 [[ $WIFI_POWERSAVE -eq 0 ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
 [[ -n $NEW_HOSTNAME && $NEW_HOSTNAME != "$CUR_HOSTNAME" ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
 [[ -n $TIMEZONE ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
@@ -1012,7 +1029,8 @@ LAT=$lat
 LON=$lon
 # Sunset to sunrise, the dial level is multiplied by this
 NIGHT_FACTOR=$factor
-# From this time until sunrise the screen goes fully dark. Blank to only dim.
+# From this time the screen goes fully dark, until an hour before sunrise.
+# Blank to only dim.
 NIGHT_OFF_AT=$off_at
 EOF
   }
@@ -1414,7 +1432,7 @@ record_install() {
   printf 'VERSION=%s\nMACLOCK=%s\nEMULATOR=%s\nPERF=%s\n' \
     "$VERSION" "$maclock" "$emulator" "${PERF:-0}" | sudo tee "$INSTALL_STATE" >/dev/null
 }
-record_install
+run "Recording the install" record_install
 
 # --- Done -----------------------------------------------------------------
 emit_gauge 100 "Done"

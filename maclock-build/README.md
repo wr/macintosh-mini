@@ -171,9 +171,9 @@ sudo systemctl enable --now brightness-control button-handler
 The dial script can follow the sun. From sunset the backlight runs at half the
 dial level, from 10pm it goes fully dark until an hour before sunrise, and at
 sunrise it comes back to wherever the dial was. Turning the dial at night
-wakes the screen until the next sunset. Sunrise and sunset are computed on the Pi, offline, for the
-reference city of the system timezone, using the coordinates tzdata ships in
-its zone tables. Stock Pi OS images come set to Europe/London, so check that
+wakes the screen until the next sunset. Sunrise and sunset are computed on the
+Pi, offline, for the reference city of the system timezone, using the
+coordinates tzdata ships in its zone tables. Stock Pi OS images come set to Europe/London, so check that
 first; the [setup script](../setup.sh) shows the zone and offers a picker. By
 hand:
 

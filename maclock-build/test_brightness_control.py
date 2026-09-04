@@ -129,11 +129,20 @@ class NightFactorRealSun(unittest.TestCase):
         self.assertEqual(self.factor(*stockholm, 2024, 6, 22, 4, 0), 1.0)
 
     def test_nome_sunset_after_local_midnight(self):
-        # Alaska's clock runs ~3 h ahead of the sun: June sunset is 01:47
+        # Alaska's clock runs ~3 h ahead of the sun: June sunset is 01:47,
+        # sunrise 04:19. The 22:00 cutoff came before sunset, so dark from
+        # sunset until 03:19, then dim until sunrise.
         nome = ("America/Nome", 64.50, -165.41)
         self.assertEqual(self.factor(*nome, 2024, 6, 22, 0, 30), 1.0)
-        self.assertEqual(self.factor(*nome, 2024, 6, 22, 2, 30), 0.5)
+        self.assertEqual(self.factor(*nome, 2024, 6, 22, 2, 30), 0.0)
+        self.assertEqual(self.factor(*nome, 2024, 6, 22, 3, 30), 0.5)
         self.assertEqual(self.factor(*nome, 2024, 6, 22, 5, 0), 1.0)
+
+    def test_reykjavik_sunset_minutes_past_midnight(self):
+        # Sunset 00:04, sunrise 02:55: dark from sunset until 01:55
+        rvk = ("Atlantic/Reykjavik", 64.15, -21.94)
+        self.assertEqual(self.factor(*rvk, 2024, 6, 22, 0, 30), 0.0)
+        self.assertEqual(self.factor(*rvk, 2024, 6, 22, 2, 30), 0.5)
 
     def test_utc_plus_14_midday_is_day(self):
         self.assertEqual(self.factor("Pacific/Kiritimati", 1.87, -157.4,
@@ -144,6 +153,15 @@ class NightFactorRealSun(unittest.TestCase):
         tromso = ("Europe/Oslo", 69.65, 18.96)
         self.assertEqual(self.factor(*tromso, 2024, 12, 21, 12, 0), 0.5)
         self.assertEqual(self.factor(*tromso, 2024, 12, 21, 23, 0), 0.5)
+
+    def test_first_day_of_midnight_sun_is_day(self):
+        # The last sunset is still in the window but no sunrise follows it
+        self.assertEqual(self.factor("Europe/Oslo", 69.65, 18.96,
+                                     2024, 5, 18, 12, 0), 1.0)
+
+    def test_first_day_of_polar_night_only_dims(self):
+        self.assertEqual(self.factor("Europe/Oslo", 69.65, 18.96,
+                                     2024, 11, 28, 12, 0), 0.5)
 
     def test_midnight_sun_never_dims(self):
         self.assertEqual(self.factor("Europe/Oslo", 69.65, 18.96,
