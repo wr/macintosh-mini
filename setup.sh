@@ -899,14 +899,20 @@ patch_cmdline() {
 run "Configuring quiet boot (cmdline.txt)" patch_cmdline
 
 # The only visible part of the brief pre-emulator rotation is cage's pointer
-# cursor (cage's background is a solid fill, identical rotated or not). Install
-# a cursor theme whose every shape is a 1x1 transparent Xcursor; the launchers
-# select it *only* for the cage command (XCURSOR_THEME, not exported), so cage
-# draws no cursor and the un-rotated instant is invisible. The Mac cursor lives
-# in the emulator's own framebuffer and is unaffected; nothing else on the
-# system selects this theme, so the fallback shell and any desktop keep theirs.
+# cursor (cage's background is a solid fill, identical rotated or not). Hide it
+# with a cursor theme whose every shape is a 1x1 transparent Xcursor.
+#
+# cage 0.2.x (what Pi OS ships) does NOT read XCURSOR_THEME — it hardcodes
+# wlr_xcursor_manager_create("left_ptr", 24), i.e. it looks for a *theme* named
+# "left_ptr". So we name the theme dir "left_ptr" (with a transparent left_ptr
+# cursor in it); cage loads it and draws nothing. Setting XCURSOR_THEME=left_ptr
+# on the launcher's cage command (not exported) also covers a future fixed cage
+# that honors the env. The Mac cursor lives in the emulator's own framebuffer
+# and is unaffected; no other app requests a theme called "left_ptr", so the
+# fallback shell and any desktop keep their normal cursor.
 install_kiosk_cursor() {
-  local cdir="$HOME/.local/share/icons/transparent/cursors" n
+  local base="$HOME/.local/share/icons/left_ptr" cdir n
+  cdir="$base/cursors"
   mkdir -p "$cdir"
   base64 -d > "$cdir/left_ptr" <<'CUR'
 WGN1chAAAAAAAAEAAQAAAAIA/f8BAAAAHAAAACQAAAACAP3/AQAAAAEAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAA=
@@ -915,9 +921,9 @@ CUR
            hand1 hand2 pointer fleur crosshair sb_h_double_arrow sb_v_double_arrow; do
     ln -sf left_ptr "$cdir/$n"
   done
-  cat > "$HOME/.local/share/icons/transparent/index.theme" <<'IDX'
+  cat > "$base/index.theme" <<'IDX'
 [Icon Theme]
-Name=transparent
+Name=left_ptr
 Comment=Invisible cursor for kiosk
 IDX
 }
@@ -1256,10 +1262,10 @@ rm -f /tmp/sheepshaver.exit
 # Rotate to landscape the instant cage advertises the output. cage can't start
 # pre-rotated on this distro (its -r flag was removed upstream), so poll
 # wlr-randr — a 20ms interval, targeting the real output name — which lands the
-# transform in a few tens of ms. XCURSOR_THEME=transparent (set only for cage,
+# transform in a few tens of ms. XCURSOR_THEME=left_ptr (set only for cage,
 # not exported) hides cage's pointer, so that un-rotated instant is invisible:
 # the only non-uniform thing on screen before the emulator maps was the cursor.
-XCURSOR_THEME=transparent XCURSOR_PATH="$HOME/.local/share/icons:/usr/share/icons" \
+XCURSOR_THEME=left_ptr XCURSOR_PATH="$HOME/.local/share/icons:/usr/share/icons" \
 cage -s -- sh -c '
   for _ in $(seq 150); do
     out=$(wlr-randr 2>/dev/null | head -1 | cut -d" " -f1)
@@ -1436,10 +1442,10 @@ rm -f /tmp/basilisk.exit
 # Rotate to landscape the instant cage advertises the output. cage can't start
 # pre-rotated on this distro (its -r flag was removed upstream), so poll
 # wlr-randr — a 20ms interval, targeting the real output name — which lands the
-# transform in a few tens of ms. XCURSOR_THEME=transparent (set only for cage,
+# transform in a few tens of ms. XCURSOR_THEME=left_ptr (set only for cage,
 # not exported) hides cage's pointer, so that un-rotated instant is invisible:
 # the only non-uniform thing on screen before the emulator maps was the cursor.
-XCURSOR_THEME=transparent XCURSOR_PATH="$HOME/.local/share/icons:/usr/share/icons" \
+XCURSOR_THEME=left_ptr XCURSOR_PATH="$HOME/.local/share/icons:/usr/share/icons" \
 cage -s -- sh -c '
   for _ in $(seq 150); do
     out=$(wlr-randr 2>/dev/null | head -1 | cut -d" " -f1)
