@@ -1052,6 +1052,10 @@ if [[ $INSTALL_MACLOCK -eq 1 ]]; then
       # from cmdline video= (console) and wlr-randr (emulator). Drop the dead line
       # from installs that predate the switch.
       sudo sed -i '/^display_rotate=3$/d' "$f"
+      # Undo the labwc-spike device-tree rotation if present: cage ignores
+      # panel-orientation and rotates via wlr-randr, and a leftover rotate= would
+      # double up with the video= console rotation. Normalize back to plain.
+      sudo sed -i -E 's|^dtoverlay=vc4-kms-dpi-2inch8,rotate=[0-9]+$|dtoverlay=vc4-kms-dpi-2inch8|' "$f"
       return 0
     fi
     sudo tee -a "$f" >/dev/null <<'EOF'
