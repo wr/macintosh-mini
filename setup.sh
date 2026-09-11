@@ -898,6 +898,30 @@ patch_cmdline() {
 }
 run "Configuring quiet boot (cmdline.txt)" patch_cmdline
 
+# The only visible part of the brief pre-emulator rotation is cage's pointer
+# cursor (cage's background is a solid fill, identical rotated or not). Install
+# a cursor theme whose every shape is a 1x1 transparent Xcursor; the launchers
+# select it *only* for the cage command (XCURSOR_THEME, not exported), so cage
+# draws no cursor and the un-rotated instant is invisible. The Mac cursor lives
+# in the emulator's own framebuffer and is unaffected; nothing else on the
+# system selects this theme, so the fallback shell and any desktop keep theirs.
+install_kiosk_cursor() {
+  local cdir="$HOME/.local/share/icons/transparent/cursors" n
+  mkdir -p "$cdir"
+  base64 -d > "$cdir/left_ptr" <<'CUR'
+WGN1chAAAAAAAAEAAQAAAAIA/f8BAAAAHAAAACQAAAACAP3/AQAAAAEAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAA=
+CUR
+  for n in default arrow top_left_arrow left_ptr_watch watch xterm text \
+           hand1 hand2 pointer fleur crosshair sb_h_double_arrow sb_v_double_arrow; do
+    ln -sf left_ptr "$cdir/$n"
+  done
+  cat > "$HOME/.local/share/icons/transparent/index.theme" <<'IDX'
+[Icon Theme]
+Name=transparent
+Comment=Invisible cursor for kiosk
+IDX
+}
+
 # --- Wi-Fi power saving ---------------------------------------------------
 # The radio parks itself when nothing is talking to it, so the Pi drops off the
 # network while idle and takes a while to answer again. Turn that off three
@@ -1198,6 +1222,7 @@ SYSCTL
   fi
 
   install_launcher() {
+    install_kiosk_cursor
     sudo tee /usr/local/bin/sheepshaver.sh >/dev/null <<'LAUNCHER'
 #!/bin/bash
 # Launches SheepShaver fullscreen via cage on the current TTY.
@@ -1226,9 +1251,11 @@ aplay -q /usr/local/bin/chime.wav 2>/dev/null &
 rm -f /tmp/sheepshaver.exit
 # Rotate to landscape the instant cage advertises the output. cage can't start
 # pre-rotated on this distro (its -r flag was removed upstream), so poll
-# wlr-randr — but tightly: a 20ms interval and targeting the real output name
-# (rather than guessing) lands the transform in a few tens of ms, so the
-# un-rotated frame before the emulator draws is barely perceptible.
+# wlr-randr — a 20ms interval, targeting the real output name — which lands the
+# transform in a few tens of ms. XCURSOR_THEME=transparent (set only for cage,
+# not exported) hides cage's pointer, so that un-rotated instant is invisible:
+# the only non-uniform thing on screen before the emulator maps was the cursor.
+XCURSOR_THEME=transparent XCURSOR_PATH="$HOME/.local/share/icons:/usr/share/icons" \
 cage -s -- sh -c '
   for _ in $(seq 150); do
     out=$(wlr-randr 2>/dev/null | head -1 | cut -d" " -f1)
@@ -1375,6 +1402,7 @@ SYSCTL
   fi
 
   install_basilisk_launcher() {
+    install_kiosk_cursor
     sudo tee /usr/local/bin/basilisk.sh >/dev/null <<'LAUNCHER'
 #!/bin/bash
 # Launches BasiliskII fullscreen via cage on the current TTY.
@@ -1403,9 +1431,11 @@ aplay -q /usr/local/bin/chime.wav 2>/dev/null &
 rm -f /tmp/basilisk.exit
 # Rotate to landscape the instant cage advertises the output. cage can't start
 # pre-rotated on this distro (its -r flag was removed upstream), so poll
-# wlr-randr — but tightly: a 20ms interval and targeting the real output name
-# (rather than guessing) lands the transform in a few tens of ms, so the
-# un-rotated frame before the emulator draws is barely perceptible.
+# wlr-randr — a 20ms interval, targeting the real output name — which lands the
+# transform in a few tens of ms. XCURSOR_THEME=transparent (set only for cage,
+# not exported) hides cage's pointer, so that un-rotated instant is invisible:
+# the only non-uniform thing on screen before the emulator maps was the cursor.
+XCURSOR_THEME=transparent XCURSOR_PATH="$HOME/.local/share/icons:/usr/share/icons" \
 cage -s -- sh -c '
   for _ in $(seq 150); do
     out=$(wlr-randr 2>/dev/null | head -1 | cut -d" " -f1)
