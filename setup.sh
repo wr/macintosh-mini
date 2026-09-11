@@ -1224,15 +1224,16 @@ fi
 aplay -q /usr/local/bin/chime.wav 2>/dev/null &
 
 rm -f /tmp/sheepshaver.exit
-# Rotate to landscape as soon as cage's output-management is up. cage can't
-# start pre-rotated on this distro (its -r flag was removed upstream), so poll
-# wlr-randr instead of a blind "sleep 1": the transform lands in ~100ms, so the
-# un-rotated window is as short as possible before the emulator draws.
+# Rotate to landscape the instant cage advertises the output. cage can't start
+# pre-rotated on this distro (its -r flag was removed upstream), so poll
+# wlr-randr — but tightly: a 20ms interval and targeting the real output name
+# (rather than guessing) lands the transform in a few tens of ms, so the
+# un-rotated frame before the emulator draws is barely perceptible.
 cage -s -- sh -c '
-  for _ in $(seq 30); do
-    wlr-randr --output DPI-1 --transform 270 2>/dev/null && break
-    wlr-randr --output Unknown-1 --transform 270 2>/dev/null && break
-    sleep 0.1
+  for _ in $(seq 150); do
+    out=$(wlr-randr 2>/dev/null | head -1 | cut -d" " -f1)
+    [ -n "$out" ] && wlr-randr --output "$out" --transform 270 2>/dev/null && break
+    sleep 0.02
   done
   systemd-cat -t sheepshaver setarch -R SheepShaver
   echo $? > /tmp/sheepshaver.exit
@@ -1400,15 +1401,16 @@ fi
 aplay -q /usr/local/bin/chime.wav 2>/dev/null &
 
 rm -f /tmp/basilisk.exit
-# Rotate to landscape as soon as cage's output-management is up. cage can't
-# start pre-rotated on this distro (its -r flag was removed upstream), so poll
-# wlr-randr instead of a blind "sleep 1": the transform lands in ~100ms, so the
-# un-rotated window is as short as possible before the emulator draws.
+# Rotate to landscape the instant cage advertises the output. cage can't start
+# pre-rotated on this distro (its -r flag was removed upstream), so poll
+# wlr-randr — but tightly: a 20ms interval and targeting the real output name
+# (rather than guessing) lands the transform in a few tens of ms, so the
+# un-rotated frame before the emulator draws is barely perceptible.
 cage -s -- sh -c '
-  for _ in $(seq 30); do
-    wlr-randr --output DPI-1 --transform 270 2>/dev/null && break
-    wlr-randr --output Unknown-1 --transform 270 2>/dev/null && break
-    sleep 0.1
+  for _ in $(seq 150); do
+    out=$(wlr-randr 2>/dev/null | head -1 | cut -d" " -f1)
+    [ -n "$out" ] && wlr-randr --output "$out" --transform 270 2>/dev/null && break
+    sleep 0.02
   done
   systemd-cat -t basilisk setarch -R BasiliskII
   echo $? > /tmp/basilisk.exit
