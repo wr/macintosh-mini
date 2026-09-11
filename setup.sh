@@ -879,11 +879,9 @@ run "Installing ${#APT_PKGS[@]} apt packages" sudo apt-get install -y "${APT_PKG
 # --- Quiet boot -----------------------------------------------------------
 # Ensure each kernel arg is present. Idempotent per-token so re-running on an
 # existing install adds anything new instead of bailing the moment one old
-# token is found. cmdline.txt is a single line.
-# Rotation is done at the device-tree level (config.txt overlay
-# rotate=90 -> DRM panel-orientation), which rotates fbcon too — so no video=
-# arg here. Strip a stale video= left by a previous (cage) install so it can't
-# fight the panel-orientation the compositor reads.
+# token is found. cmdline.txt is a single line. Display rotation is handled
+# entirely at the device-tree level (config.txt overlay rotate=90 -> DRM
+# panel-orientation, which rotates fbcon too), so there is no video= arg here.
 patch_cmdline() {
   local f=/boot/firmware/cmdline.txt t
   local tokens=(
@@ -893,7 +891,6 @@ patch_cmdline() {
     console=tty3
     logo.nologo
   )
-  sudo sed -i 's| video=DPI-1:480x640M@60,rotate=270||g' "$f"
   for t in "${tokens[@]}"; do
     grep -qF -- "$t" "$f" || sudo sed -i "s|\$| $t|" "$f"
   done
@@ -1088,15 +1085,15 @@ if [[ $INSTALL_MACLOCK -eq 1 ]]; then
       # loading the overlay twice just makes the second probe fail.
       grep -q '^dtoverlay=pwm-gpio,gpio=18$' "$f" || sudo sed -i \
         '0,/^dtoverlay=audremap-pin19$/s//&\ndtoverlay=pwm-gpio,gpio=18/' "$f"
-      # display_rotate is ignored under vc4-kms — drop the dead line.
+      # display_rotate=3 (shipped through 1.3.0) is ignored under vc4-kms — drop
+      # the dead line.
       sudo sed -i '/^display_rotate=3$/d' "$f"
-      # Rotate at the DRM/device-tree level: rotate=90 on the DPI
-      # overlay sets the panel-orientation property, which labwc (and fbcon)
-      # honor at init — a rotated first frame, no wlr-randr, no flash. (DT rotate
-      # is the opposite sign of the old cmdline video= rotate: 270 there == 90
-      # here.) Normalize the overlay line on installs that predate/precede this.
-      sudo sed -i -E \
-        's|^dtoverlay=vc4-kms-dpi-2inch8(,rotate=[0-9]+)?$|dtoverlay=vc4-kms-dpi-2inch8,rotate=90|' "$f"
+      # Add the panel rotation: rotate=90 on the DPI overlay sets the DRM
+      # panel-orientation, honored at init by fbcon (console) and labwc
+      # (emulator) — a rotated first frame, no flash. (Idempotent: a line that
+      # already carries ,rotate=90 no longer matches the bare form.)
+      sudo sed -i \
+        's|^dtoverlay=vc4-kms-dpi-2inch8$|dtoverlay=vc4-kms-dpi-2inch8,rotate=90|' "$f"
       return 0
     fi
     sudo tee -a "$f" >/dev/null <<'EOF'
@@ -1108,8 +1105,7 @@ dtoverlay=waveshare-28dpi-3b
 dtoverlay=waveshare-28dpi-4b
 #dtoverlay=waveshare-touch-28dpi
 # rotate=90 sets the DRM panel-orientation, honored at init by fbcon (console)
-# and labwc (emulator) — rotated from the first frame, no wlr-randr, no flash.
-# (DT rotate is the opposite sign of the old cmdline video= rotate=270.)
+# and labwc (emulator) — rotated from the first frame, no flash.
 dtoverlay=vc4-kms-dpi-2inch8,rotate=90
 
 # Audio — PWM on GPIO 19 only, which is the one physically wired. The stock
