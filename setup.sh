@@ -941,8 +941,10 @@ SESSION
   # framebuffer, so the compositor cursor is a second, redundant arrow — and it
   # shows for the moment before the emulator maps. Install a cursor theme whose
   # every shape is a 1x1 transparent image and point XCURSOR at it (launchers
-  # export XCURSOR_THEME=transparent), so labwc renders nothing; the Mac cursor
-  # lives in the emulator's surface and is unaffected.
+  # set XCURSOR_THEME=transparent only on the labwc command, not exported), so
+  # labwc renders nothing; the Mac cursor lives in the emulator's surface and is
+  # unaffected. Nothing else on the system selects this theme, so a desktop or
+  # the fallback shell keeps its normal cursor.
   local cdir="$HOME/.local/share/icons/transparent/cursors"
   mkdir -p "$cdir"
   base64 -d > "$cdir/left_ptr" <<'CUR'
@@ -1282,8 +1284,6 @@ setterm --cursor off 2>/dev/null || true
 export XDG_RUNTIME_DIR=/tmp/runtime
 export LIBSEAT_BACKEND=seatd
 export SDL_VIDEODRIVER=x11
-export XCURSOR_THEME=transparent
-export XCURSOR_PATH="$HOME/.local/share/icons:/usr/share/icons"
 mkdir -p "$XDG_RUNTIME_DIR"
 chmod 700 "$XDG_RUNTIME_DIR"
 
@@ -1300,7 +1300,10 @@ rm -f /tmp/sheepshaver.exit
 # labwc reads ~/.config/labwc/rc.xml and rotates the output from the DRM
 # panel-orientation at init (rotated first frame, no flash). -S runs the
 # session command and terminates labwc when it (the emulator) exits.
-labwc -S "/usr/local/bin/mac-session sheepshaver SheepShaver /tmp/sheepshaver.exit"
+# XCURSOR_* is set only for labwc (not exported) so the invisible cursor never
+# leaks into the fallback shell or a desktop started from it.
+XCURSOR_THEME=transparent XCURSOR_PATH="$HOME/.local/share/icons:/usr/share/icons" \
+  labwc -S "/usr/local/bin/mac-session sheepshaver SheepShaver /tmp/sheepshaver.exit"
 rc=$(cat /tmp/sheepshaver.exit 2>/dev/null || echo 99)
 rm -f /tmp/sheepshaver.exit
 
@@ -1452,8 +1455,6 @@ setterm --cursor off 2>/dev/null || true
 export XDG_RUNTIME_DIR=/tmp/runtime
 export LIBSEAT_BACKEND=seatd
 export SDL_VIDEODRIVER=x11
-export XCURSOR_THEME=transparent
-export XCURSOR_PATH="$HOME/.local/share/icons:/usr/share/icons"
 mkdir -p "$XDG_RUNTIME_DIR"
 chmod 700 "$XDG_RUNTIME_DIR"
 
@@ -1470,7 +1471,10 @@ rm -f /tmp/basilisk.exit
 # labwc reads ~/.config/labwc/rc.xml and rotates the output from the DRM
 # panel-orientation at init (rotated first frame, no flash). -S runs the
 # session command and terminates labwc when it (the emulator) exits.
-labwc -S "/usr/local/bin/mac-session basilisk BasiliskII /tmp/basilisk.exit"
+# XCURSOR_* is set only for labwc (not exported) so the invisible cursor never
+# leaks into the fallback shell or a desktop started from it.
+XCURSOR_THEME=transparent XCURSOR_PATH="$HOME/.local/share/icons:/usr/share/icons" \
+  labwc -S "/usr/local/bin/mac-session basilisk BasiliskII /tmp/basilisk.exit"
 rc=$(cat /tmp/basilisk.exit 2>/dev/null || echo 99)
 rm -f /tmp/basilisk.exit
 
