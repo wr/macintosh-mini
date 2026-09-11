@@ -32,7 +32,7 @@ set -euo pipefail
 
 REPO_BRANCH="main"   # --branch: test an unmerged branch on a real Pi
 REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/$REPO_BRANCH"
-VERSION="1.4.0"
+VERSION="1.4.0+labwc-spike"
 
 # SheepShaver paths (DISK_IMAGE is auto-discovered or set via --disk)
 DISK_IMAGE=""
@@ -866,7 +866,7 @@ if [[ $INSTALL_SHEEPSHAVER -eq 1 || $INSTALL_BASILISK -eq 1 ]]; then
     build-essential autoconf automake libtool pkg-config
     libsdl2-dev libgtk-3-dev libgl1-mesa-dev libxkbcommon-dev
     libmpfr-dev
-    cage wlr-randr seatd
+    labwc wlr-randr seatd
     alsa-utils
   )
 fi
@@ -878,25 +878,60 @@ run "Installing ${#APT_PKGS[@]} apt packages" sudo apt-get install -y "${APT_PKG
 
 # --- Quiet boot -----------------------------------------------------------
 # Ensure each kernel arg is present. Idempotent per-token so re-running on an
-# existing install adds anything new (e.g. the video= rotation) instead of
-# bailing the moment one old token is found. cmdline.txt is a single line.
-# video=…,rotate=270 rotates the text console/fbcon into landscape; the
-# emulator's own rotation is handled separately by wlr-randr in the launchers.
+# existing install adds anything new instead of bailing the moment one old
+# token is found. cmdline.txt is a single line.
+# [labwc spike] Rotation is done at the device-tree level (config.txt overlay
+# rotate=270 -> DRM panel-orientation), which rotates fbcon too — so no video=
+# arg here. Strip a stale video= left by a previous (cage) install so it can't
+# fight the panel-orientation the compositor reads.
 patch_cmdline() {
   local f=/boot/firmware/cmdline.txt t
   local tokens=(
     quiet
-    "video=DPI-1:480x640M@60,rotate=270"
     loglevel=0
     vt.global_cursor_default=0
     console=tty3
     logo.nologo
   )
+  sudo sed -i 's| video=DPI-1:480x640M@60,rotate=270||g' "$f"
   for t in "${tokens[@]}"; do
     grep -qF -- "$t" "$f" || sudo sed -i "s|\$| $t|" "$f"
   done
 }
 run "Configuring quiet boot (cmdline.txt)" patch_cmdline
+
+# [labwc spike] Shared labwc kiosk config, written when an emulator launcher is
+# installed. rc.xml strips the titlebar for the emulator windows; mac-session
+# runs one emulator and lets `labwc -S` terminate the compositor when it exits.
+write_labwc_kiosk() {
+  mkdir -p "$HOME/.config/labwc"
+  cat > "$HOME/.config/labwc/rc.xml" <<'XML'
+<?xml version="1.0"?>
+<labwc_config>
+  <windowRules>
+    <windowRule identifier="SheepShaver" serverDecoration="no"/>
+    <windowRule identifier="BasiliskII"  serverDecoration="no"/>
+  </windowRules>
+</labwc_config>
+XML
+  sudo tee /usr/local/bin/mac-session >/dev/null <<'SESSION'
+#!/bin/sh
+# labwc session command: labwc -S "mac-session <tag> <bin> <exitfile>".
+# labwc exits when this returns. Rotation is meant to come from the DRM
+# panel-orientation (config.txt overlay rotate=270), which labwc applies before
+# the first frame — no flash. If the overlay ignored rotate= (output still
+# 'normal'), fall back to a one-shot wlr-randr transform; that reintroduces the
+# brief flash, so it is only a safety net, not the intended path.
+tag=$1; bin=$2; exitfile=$3
+if ! wlr-randr 2>/dev/null | grep -q "Transform: 270"; then
+  out=$(wlr-randr 2>/dev/null | head -1 | cut -d" " -f1)
+  [ -n "$out" ] && wlr-randr --output "$out" --transform 270 2>/dev/null
+fi
+systemd-cat -t "$tag" setarch -R "$bin"
+echo $? > "$exitfile"
+SESSION
+  sudo chmod 755 /usr/local/bin/mac-session
+}
 
 # --- Wi-Fi power saving ---------------------------------------------------
 # The radio parks itself when nothing is talking to it, so the Pi drops off the
@@ -1024,10 +1059,14 @@ if [[ $INSTALL_MACLOCK -eq 1 ]]; then
       # loading the overlay twice just makes the second probe fail.
       grep -q '^dtoverlay=pwm-gpio,gpio=18$' "$f" || sudo sed -i \
         '0,/^dtoverlay=audremap-pin19$/s//&\ndtoverlay=pwm-gpio,gpio=18/' "$f"
-      # display_rotate is ignored under the vc4-kms driver — rotation now comes
-      # from cmdline video= (console) and wlr-randr (emulator). Drop the dead line
-      # from installs that predate the switch.
+      # display_rotate is ignored under vc4-kms — drop the dead line.
       sudo sed -i '/^display_rotate=3$/d' "$f"
+      # [labwc spike] Rotate at the DRM/device-tree level: rotate=270 on the DPI
+      # overlay sets the panel-orientation property, which labwc (and fbcon)
+      # honor at init — a rotated first frame, no wlr-randr, no flash. Add it to
+      # the overlay line on installs that predate the spike.
+      grep -q '^dtoverlay=vc4-kms-dpi-2inch8,rotate=270$' "$f" || sudo sed -i \
+        's|^dtoverlay=vc4-kms-dpi-2inch8$|dtoverlay=vc4-kms-dpi-2inch8,rotate=270|' "$f"
       return 0
     fi
     sudo tee -a "$f" >/dev/null <<'EOF'
@@ -1038,7 +1077,9 @@ dtoverlay=waveshare-28dpi-3b-4b-notouch
 dtoverlay=waveshare-28dpi-3b
 dtoverlay=waveshare-28dpi-4b
 #dtoverlay=waveshare-touch-28dpi
-dtoverlay=vc4-kms-dpi-2inch8
+# rotate=270 sets the DRM panel-orientation, honored at init by fbcon (console)
+# and labwc (emulator) — rotated from the first frame, no wlr-randr, no flash.
+dtoverlay=vc4-kms-dpi-2inch8,rotate=270
 
 # Audio — PWM on GPIO 19 only, which is the one physically wired. The stock
 # audremap,pins_18_19 also claims GPIO 18 and blocks the backlight PWM.
@@ -1198,12 +1239,13 @@ SYSCTL
   fi
 
   install_launcher() {
+    write_labwc_kiosk
     sudo tee /usr/local/bin/sheepshaver.sh >/dev/null <<'LAUNCHER'
 #!/bin/bash
-# Launches SheepShaver fullscreen via cage on the current TTY.
+# Launches SheepShaver fullscreen via labwc on the current TTY.
 # Relaunch: exit 0 (Mac Shut Down) or 143 (double-reset) -> Pi prompt;
 # crash -> relaunch; Mac Restart reboots the VM in place.
-ulimit -c 0   # no core dumps when killed abruptly (reset stops cage mid-render)
+ulimit -c 0   # no core dumps when killed abruptly (reset stops labwc mid-render)
 clear 2>/dev/null
 printf '\033[?25l' 2>/dev/null
 setterm --cursor off 2>/dev/null || true
@@ -1224,20 +1266,10 @@ fi
 aplay -q /usr/local/bin/chime.wav 2>/dev/null &
 
 rm -f /tmp/sheepshaver.exit
-# Rotate to landscape the instant cage advertises the output. cage can't start
-# pre-rotated on this distro (its -r flag was removed upstream), so poll
-# wlr-randr — but tightly: a 20ms interval and targeting the real output name
-# (rather than guessing) lands the transform in a few tens of ms, so the
-# un-rotated frame before the emulator draws is barely perceptible.
-cage -s -- sh -c '
-  for _ in $(seq 150); do
-    out=$(wlr-randr 2>/dev/null | head -1 | cut -d" " -f1)
-    [ -n "$out" ] && wlr-randr --output "$out" --transform 270 2>/dev/null && break
-    sleep 0.02
-  done
-  systemd-cat -t sheepshaver setarch -R SheepShaver
-  echo $? > /tmp/sheepshaver.exit
-'
+# labwc reads ~/.config/labwc/rc.xml and rotates the output from the DRM
+# panel-orientation at init (rotated first frame, no flash). -S runs the
+# session command and terminates labwc when it (the emulator) exits.
+labwc -S "/usr/local/bin/mac-session sheepshaver SheepShaver /tmp/sheepshaver.exit"
 rc=$(cat /tmp/sheepshaver.exit 2>/dev/null || echo 99)
 rm -f /tmp/sheepshaver.exit
 
@@ -1375,12 +1407,13 @@ SYSCTL
   fi
 
   install_basilisk_launcher() {
+    write_labwc_kiosk
     sudo tee /usr/local/bin/basilisk.sh >/dev/null <<'LAUNCHER'
 #!/bin/bash
-# Launches BasiliskII fullscreen via cage on the current TTY.
+# Launches BasiliskII fullscreen via labwc on the current TTY.
 # Relaunch: exit 0 (Mac Shut Down) or 143 (double-reset) -> Pi prompt;
 # crash -> relaunch; Mac Restart reboots the VM in place.
-ulimit -c 0   # no core dumps when killed abruptly (reset stops cage mid-render)
+ulimit -c 0   # no core dumps when killed abruptly (reset stops labwc mid-render)
 clear 2>/dev/null
 printf '\033[?25l' 2>/dev/null
 setterm --cursor off 2>/dev/null || true
@@ -1401,20 +1434,10 @@ fi
 aplay -q /usr/local/bin/chime.wav 2>/dev/null &
 
 rm -f /tmp/basilisk.exit
-# Rotate to landscape the instant cage advertises the output. cage can't start
-# pre-rotated on this distro (its -r flag was removed upstream), so poll
-# wlr-randr — but tightly: a 20ms interval and targeting the real output name
-# (rather than guessing) lands the transform in a few tens of ms, so the
-# un-rotated frame before the emulator draws is barely perceptible.
-cage -s -- sh -c '
-  for _ in $(seq 150); do
-    out=$(wlr-randr 2>/dev/null | head -1 | cut -d" " -f1)
-    [ -n "$out" ] && wlr-randr --output "$out" --transform 270 2>/dev/null && break
-    sleep 0.02
-  done
-  systemd-cat -t basilisk setarch -R BasiliskII
-  echo $? > /tmp/basilisk.exit
-'
+# labwc reads ~/.config/labwc/rc.xml and rotates the output from the DRM
+# panel-orientation at init (rotated first frame, no flash). -S runs the
+# session command and terminates labwc when it (the emulator) exits.
+labwc -S "/usr/local/bin/mac-session basilisk BasiliskII /tmp/basilisk.exit"
 rc=$(cat /tmp/basilisk.exit 2>/dev/null || echo 99)
 rm -f /tmp/basilisk.exit
 
