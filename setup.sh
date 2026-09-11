@@ -926,13 +926,16 @@ XML
 # labwc session command: labwc -S "mac-session <tag> <bin> <exitfile>".
 # labwc exits when this returns. Rotation is meant to come from the DRM
 # panel-orientation (config.txt overlay rotate=90), which labwc applies before
-# the first frame — no flash. Only if the output came up completely un-rotated
-# (overlay ignored rotate=) do we fall back to a one-shot wlr-randr transform;
-# that reintroduces the brief flash, so it is only a safety net.
+# the first frame — no flash. Only if the panel came up un-rotated (overlay
+# ignored rotate=) do we fall back to a one-shot wlr-randr transform; that
+# reintroduces the brief flash, so it is only a safety net. Target the DPI
+# panel connector by name — never a stray output — so an emulator-only install
+# on some other display (e.g. HDMI) is left alone.
 tag=$1; bin=$2; exitfile=$3
 if wlr-randr 2>/dev/null | grep -q "Transform: normal"; then
-  out=$(wlr-randr 2>/dev/null | head -1 | cut -d" " -f1)
-  [ -n "$out" ] && wlr-randr --output "$out" --transform 270 2>/dev/null
+  for o in DPI-1 Unknown-1; do
+    wlr-randr --output "$o" --transform 270 2>/dev/null && break
+  done
 fi
 systemd-cat -t "$tag" setarch -R "$bin"
 echo $? > "$exitfile"

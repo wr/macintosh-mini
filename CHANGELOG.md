@@ -1,67 +1,28 @@
 # Changelog
 
-All notable changes to the macintosh-mini installer (`setup.sh`) are recorded
-here. The version is the `VERSION` string in `setup.sh`; re-running the
-installer on an existing Pi prints the entries added since the installed
-version.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+Notable changes to the macintosh-mini installer (`setup.sh`). Re-running on an
+existing Pi shows the entries added since the installed version.
 
 ## [1.4.0] - 2026-09-11
-
-### Added
-- Landscape orientation for the console and emulator, rotated from the first
-  frame with no flash. Rotation is set at the device-tree level
-  (`dtoverlay=…,rotate=90` → DRM panel-orientation), which both the boot console
-  (fbcon) and the compositor honor at init. ([#24](https://github.com/wr/macintosh-mini/pull/24), [#26](https://github.com/wr/macintosh-mini/pull/26))
-
-### Changed
-- The emulator now runs under `labwc` instead of `cage`. labwc honors the DRM
-  panel-orientation at startup (cage cannot, so it flashed un-rotated for a
-  moment before a `wlr-randr` transform caught up). ([#26](https://github.com/wr/macintosh-mini/pull/26))
-- The compositor's pointer cursor is hidden (a transparent cursor theme), so
-  only the Mac cursor shows and nothing appears before the emulator loads.
-
-### Fixed
-- The updater now applies `cmdline.txt` and `config.txt` display changes when
-  re-run on an existing install. `patch_cmdline` is idempotent per-token, so an
-  update adds only what is missing instead of bailing the moment one old token
-  is found. ([#25](https://github.com/wr/macintosh-mini/pull/25))
-- Stale `display_rotate=3` (ignored under the vc4-kms driver) is removed from
-  older `config.txt` installs.
+- Console and emulator boot in landscape, rotated from the first frame.
+- Emulator runs under labwc instead of cage — no rotation flash.
+- Compositor cursor hidden; only the Mac cursor shows.
+- Updater applies display changes on re-run, not just fresh installs.
 
 ## [1.3.0] - 2026-09-04
-
-### Added
-- Dim the screen automatically from sunset to sunrise. ([#22](https://github.com/wr/macintosh-mini/pull/22))
-
-### Fixed
-- Keep the configured hostname after a reboot on cloud-init images. ([#20](https://github.com/wr/macintosh-mini/pull/20))
-- Keep the wi-fi radio awake so the Pi stays reachable instead of dropping off
-  the network when idle. ([#19](https://github.com/wr/macintosh-mini/pull/19))
+- Dim the screen from sunset to sunrise (#22).
+- Keep the hostname after a reboot on cloud-init images (#20).
+- Keep the wi-fi radio awake so the Pi stays reachable (#19).
 
 ## [1.2.0] - 2026-08-25
-
-### Fixed
-- Fix backlight flicker and the brightness dial. ([#18](https://github.com/wr/macintosh-mini/pull/18))
-- Don't crash when a graphics group is missing. ([#17](https://github.com/wr/macintosh-mini/pull/17))
+- Fix backlight flicker and the brightness dial (#18).
+- Don't crash when a graphics group is missing (#17).
 
 ## [1.1.0] - 2026-06-08
-
-### Added
-- Prompt for the BasiliskII model id — 5 (Mac IIci, System 7.0–7.1) or 14
-  (Quadra, 7.5+/OS 8).
+- Prompt for the BasiliskII model id (Mac IIci vs Quadra).
 
 ## [1.0.0] - 2026-05-28
-
-### Added
-- Version the installer. ([#10](https://github.com/wr/macintosh-mini/pull/10))
-- BasiliskII (68k) emulator, now the default core.
-
-### Fixed
-- Suppress emulator core dumps and check the SheepShaver ROM size. ([#9](https://github.com/wr/macintosh-mini/pull/9))
-- Clearer installer menu. ([#8](https://github.com/wr/macintosh-mini/pull/8))
+- First versioned installer; BasiliskII (68k) added as the default core (#8, #9, #10).
 
 [1.4.0]: https://github.com/wr/macintosh-mini/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/wr/macintosh-mini/compare/v1.2.0...v1.3.0
