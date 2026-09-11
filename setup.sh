@@ -371,6 +371,45 @@ if [[ -z $INSTALLED_VERSION ]]; then
   grep -qs "fsck.mode=skip" /boot/firmware/cmdline.txt && INSTALLED_PERF=1
 fi
 
+# Show the CHANGELOG.md entries added since the installed version. CHANGELOG.md
+# in the repo is the source of truth; this fetches it and displays the newer
+# sections. Best-effort: silent if offline, missing, or unparseable.
+show_changelog_since() {
+  local from=${1:-} md tmp v versions show=()
+  md=$(curl -fsSL --retry 2 "$REPO_RAW/CHANGELOG.md" 2>/dev/null) || return 0
+  [[ -n $md ]] || return 0
+  versions=$(printf '%s\n' "$md" | sed -n 's/^## \[\([0-9][0-9.]*\)\].*/\1/p')
+  [[ -n $versions ]] || return 0
+  while IFS= read -r v; do
+    [[ -n $v ]] || continue
+    # skip anything newer than what we are installing…
+    [[ "$v" != "$VERSION" && "$(printf '%s\n%s\n' "$v" "$VERSION" | sort -V | tail -1)" == "$v" ]] && continue
+    # …and anything at or older than what is already installed.
+    if [[ -n $from ]]; then
+      [[ "$v" == "$from" ]] && continue
+      [[ "$(printf '%s\n%s\n' "$v" "$from" | sort -V | tail -1)" == "$from" ]] && continue
+    fi
+    show+=("$v")
+  done <<< "$versions"
+  [[ ${#show[@]} -gt 0 ]] || return 0
+  tmp=$(mktemp)
+  printf "What's new since %s\n\n" "${from:-your version}" > "$tmp"
+  for v in "${show[@]}"; do
+    printf '%s\n' "$md" | awk -v ver="$v" '
+      $0 ~ "^## \\[" ver "\\]" {p=1; print; next}
+      p && (/^## \[/ || /^\[[0-9].*\]: /) {exit}
+      p {print}
+    ' >> "$tmp"
+  done
+  if command -v whiptail >/dev/null 2>&1; then
+    whiptail --backtitle "macintosh-mini" --title "What's new" \
+      --scrolltext --textbox "$tmp" 20 72 </dev/tty || true
+  else
+    cat "$tmp"
+  fi
+  rm -f "$tmp"
+}
+
 UPDATE_MODE=""   # "" = fresh install or flags given, quick = keep settings, edit = re-prompt
 if [[ $INSTALL_MACLOCK -eq 0 && $INSTALL_SHEEPSHAVER -eq 0 && $INSTALL_BASILISK -eq 0 \
       && ( -n $INSTALLED_MACLOCK || -n $INSTALLED_EMULATOR ) ]]; then
@@ -386,6 +425,7 @@ if [[ $INSTALL_MACLOCK -eq 0 && $INSTALL_SHEEPSHAVER -eq 0 && $INSTALL_BASILISK 
     "$opt_edit") UPDATE_MODE=edit ;;
     *)           exit 0 ;;
   esac
+  show_changelog_since "$INSTALLED_VERSION"
   [[ $INSTALLED_MACLOCK == 1 ]] && INSTALL_MACLOCK=1
   case "$INSTALLED_EMULATOR" in
     basilisk)    INSTALL_BASILISK=1 ;;
