@@ -32,7 +32,7 @@ set -euo pipefail
 
 REPO_BRANCH="main"   # --branch: test an unmerged branch on a real Pi
 REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/$REPO_BRANCH"
-VERSION="1.3.0"
+VERSION="1.4.0"
 
 # SheepShaver paths (DISK_IMAGE is auto-discovered or set via --disk)
 DISK_IMAGE=""
@@ -837,10 +837,24 @@ run "Updating apt index" sudo apt-get update
 run "Installing ${#APT_PKGS[@]} apt packages" sudo apt-get install -y "${APT_PKGS[@]}"
 
 # --- Quiet boot -----------------------------------------------------------
+# Ensure each kernel arg is present. Idempotent per-token so re-running on an
+# existing install adds anything new (e.g. the video= rotation) instead of
+# bailing the moment one old token is found. cmdline.txt is a single line.
+# video=…,rotate=270 rotates the text console/fbcon into landscape; the
+# emulator's own rotation is handled separately by cage -r in the launchers.
 patch_cmdline() {
-  local f=/boot/firmware/cmdline.txt
-  grep -q 'vt.global_cursor_default=0' "$f" && return 0
-  sudo sed -i 's|$| quiet video=DPI-1:480x640M@60,rotate=270 loglevel=0 vt.global_cursor_default=0 console=tty3 logo.nologo|' "$f"
+  local f=/boot/firmware/cmdline.txt t
+  local tokens=(
+    quiet
+    "video=DPI-1:480x640M@60,rotate=270"
+    loglevel=0
+    vt.global_cursor_default=0
+    console=tty3
+    logo.nologo
+  )
+  for t in "${tokens[@]}"; do
+    grep -qF -- "$t" "$f" || sudo sed -i "s|\$| $t|" "$f"
+  done
 }
 run "Configuring quiet boot (cmdline.txt)" patch_cmdline
 
@@ -970,6 +984,10 @@ if [[ $INSTALL_MACLOCK -eq 1 ]]; then
       # loading the overlay twice just makes the second probe fail.
       grep -q '^dtoverlay=pwm-gpio,gpio=18$' "$f" || sudo sed -i \
         '0,/^dtoverlay=audremap-pin19$/s//&\ndtoverlay=pwm-gpio,gpio=18/' "$f"
+      # display_rotate is ignored under the vc4-kms driver — rotation now comes
+      # from cmdline video= (console) and cage -r (emulator). Drop the dead line
+      # from installs that predate the switch.
+      sudo sed -i '/^display_rotate=3$/d' "$f"
       return 0
     fi
     sudo tee -a "$f" >/dev/null <<'EOF'
@@ -1166,10 +1184,10 @@ fi
 aplay -q /usr/local/bin/chime.wav 2>/dev/null &
 
 rm -f /tmp/sheepshaver.exit
-cage -s -- sh -c '
-  sleep 1
-  wlr-randr --output DPI-1 --transform 270 2>/dev/null
-  wlr-randr --output Unknown-1 --transform 270 2>/dev/null
+# -r rotates the output 90° CW at startup (== wl_output transform 270), so the
+# first frame is already landscape — no un-rotated flash. Replaces the old
+# "start, sleep 1, wlr-randr --transform 270" which rendered portrait for ~1s.
+cage -s -r -- sh -c '
   systemd-cat -t sheepshaver setarch -R SheepShaver
   echo $? > /tmp/sheepshaver.exit
 '
@@ -1336,10 +1354,10 @@ fi
 aplay -q /usr/local/bin/chime.wav 2>/dev/null &
 
 rm -f /tmp/basilisk.exit
-cage -s -- sh -c '
-  sleep 1
-  wlr-randr --output DPI-1 --transform 270 2>/dev/null
-  wlr-randr --output Unknown-1 --transform 270 2>/dev/null
+# -r rotates the output 90° CW at startup (== wl_output transform 270), so the
+# first frame is already landscape — no un-rotated flash. Replaces the old
+# "start, sleep 1, wlr-randr --transform 270" which rendered portrait for ~1s.
+cage -s -r -- sh -c '
   systemd-cat -t basilisk setarch -R BasiliskII
   echo $? > /tmp/basilisk.exit
 '
