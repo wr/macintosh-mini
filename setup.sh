@@ -840,7 +840,7 @@ run "Installing ${#APT_PKGS[@]} apt packages" sudo apt-get install -y "${APT_PKG
 patch_cmdline() {
   local f=/boot/firmware/cmdline.txt
   grep -q 'vt.global_cursor_default=0' "$f" && return 0
-  sudo sed -i 's|$| quiet loglevel=0 vt.global_cursor_default=0 console=tty3 logo.nologo|' "$f"
+  sudo sed -i 's|$| quiet video=DPI-1:480x640M@60,rotate=270 loglevel=0 vt.global_cursor_default=0 console=tty3 logo.nologo|' "$f"
 }
 run "Configuring quiet boot (cmdline.txt)" patch_cmdline
 
@@ -981,7 +981,6 @@ dtoverlay=waveshare-28dpi-3b
 dtoverlay=waveshare-28dpi-4b
 #dtoverlay=waveshare-touch-28dpi
 dtoverlay=vc4-kms-dpi-2inch8
-display_rotate=3
 
 # Audio — PWM on GPIO 19 only, which is the one physically wired. The stock
 # audremap,pins_18_19 also claims GPIO 18 and blocks the backlight PWM.
