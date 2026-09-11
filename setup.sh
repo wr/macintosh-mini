@@ -32,7 +32,7 @@ set -euo pipefail
 
 REPO_BRANCH="main"   # --branch: test an unmerged branch on a real Pi
 REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/$REPO_BRANCH"
-VERSION="1.4.0+labwc-spike"
+VERSION="1.4.0"
 
 # SheepShaver paths (DISK_IMAGE is auto-discovered or set via --disk)
 DISK_IMAGE=""
@@ -880,7 +880,7 @@ run "Installing ${#APT_PKGS[@]} apt packages" sudo apt-get install -y "${APT_PKG
 # Ensure each kernel arg is present. Idempotent per-token so re-running on an
 # existing install adds anything new instead of bailing the moment one old
 # token is found. cmdline.txt is a single line.
-# [labwc spike] Rotation is done at the device-tree level (config.txt overlay
+# Rotation is done at the device-tree level (config.txt overlay
 # rotate=90 -> DRM panel-orientation), which rotates fbcon too — so no video=
 # arg here. Strip a stale video= left by a previous (cage) install so it can't
 # fight the panel-orientation the compositor reads.
@@ -900,7 +900,7 @@ patch_cmdline() {
 }
 run "Configuring quiet boot (cmdline.txt)" patch_cmdline
 
-# [labwc spike] Shared labwc kiosk config, written when an emulator launcher is
+# Shared labwc kiosk config, written when an emulator launcher is
 # installed. rc.xml strips the titlebar for the emulator windows; mac-session
 # runs one emulator and lets `labwc -S` terminate the compositor when it exits.
 write_labwc_kiosk() {
@@ -1090,7 +1090,7 @@ if [[ $INSTALL_MACLOCK -eq 1 ]]; then
         '0,/^dtoverlay=audremap-pin19$/s//&\ndtoverlay=pwm-gpio,gpio=18/' "$f"
       # display_rotate is ignored under vc4-kms — drop the dead line.
       sudo sed -i '/^display_rotate=3$/d' "$f"
-      # [labwc spike] Rotate at the DRM/device-tree level: rotate=90 on the DPI
+      # Rotate at the DRM/device-tree level: rotate=90 on the DPI
       # overlay sets the panel-orientation property, which labwc (and fbcon)
       # honor at init — a rotated first frame, no wlr-randr, no flash. (DT rotate
       # is the opposite sign of the old cmdline video= rotate: 270 there == 90

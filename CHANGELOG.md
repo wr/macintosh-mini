@@ -11,8 +11,17 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [1.4.0] - 2026-09-11
 
 ### Added
-- Landscape orientation for the text console/terminal via a `video=…,rotate=270`
-  kernel argument in `cmdline.txt`. ([#24](https://github.com/wr/macintosh-mini/pull/24))
+- Landscape orientation for the console and emulator, rotated from the first
+  frame with no flash. Rotation is set at the device-tree level
+  (`dtoverlay=…,rotate=90` → DRM panel-orientation), which both the boot console
+  (fbcon) and the compositor honor at init. ([#24](https://github.com/wr/macintosh-mini/pull/24), [#26](https://github.com/wr/macintosh-mini/pull/26))
+
+### Changed
+- The emulator now runs under `labwc` instead of `cage`. labwc honors the DRM
+  panel-orientation at startup (cage cannot, so it flashed un-rotated for a
+  moment before a `wlr-randr` transform caught up). ([#26](https://github.com/wr/macintosh-mini/pull/26))
+- The compositor's pointer cursor is hidden (a transparent cursor theme), so
+  only the Mac cursor shows and nothing appears before the emulator loads.
 
 ### Fixed
 - The updater now applies `cmdline.txt` and `config.txt` display changes when
@@ -21,9 +30,6 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
   is found. ([#25](https://github.com/wr/macintosh-mini/pull/25))
 - Stale `display_rotate=3` (ignored under the vc4-kms driver) is removed from
   older `config.txt` installs.
-- The emulator's landscape rotation is applied as soon as the compositor is
-  ready instead of after a blind one-second wait, shrinking the brief
-  un-rotated flash at launch.
 
 ## [1.3.0] - 2026-09-04
 
