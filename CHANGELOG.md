@@ -6,7 +6,6 @@ existing Pi shows the entries added since the installed version.
 ## [1.4.0] - 2026-09-11
 - Console and emulator boot in landscape, rotated from the first frame.
 - Emulator runs under labwc instead of cage — no rotation flash.
-- Compositor cursor hidden; only the Mac cursor shows.
 - Updater applies display changes on re-run, not just fresh installs.
 
 ## [1.3.0] - 2026-09-04

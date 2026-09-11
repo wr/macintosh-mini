@@ -176,13 +176,17 @@ ensure_whiptail() {
 }
 
 wt_menu() {
-  # Args: title, prompt, default_tag, list_height, then pairs of tag/label.
+  # Args: [--nocancel], title, prompt, default_tag, list_height, then tag/label
+  # pairs. --nocancel drops the Cancel button (use when an Exit item in the
+  # list already covers leaving, so the button isn't a redundant duplicate).
+  local nocancel=""
+  [[ $1 == --nocancel ]] && { nocancel=--nocancel; shift; }
   local title=$1 prompt=$2 default=$3 list_height=$4
   shift 4
   local extra=8; [[ -z $prompt ]] && extra=7
   local newlines=${prompt//[!$'\n']/}; extra=$(( extra + ${#newlines} ))
   local total_height=$(( list_height + extra ))
-  whiptail --backtitle "macintosh-mini" --title "$title" \
+  whiptail --backtitle "macintosh-mini" --title "$title" $nocancel \
     --default-item "$default" \
     --menu "$prompt" "$total_height" 78 "$list_height" \
     "$@" 3>&1 1>&2 2>&3 </dev/tty
@@ -413,7 +417,7 @@ if [[ $INSTALL_MACLOCK -eq 0 && $INSTALL_SHEEPSHAVER -eq 0 && $INSTALL_BASILISK 
   up_prompt="Version ${INSTALLED_VERSION:-1.2.0 or earlier} is installed."
   up_news=$(changelog_since "$INSTALLED_VERSION")
   [[ -n $up_news ]] && up_prompt="$up_prompt"$'\n\n'"$up_news"
-  CHOICE=$(wt_menu "Macintosh Mini Installer v$VERSION" \
+  CHOICE=$(wt_menu --nocancel "Macintosh Mini Installer v$VERSION" \
     "$up_prompt" "$opt_up" 3 \
     "$opt_up"   "" \
     "$opt_edit" "" \
@@ -636,7 +640,8 @@ configure_existing() {  # $1=prefs  $2=is_basilisk
       1)  cur_color="Black & White 1-bit" ;;
       *)  cur_color="${cur_depth:-?}-bit" ;;
     esac
-    # OK = change the highlighted setting; Continue = proceed keeping settings.
+    # Each row edits its setting in place (applied immediately). Edit = change
+    # the highlighted setting; Done = finish and proceed with these settings.
     if [[ $isb -eq 1 ]]; then
       cur_modelid=$(pref_get "$prefs" modelid)
       case "${cur_modelid:-}" in
@@ -645,7 +650,7 @@ configure_existing() {  # $1=prefs  $2=is_basilisk
         *)  cur_model="modelid ${cur_modelid:-?}" ;;
       esac
       pick=$(whiptail --backtitle "macintosh-mini" --title "Emulator Settings" \
-          --ok-button "Change" --cancel-button "Continue" --menu "" 13 72 4 \
+          --ok-button "Edit" --cancel-button "Done" --menu "" 13 72 4 \
           "Disk image:"    "${cur_disk:-unknown}" \
           "Startup chime:" "${cur_chime:-—}" \
           "Color depth:"   "$cur_color" \
@@ -653,7 +658,7 @@ configure_existing() {  # $1=prefs  $2=is_basilisk
           3>&1 1>&2 2>&3 </dev/tty) || break
     else
       pick=$(whiptail --backtitle "macintosh-mini" --title "Emulator Settings" \
-          --ok-button "Change" --cancel-button "Continue" --menu "" 12 72 3 \
+          --ok-button "Edit" --cancel-button "Done" --menu "" 12 72 3 \
           "Disk image:"    "${cur_disk:-unknown}" \
           "Startup chime:" "${cur_chime:-—}" \
           "Color depth:"   "$cur_color" \
