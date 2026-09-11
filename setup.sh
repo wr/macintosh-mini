@@ -881,7 +881,7 @@ run "Installing ${#APT_PKGS[@]} apt packages" sudo apt-get install -y "${APT_PKG
 # existing install adds anything new instead of bailing the moment one old
 # token is found. cmdline.txt is a single line.
 # [labwc spike] Rotation is done at the device-tree level (config.txt overlay
-# rotate=270 -> DRM panel-orientation), which rotates fbcon too — so no video=
+# rotate=90 -> DRM panel-orientation), which rotates fbcon too — so no video=
 # arg here. Strip a stale video= left by a previous (cage) install so it can't
 # fight the panel-orientation the compositor reads.
 patch_cmdline() {
@@ -905,12 +905,17 @@ run "Configuring quiet boot (cmdline.txt)" patch_cmdline
 # runs one emulator and lets `labwc -S` terminate the compositor when it exits.
 write_labwc_kiosk() {
   mkdir -p "$HOME/.config/labwc"
+  # Single-app kiosk: force every window fullscreen and undecorated. Fullscreen
+  # gives the emulator exclusive pointer focus so it hides the host cursor —
+  # otherwise the compositor cursor and the guest (Mac) cursor both show. "*"
+  # matches all windows, so this doesn't depend on the emulator's WM_CLASS.
   cat > "$HOME/.config/labwc/rc.xml" <<'XML'
 <?xml version="1.0"?>
 <labwc_config>
   <windowRules>
-    <windowRule identifier="SheepShaver" serverDecoration="no"/>
-    <windowRule identifier="BasiliskII"  serverDecoration="no"/>
+    <windowRule identifier="*" serverDecoration="no" matchOnce="true">
+      <action name="ToggleFullscreen"/>
+    </windowRule>
   </windowRules>
 </labwc_config>
 XML
@@ -918,12 +923,12 @@ XML
 #!/bin/sh
 # labwc session command: labwc -S "mac-session <tag> <bin> <exitfile>".
 # labwc exits when this returns. Rotation is meant to come from the DRM
-# panel-orientation (config.txt overlay rotate=270), which labwc applies before
-# the first frame — no flash. If the overlay ignored rotate= (output still
-# 'normal'), fall back to a one-shot wlr-randr transform; that reintroduces the
-# brief flash, so it is only a safety net, not the intended path.
+# panel-orientation (config.txt overlay rotate=90), which labwc applies before
+# the first frame — no flash. Only if the output came up completely un-rotated
+# (overlay ignored rotate=) do we fall back to a one-shot wlr-randr transform;
+# that reintroduces the brief flash, so it is only a safety net.
 tag=$1; bin=$2; exitfile=$3
-if ! wlr-randr 2>/dev/null | grep -q "Transform: 270"; then
+if wlr-randr 2>/dev/null | grep -q "Transform: normal"; then
   out=$(wlr-randr 2>/dev/null | head -1 | cut -d" " -f1)
   [ -n "$out" ] && wlr-randr --output "$out" --transform 270 2>/dev/null
 fi
@@ -1061,12 +1066,13 @@ if [[ $INSTALL_MACLOCK -eq 1 ]]; then
         '0,/^dtoverlay=audremap-pin19$/s//&\ndtoverlay=pwm-gpio,gpio=18/' "$f"
       # display_rotate is ignored under vc4-kms — drop the dead line.
       sudo sed -i '/^display_rotate=3$/d' "$f"
-      # [labwc spike] Rotate at the DRM/device-tree level: rotate=270 on the DPI
+      # [labwc spike] Rotate at the DRM/device-tree level: rotate=90 on the DPI
       # overlay sets the panel-orientation property, which labwc (and fbcon)
-      # honor at init — a rotated first frame, no wlr-randr, no flash. Add it to
-      # the overlay line on installs that predate the spike.
-      grep -q '^dtoverlay=vc4-kms-dpi-2inch8,rotate=270$' "$f" || sudo sed -i \
-        's|^dtoverlay=vc4-kms-dpi-2inch8$|dtoverlay=vc4-kms-dpi-2inch8,rotate=270|' "$f"
+      # honor at init — a rotated first frame, no wlr-randr, no flash. (DT rotate
+      # is the opposite sign of the old cmdline video= rotate: 270 there == 90
+      # here.) Normalize the overlay line on installs that predate/precede this.
+      sudo sed -i -E \
+        's|^dtoverlay=vc4-kms-dpi-2inch8(,rotate=[0-9]+)?$|dtoverlay=vc4-kms-dpi-2inch8,rotate=90|' "$f"
       return 0
     fi
     sudo tee -a "$f" >/dev/null <<'EOF'
@@ -1077,9 +1083,10 @@ dtoverlay=waveshare-28dpi-3b-4b-notouch
 dtoverlay=waveshare-28dpi-3b
 dtoverlay=waveshare-28dpi-4b
 #dtoverlay=waveshare-touch-28dpi
-# rotate=270 sets the DRM panel-orientation, honored at init by fbcon (console)
+# rotate=90 sets the DRM panel-orientation, honored at init by fbcon (console)
 # and labwc (emulator) — rotated from the first frame, no wlr-randr, no flash.
-dtoverlay=vc4-kms-dpi-2inch8,rotate=270
+# (DT rotate is the opposite sign of the old cmdline video= rotate=270.)
+dtoverlay=vc4-kms-dpi-2inch8,rotate=90
 
 # Audio — PWM on GPIO 19 only, which is the one physically wired. The stock
 # audremap,pins_18_19 also claims GPIO 18 and blocks the backlight PWM.
