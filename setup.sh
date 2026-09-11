@@ -32,7 +32,7 @@ set -euo pipefail
 
 REPO_BRANCH="main"   # --branch: test an unmerged branch on a real Pi
 REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/$REPO_BRANCH"
-VERSION="1.3.0"
+VERSION="1.4.0"
 
 # SheepShaver paths (DISK_IMAGE is auto-discovered or set via --disk)
 DISK_IMAGE=""
@@ -176,13 +176,17 @@ ensure_whiptail() {
 }
 
 wt_menu() {
-  # Args: title, prompt, default_tag, list_height, then pairs of tag/label.
+  # Args: [--nocancel], title, prompt, default_tag, list_height, then tag/label
+  # pairs. --nocancel drops the Cancel button (use when an Exit item in the
+  # list already covers leaving, so the button isn't a redundant duplicate).
+  local nocancel=""
+  [[ $1 == --nocancel ]] && { nocancel=--nocancel; shift; }
   local title=$1 prompt=$2 default=$3 list_height=$4
   shift 4
   local extra=8; [[ -z $prompt ]] && extra=7
   local newlines=${prompt//[!$'\n']/}; extra=$(( extra + ${#newlines} ))
   local total_height=$(( list_height + extra ))
-  whiptail --backtitle "macintosh-mini" --title "$title" \
+  whiptail --backtitle "macintosh-mini" --title "$title" $nocancel \
     --default-item "$default" \
     --menu "$prompt" "$total_height" 78 "$list_height" \
     "$@" 3>&1 1>&2 2>&3 </dev/tty
@@ -371,31 +375,51 @@ if [[ -z $INSTALLED_VERSION ]]; then
   grep -qs "fsck.mode=skip" /boot/firmware/cmdline.txt && INSTALLED_PERF=1
 fi
 
-UPDATE_MODE=""   # "" = fresh install or flags given, quick = keep settings, edit = re-prompt
+# Print the CHANGELOG.md bullet lines added since the installed version, as
+# compact "New in <ver>:" blocks for the update menu. CHANGELOG.md in the repo
+# is the source of truth. Best-effort: prints nothing if offline, missing, or
+# unparseable, so the caller just shows the menu without a what's-new section.
+changelog_since() {
+  local from=${1:-} md v versions show=()
+  md=$(curl -fsSL --retry 2 "$REPO_RAW/CHANGELOG.md" 2>/dev/null) || return 0
+  [[ -n $md ]] || return 0
+  versions=$(printf '%s\n' "$md" | sed -n 's/^## \[\([0-9][0-9.]*\)\].*/\1/p')
+  [[ -n $versions ]] || return 0
+  while IFS= read -r v; do
+    [[ -n $v ]] || continue
+    # skip anything newer than what we are installing…
+    [[ "$v" != "$VERSION" && "$(printf '%s\n%s\n' "$v" "$VERSION" | sort -V | tail -1)" == "$v" ]] && continue
+    # …and anything at or older than what is already installed.
+    if [[ -n $from ]]; then
+      [[ "$v" == "$from" ]] && continue
+      [[ "$(printf '%s\n%s\n' "$v" "$from" | sort -V | tail -1)" == "$from" ]] && continue
+    fi
+    show+=("$v")
+  done <<< "$versions"
+  [[ ${#show[@]} -gt 0 ]] || return 0
+  for v in "${show[@]}"; do
+    printf 'New in %s:\n' "$v"
+    printf '%s\n' "$md" | awk -v ver="$v" '
+      $0 ~ "^## \\[" ver "\\]" {p=1; next}
+      p && /^## \[/ {exit}
+      p && /^- / {print}
+    '
+  done
+}
+
+UPDATE_MODE=""   # "" = fresh install or flags given, quick = keep settings
+# An existing install with no flags is an update. Detect it here so the fresh
+# menu and prefs prompts below skip; the update menu itself is shown later (at
+# the reconfigure step), once the emulator settings editor it opens is defined.
+IS_UPDATE=0
 if [[ $INSTALL_MACLOCK -eq 0 && $INSTALL_SHEEPSHAVER -eq 0 && $INSTALL_BASILISK -eq 0 \
       && ( -n $INSTALLED_MACLOCK || -n $INSTALLED_EMULATOR ) ]]; then
-  opt_up="Update to version $VERSION"
-  opt_edit="Update and edit settings"
-  CHOICE=$(wt_menu "Macintosh Mini Installer v$VERSION" \
-    "Version ${INSTALLED_VERSION:-1.2.0 or earlier} is installed." "$opt_up" 3 \
-    "$opt_up"   "" \
-    "$opt_edit" "" \
-    "Exit"      "") || exit 0
-  case "$CHOICE" in
-    "$opt_up")   UPDATE_MODE=quick ;;
-    "$opt_edit") UPDATE_MODE=edit ;;
-    *)           exit 0 ;;
-  esac
+  IS_UPDATE=1
   [[ $INSTALLED_MACLOCK == 1 ]] && INSTALL_MACLOCK=1
   case "$INSTALLED_EMULATOR" in
     basilisk)    INSTALL_BASILISK=1 ;;
     sheepshaver) INSTALL_SHEEPSHAVER=1 ;;
   esac
-  if [[ $UPDATE_MODE == quick ]]; then
-    # Keep every setting: no prompts, nothing rewritten
-    [[ -z $PERF ]] && PERF=${INSTALLED_PERF:-0}
-    [[ -z $NEW_HOSTNAME ]] && NEW_HOSTNAME=$(hostname)
-  fi
 fi
 
 # --- Whiptail prompts ------------------------------------------------------
@@ -599,7 +623,8 @@ configure_existing() {  # $1=prefs  $2=is_basilisk
       1)  cur_color="Black & White 1-bit" ;;
       *)  cur_color="${cur_depth:-?}-bit" ;;
     esac
-    # OK = change the highlighted setting; Continue = proceed keeping settings.
+    # Each row edits its setting in place (applied immediately). Select = edit
+    # the highlighted setting; Back = return to the previous menu.
     if [[ $isb -eq 1 ]]; then
       cur_modelid=$(pref_get "$prefs" modelid)
       case "${cur_modelid:-}" in
@@ -608,7 +633,7 @@ configure_existing() {  # $1=prefs  $2=is_basilisk
         *)  cur_model="modelid ${cur_modelid:-?}" ;;
       esac
       pick=$(whiptail --backtitle "macintosh-mini" --title "Emulator Settings" \
-          --ok-button "Change" --cancel-button "Continue" --menu "" 13 72 4 \
+          --ok-button "Select" --cancel-button "Back" --menu "" 13 72 4 \
           "Disk image:"    "${cur_disk:-unknown}" \
           "Startup chime:" "${cur_chime:-—}" \
           "Color depth:"   "$cur_color" \
@@ -616,7 +641,7 @@ configure_existing() {  # $1=prefs  $2=is_basilisk
           3>&1 1>&2 2>&3 </dev/tty) || break
     else
       pick=$(whiptail --backtitle "macintosh-mini" --title "Emulator Settings" \
-          --ok-button "Change" --cancel-button "Continue" --menu "" 12 72 3 \
+          --ok-button "Select" --cancel-button "Back" --menu "" 12 72 3 \
           "Disk image:"    "${cur_disk:-unknown}" \
           "Startup chime:" "${cur_chime:-—}" \
           "Color depth:"   "$cur_color" \
@@ -631,8 +656,35 @@ configure_existing() {  # $1=prefs  $2=is_basilisk
   done
 }
 
-if [[ $UPDATE_MODE == quick ]]; then
-  :
+if [[ $IS_UPDATE -eq 1 ]]; then
+  # The update's main menu. "Edit settings" opens the emulator settings editor
+  # as a modal (its Back returns here); "Update to version X" proceeds, keeping
+  # every other setting. Cancel/Esc exits. What's new is folded into the prompt
+  # (wt_menu grows the box per newline) so it's on the first screen.
+  opt_up="Update to version $VERSION"
+  opt_edit="Edit settings"
+  up_prompt="Version ${INSTALLED_VERSION:-1.2.0 or earlier} is installed."
+  up_news=$(changelog_since "$INSTALLED_VERSION")
+  [[ -n $up_news ]] && up_prompt="$up_prompt"$'\n\n'"$up_news"
+  while true; do
+    CHOICE=$(wt_menu "Macintosh Mini Installer v$VERSION" \
+      "$up_prompt" "$opt_up" 2 \
+      "$opt_up"   "" \
+      "$opt_edit" "") || exit 0
+    case "$CHOICE" in
+      "$opt_up") break ;;
+      "$opt_edit")
+        if   [[ $INSTALL_BASILISK    -eq 1 ]]; then configure_existing "$HOME/.basilisk_ii_prefs" 1
+        elif [[ $INSTALL_SHEEPSHAVER -eq 1 ]]; then configure_existing "$HOME/.sheepshaver_prefs" 0
+        else whiptail --backtitle "macintosh-mini" --title "Edit settings" \
+               --msgbox "No editable settings for a hardware-only install." 8 60 </dev/tty || true
+        fi ;;
+      *) exit 0 ;;
+    esac
+  done
+  UPDATE_MODE=quick   # keep every other setting at its installed value
+  [[ -z $PERF ]] && PERF=${INSTALLED_PERF:-0}
+  [[ -z $NEW_HOSTNAME ]] && NEW_HOSTNAME=$(hostname)
 elif [[ $NEED_PREFS -eq 0 && $INSTALL_BASILISK -eq 1 ]]; then
   configure_existing "$HOME/.basilisk_ii_prefs" 1
 elif [[ $NEED_PREFS -eq 0 && $INSTALL_SHEEPSHAVER -eq 1 ]]; then
@@ -826,7 +878,7 @@ if [[ $INSTALL_SHEEPSHAVER -eq 1 || $INSTALL_BASILISK -eq 1 ]]; then
     build-essential autoconf automake libtool pkg-config
     libsdl2-dev libgtk-3-dev libgl1-mesa-dev libxkbcommon-dev
     libmpfr-dev
-    cage wlr-randr seatd
+    labwc wlr-randr seatd
     alsa-utils
   )
 fi
@@ -837,12 +889,95 @@ run "Updating apt index" sudo apt-get update
 run "Installing ${#APT_PKGS[@]} apt packages" sudo apt-get install -y "${APT_PKGS[@]}"
 
 # --- Quiet boot -----------------------------------------------------------
+# Ensure each kernel arg is present. Idempotent per-token so re-running on an
+# existing install adds anything new instead of bailing the moment one old
+# token is found. cmdline.txt is a single line. Display rotation is handled
+# entirely at the device-tree level (config.txt overlay rotate=90 -> DRM
+# panel-orientation, which rotates fbcon too), so there is no video= arg here.
 patch_cmdline() {
-  local f=/boot/firmware/cmdline.txt
-  grep -q 'vt.global_cursor_default=0' "$f" && return 0
-  sudo sed -i 's|$| quiet video=DPI-1:480x640M@60,rotate=270 loglevel=0 vt.global_cursor_default=0 console=tty3 logo.nologo|' "$f"
+  local f=/boot/firmware/cmdline.txt t
+  local tokens=(
+    quiet
+    loglevel=0
+    vt.global_cursor_default=0
+    console=tty3
+    logo.nologo
+  )
+  # #24 briefly put a video=…rotate=270 arg on main to rotate the console.
+  # Rotation now comes from the device-tree panel-orientation (which also rotates
+  # fbcon), so strip that arg — left in place it double-rotates the console
+  # against rotate=90. Harmless no-op on 1.3.0 installs, which never had it.
+  sudo sed -i 's| video=DPI-1:480x640M@60,rotate=270||g' "$f"
+  for t in "${tokens[@]}"; do
+    grep -qF -- "$t" "$f" || sudo sed -i "s|\$| $t|" "$f"
+  done
 }
 run "Configuring quiet boot (cmdline.txt)" patch_cmdline
+
+# Shared labwc kiosk config, written when an emulator launcher is
+# installed. rc.xml strips the titlebar for the emulator windows; mac-session
+# runs one emulator and lets `labwc -S` terminate the compositor when it exits.
+write_labwc_kiosk() {
+  mkdir -p "$HOME/.config/labwc"
+  # Single-app kiosk: force every window fullscreen and undecorated. Fullscreen
+  # gives the emulator exclusive pointer focus so it hides the host cursor —
+  # otherwise the compositor cursor and the guest (Mac) cursor both show. "*"
+  # matches all windows, so this doesn't depend on the emulator's WM_CLASS.
+  cat > "$HOME/.config/labwc/rc.xml" <<'XML'
+<?xml version="1.0"?>
+<labwc_config>
+  <windowRules>
+    <windowRule identifier="*" serverDecoration="no" matchOnce="true">
+      <action name="ToggleFullscreen"/>
+    </windowRule>
+  </windowRules>
+</labwc_config>
+XML
+  sudo tee /usr/local/bin/mac-session >/dev/null <<'SESSION'
+#!/bin/sh
+# labwc session command: labwc -S "mac-session <tag> <bin> <exitfile>".
+# labwc exits when this returns. Rotation is meant to come from the DRM
+# panel-orientation (config.txt overlay rotate=90), which labwc applies before
+# the first frame — no flash. Only if the panel came up un-rotated (overlay
+# ignored rotate=) do we fall back to a one-shot wlr-randr transform; that
+# reintroduces the brief flash, so it is only a safety net. Target the DPI
+# panel connector by name — never a stray output — so an emulator-only install
+# on some other display (e.g. HDMI) is left alone.
+tag=$1; bin=$2; exitfile=$3
+if wlr-randr 2>/dev/null | grep -q "Transform: normal"; then
+  for o in DPI-1 Unknown-1; do
+    wlr-randr --output "$o" --transform 270 2>/dev/null && break
+  done
+fi
+systemd-cat -t "$tag" setarch -R "$bin"
+echo $? > "$exitfile"
+SESSION
+  sudo chmod 755 /usr/local/bin/mac-session
+
+  # Hide labwc's own pointer cursor. The emulator draws the Mac cursor into its
+  # framebuffer, so the compositor cursor is a second, redundant arrow — and it
+  # shows for the moment before the emulator maps. Install a cursor theme whose
+  # every shape is a 1x1 transparent image and point XCURSOR at it (launchers
+  # set XCURSOR_THEME=transparent only on the labwc command, not exported), so
+  # labwc renders nothing; the Mac cursor lives in the emulator's surface and is
+  # unaffected. Nothing else on the system selects this theme, so a desktop or
+  # the fallback shell keeps its normal cursor.
+  local cdir="$HOME/.local/share/icons/transparent/cursors"
+  mkdir -p "$cdir"
+  base64 -d > "$cdir/left_ptr" <<'CUR'
+WGN1chAAAAAAAAEAAQAAAAIA/f8BAAAAHAAAACQAAAACAP3/AQAAAAEAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAA=
+CUR
+  local n
+  for n in default arrow top_left_arrow left_ptr_watch watch xterm text \
+           hand1 hand2 pointer fleur crosshair sb_h_double_arrow sb_v_double_arrow; do
+    ln -sf left_ptr "$cdir/$n"
+  done
+  cat > "$HOME/.local/share/icons/transparent/index.theme" <<'IDX'
+[Icon Theme]
+Name=transparent
+Comment=Invisible cursor for kiosk
+IDX
+}
 
 # --- Wi-Fi power saving ---------------------------------------------------
 # The radio parks itself when nothing is talking to it, so the Pi drops off the
@@ -970,6 +1105,15 @@ if [[ $INSTALL_MACLOCK -eq 1 ]]; then
       # loading the overlay twice just makes the second probe fail.
       grep -q '^dtoverlay=pwm-gpio,gpio=18$' "$f" || sudo sed -i \
         '0,/^dtoverlay=audremap-pin19$/s//&\ndtoverlay=pwm-gpio,gpio=18/' "$f"
+      # display_rotate=3 (shipped through 1.3.0) is ignored under vc4-kms — drop
+      # the dead line.
+      sudo sed -i '/^display_rotate=3$/d' "$f"
+      # Add the panel rotation: rotate=90 on the DPI overlay sets the DRM
+      # panel-orientation, honored at init by fbcon (console) and labwc
+      # (emulator) — a rotated first frame, no flash. (Idempotent: a line that
+      # already carries ,rotate=90 no longer matches the bare form.)
+      sudo sed -i \
+        's|^dtoverlay=vc4-kms-dpi-2inch8$|dtoverlay=vc4-kms-dpi-2inch8,rotate=90|' "$f"
       return 0
     fi
     sudo tee -a "$f" >/dev/null <<'EOF'
@@ -980,7 +1124,9 @@ dtoverlay=waveshare-28dpi-3b-4b-notouch
 dtoverlay=waveshare-28dpi-3b
 dtoverlay=waveshare-28dpi-4b
 #dtoverlay=waveshare-touch-28dpi
-dtoverlay=vc4-kms-dpi-2inch8
+# rotate=90 sets the DRM panel-orientation, honored at init by fbcon (console)
+# and labwc (emulator) — rotated from the first frame, no flash.
+dtoverlay=vc4-kms-dpi-2inch8,rotate=90
 
 # Audio — PWM on GPIO 19 only, which is the one physically wired. The stock
 # audremap,pins_18_19 also claims GPIO 18 and blocks the backlight PWM.
@@ -1140,12 +1286,13 @@ SYSCTL
   fi
 
   install_launcher() {
+    write_labwc_kiosk
     sudo tee /usr/local/bin/sheepshaver.sh >/dev/null <<'LAUNCHER'
 #!/bin/bash
-# Launches SheepShaver fullscreen via cage on the current TTY.
+# Launches SheepShaver fullscreen via labwc on the current TTY.
 # Relaunch: exit 0 (Mac Shut Down) or 143 (double-reset) -> Pi prompt;
 # crash -> relaunch; Mac Restart reboots the VM in place.
-ulimit -c 0   # no core dumps when killed abruptly (reset stops cage mid-render)
+ulimit -c 0   # no core dumps when killed abruptly (reset stops labwc mid-render)
 clear 2>/dev/null
 printf '\033[?25l' 2>/dev/null
 setterm --cursor off 2>/dev/null || true
@@ -1166,13 +1313,13 @@ fi
 aplay -q /usr/local/bin/chime.wav 2>/dev/null &
 
 rm -f /tmp/sheepshaver.exit
-cage -s -- sh -c '
-  sleep 1
-  wlr-randr --output DPI-1 --transform 270 2>/dev/null
-  wlr-randr --output Unknown-1 --transform 270 2>/dev/null
-  systemd-cat -t sheepshaver setarch -R SheepShaver
-  echo $? > /tmp/sheepshaver.exit
-'
+# labwc reads ~/.config/labwc/rc.xml and rotates the output from the DRM
+# panel-orientation at init (rotated first frame, no flash). -S runs the
+# session command and terminates labwc when it (the emulator) exits.
+# XCURSOR_* is set only for labwc (not exported) so the invisible cursor never
+# leaks into the fallback shell or a desktop started from it.
+XCURSOR_THEME=transparent XCURSOR_PATH="$HOME/.local/share/icons:/usr/share/icons" \
+  labwc -S "/usr/local/bin/mac-session sheepshaver SheepShaver /tmp/sheepshaver.exit"
 rc=$(cat /tmp/sheepshaver.exit 2>/dev/null || echo 99)
 rm -f /tmp/sheepshaver.exit
 
@@ -1310,12 +1457,13 @@ SYSCTL
   fi
 
   install_basilisk_launcher() {
+    write_labwc_kiosk
     sudo tee /usr/local/bin/basilisk.sh >/dev/null <<'LAUNCHER'
 #!/bin/bash
-# Launches BasiliskII fullscreen via cage on the current TTY.
+# Launches BasiliskII fullscreen via labwc on the current TTY.
 # Relaunch: exit 0 (Mac Shut Down) or 143 (double-reset) -> Pi prompt;
 # crash -> relaunch; Mac Restart reboots the VM in place.
-ulimit -c 0   # no core dumps when killed abruptly (reset stops cage mid-render)
+ulimit -c 0   # no core dumps when killed abruptly (reset stops labwc mid-render)
 clear 2>/dev/null
 printf '\033[?25l' 2>/dev/null
 setterm --cursor off 2>/dev/null || true
@@ -1336,13 +1484,13 @@ fi
 aplay -q /usr/local/bin/chime.wav 2>/dev/null &
 
 rm -f /tmp/basilisk.exit
-cage -s -- sh -c '
-  sleep 1
-  wlr-randr --output DPI-1 --transform 270 2>/dev/null
-  wlr-randr --output Unknown-1 --transform 270 2>/dev/null
-  systemd-cat -t basilisk setarch -R BasiliskII
-  echo $? > /tmp/basilisk.exit
-'
+# labwc reads ~/.config/labwc/rc.xml and rotates the output from the DRM
+# panel-orientation at init (rotated first frame, no flash). -S runs the
+# session command and terminates labwc when it (the emulator) exits.
+# XCURSOR_* is set only for labwc (not exported) so the invisible cursor never
+# leaks into the fallback shell or a desktop started from it.
+XCURSOR_THEME=transparent XCURSOR_PATH="$HOME/.local/share/icons:/usr/share/icons" \
+  labwc -S "/usr/local/bin/mac-session basilisk BasiliskII /tmp/basilisk.exit"
 rc=$(cat /tmp/basilisk.exit 2>/dev/null || echo 99)
 rm -f /tmp/basilisk.exit
 
