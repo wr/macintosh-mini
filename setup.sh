@@ -841,7 +841,7 @@ run "Installing ${#APT_PKGS[@]} apt packages" sudo apt-get install -y "${APT_PKG
 # existing install adds anything new (e.g. the video= rotation) instead of
 # bailing the moment one old token is found. cmdline.txt is a single line.
 # video=…,rotate=270 rotates the text console/fbcon into landscape; the
-# emulator's own rotation is handled separately by cage -r in the launchers.
+# emulator's own rotation is handled separately by wlr-randr in the launchers.
 patch_cmdline() {
   local f=/boot/firmware/cmdline.txt t
   local tokens=(
@@ -985,7 +985,7 @@ if [[ $INSTALL_MACLOCK -eq 1 ]]; then
       grep -q '^dtoverlay=pwm-gpio,gpio=18$' "$f" || sudo sed -i \
         '0,/^dtoverlay=audremap-pin19$/s//&\ndtoverlay=pwm-gpio,gpio=18/' "$f"
       # display_rotate is ignored under the vc4-kms driver — rotation now comes
-      # from cmdline video= (console) and cage -r (emulator). Drop the dead line
+      # from cmdline video= (console) and wlr-randr (emulator). Drop the dead line
       # from installs that predate the switch.
       sudo sed -i '/^display_rotate=3$/d' "$f"
       return 0
@@ -1184,10 +1184,16 @@ fi
 aplay -q /usr/local/bin/chime.wav 2>/dev/null &
 
 rm -f /tmp/sheepshaver.exit
-# -r rotates the output 90° CW at startup (== wl_output transform 270), so the
-# first frame is already landscape — no un-rotated flash. Replaces the old
-# "start, sleep 1, wlr-randr --transform 270" which rendered portrait for ~1s.
-cage -s -r -- sh -c '
+# Rotate to landscape as soon as cage's output-management is up. cage can't
+# start pre-rotated on this distro (its -r flag was removed upstream), so poll
+# wlr-randr instead of a blind "sleep 1": the transform lands in ~100ms, so the
+# un-rotated window is as short as possible before the emulator draws.
+cage -s -- sh -c '
+  for _ in $(seq 30); do
+    wlr-randr --output DPI-1 --transform 270 2>/dev/null && break
+    wlr-randr --output Unknown-1 --transform 270 2>/dev/null && break
+    sleep 0.1
+  done
   systemd-cat -t sheepshaver setarch -R SheepShaver
   echo $? > /tmp/sheepshaver.exit
 '
@@ -1354,10 +1360,16 @@ fi
 aplay -q /usr/local/bin/chime.wav 2>/dev/null &
 
 rm -f /tmp/basilisk.exit
-# -r rotates the output 90° CW at startup (== wl_output transform 270), so the
-# first frame is already landscape — no un-rotated flash. Replaces the old
-# "start, sleep 1, wlr-randr --transform 270" which rendered portrait for ~1s.
-cage -s -r -- sh -c '
+# Rotate to landscape as soon as cage's output-management is up. cage can't
+# start pre-rotated on this distro (its -r flag was removed upstream), so poll
+# wlr-randr instead of a blind "sleep 1": the transform lands in ~100ms, so the
+# un-rotated window is as short as possible before the emulator draws.
+cage -s -- sh -c '
+  for _ in $(seq 30); do
+    wlr-randr --output DPI-1 --transform 270 2>/dev/null && break
+    wlr-randr --output Unknown-1 --transform 270 2>/dev/null && break
+    sleep 0.1
+  done
   systemd-cat -t basilisk setarch -R BasiliskII
   echo $? > /tmp/basilisk.exit
 '
