@@ -891,6 +891,11 @@ patch_cmdline() {
     console=tty3
     logo.nologo
   )
+  # #24 briefly put a video=…rotate=270 arg on main to rotate the console.
+  # Rotation now comes from the device-tree panel-orientation (which also rotates
+  # fbcon), so strip that arg — left in place it double-rotates the console
+  # against rotate=90. Harmless no-op on 1.3.0 installs, which never had it.
+  sudo sed -i 's| video=DPI-1:480x640M@60,rotate=270||g' "$f"
   for t in "${tokens[@]}"; do
     grep -qF -- "$t" "$f" || sudo sed -i "s|\$| $t|" "$f"
   done
