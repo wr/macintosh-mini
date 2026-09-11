@@ -641,7 +641,7 @@ configure_existing() {  # $1=prefs  $2=is_basilisk
       *)  cur_color="${cur_depth:-?}-bit" ;;
     esac
     # Each row edits its setting in place (applied immediately). Edit = change
-    # the highlighted setting; Done = finish and proceed with these settings.
+    # the highlighted setting; Continue = proceed with these settings.
     if [[ $isb -eq 1 ]]; then
       cur_modelid=$(pref_get "$prefs" modelid)
       case "${cur_modelid:-}" in
@@ -650,7 +650,7 @@ configure_existing() {  # $1=prefs  $2=is_basilisk
         *)  cur_model="modelid ${cur_modelid:-?}" ;;
       esac
       pick=$(whiptail --backtitle "macintosh-mini" --title "Emulator Settings" \
-          --ok-button "Edit" --cancel-button "Done" --menu "" 13 72 4 \
+          --ok-button "Edit" --cancel-button "Continue" --menu "" 13 72 4 \
           "Disk image:"    "${cur_disk:-unknown}" \
           "Startup chime:" "${cur_chime:-—}" \
           "Color depth:"   "$cur_color" \
@@ -658,7 +658,7 @@ configure_existing() {  # $1=prefs  $2=is_basilisk
           3>&1 1>&2 2>&3 </dev/tty) || break
     else
       pick=$(whiptail --backtitle "macintosh-mini" --title "Emulator Settings" \
-          --ok-button "Edit" --cancel-button "Done" --menu "" 12 72 3 \
+          --ok-button "Edit" --cancel-button "Continue" --menu "" 12 72 3 \
           "Disk image:"    "${cur_disk:-unknown}" \
           "Startup chime:" "${cur_chime:-—}" \
           "Color depth:"   "$cur_color" \
