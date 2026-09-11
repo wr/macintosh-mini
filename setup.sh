@@ -407,36 +407,19 @@ changelog_since() {
   done
 }
 
-UPDATE_MODE=""   # "" = fresh install or flags given, quick = keep settings, edit = re-prompt
+UPDATE_MODE=""   # "" = fresh install or flags given, quick = keep settings
+# An existing install with no flags is an update. Detect it here so the fresh
+# menu and prefs prompts below skip; the update menu itself is shown later (at
+# the reconfigure step), once the emulator settings editor it opens is defined.
+IS_UPDATE=0
 if [[ $INSTALL_MACLOCK -eq 0 && $INSTALL_SHEEPSHAVER -eq 0 && $INSTALL_BASILISK -eq 0 \
       && ( -n $INSTALLED_MACLOCK || -n $INSTALLED_EMULATOR ) ]]; then
-  opt_up="Update to version $VERSION"
-  opt_edit="Update and edit settings"
-  # Fold "what's new" straight into the menu prompt (wt_menu grows the box per
-  # newline), so it's on the first screen rather than a separate step.
-  up_prompt="Version ${INSTALLED_VERSION:-1.2.0 or earlier} is installed."
-  up_news=$(changelog_since "$INSTALLED_VERSION")
-  [[ -n $up_news ]] && up_prompt="$up_prompt"$'\n\n'"$up_news"
-  CHOICE=$(wt_menu --nocancel "Macintosh Mini Installer v$VERSION" \
-    "$up_prompt" "$opt_up" 3 \
-    "$opt_up"   "" \
-    "$opt_edit" "" \
-    "Exit"      "") || exit 0
-  case "$CHOICE" in
-    "$opt_up")   UPDATE_MODE=quick ;;
-    "$opt_edit") UPDATE_MODE=edit ;;
-    *)           exit 0 ;;
-  esac
+  IS_UPDATE=1
   [[ $INSTALLED_MACLOCK == 1 ]] && INSTALL_MACLOCK=1
   case "$INSTALLED_EMULATOR" in
     basilisk)    INSTALL_BASILISK=1 ;;
     sheepshaver) INSTALL_SHEEPSHAVER=1 ;;
   esac
-  if [[ $UPDATE_MODE == quick ]]; then
-    # Keep every setting: no prompts, nothing rewritten
-    [[ -z $PERF ]] && PERF=${INSTALLED_PERF:-0}
-    [[ -z $NEW_HOSTNAME ]] && NEW_HOSTNAME=$(hostname)
-  fi
 fi
 
 # --- Whiptail prompts ------------------------------------------------------
@@ -640,8 +623,8 @@ configure_existing() {  # $1=prefs  $2=is_basilisk
       1)  cur_color="Black & White 1-bit" ;;
       *)  cur_color="${cur_depth:-?}-bit" ;;
     esac
-    # Each row edits its setting in place (applied immediately). Edit = change
-    # the highlighted setting; Continue = proceed with these settings.
+    # Each row edits its setting in place (applied immediately). Select = edit
+    # the highlighted setting; Back = return to the previous menu.
     if [[ $isb -eq 1 ]]; then
       cur_modelid=$(pref_get "$prefs" modelid)
       case "${cur_modelid:-}" in
@@ -650,7 +633,7 @@ configure_existing() {  # $1=prefs  $2=is_basilisk
         *)  cur_model="modelid ${cur_modelid:-?}" ;;
       esac
       pick=$(whiptail --backtitle "macintosh-mini" --title "Emulator Settings" \
-          --ok-button "Edit" --cancel-button "Continue" --menu "" 13 72 4 \
+          --ok-button "Select" --cancel-button "Back" --menu "" 13 72 4 \
           "Disk image:"    "${cur_disk:-unknown}" \
           "Startup chime:" "${cur_chime:-—}" \
           "Color depth:"   "$cur_color" \
@@ -658,7 +641,7 @@ configure_existing() {  # $1=prefs  $2=is_basilisk
           3>&1 1>&2 2>&3 </dev/tty) || break
     else
       pick=$(whiptail --backtitle "macintosh-mini" --title "Emulator Settings" \
-          --ok-button "Edit" --cancel-button "Continue" --menu "" 12 72 3 \
+          --ok-button "Select" --cancel-button "Back" --menu "" 12 72 3 \
           "Disk image:"    "${cur_disk:-unknown}" \
           "Startup chime:" "${cur_chime:-—}" \
           "Color depth:"   "$cur_color" \
@@ -673,8 +656,35 @@ configure_existing() {  # $1=prefs  $2=is_basilisk
   done
 }
 
-if [[ $UPDATE_MODE == quick ]]; then
-  :
+if [[ $IS_UPDATE -eq 1 ]]; then
+  # The update's main menu. "Edit settings" opens the emulator settings editor
+  # as a modal (its Back returns here); "Update to version X" proceeds, keeping
+  # every other setting. Cancel/Esc exits. What's new is folded into the prompt
+  # (wt_menu grows the box per newline) so it's on the first screen.
+  opt_up="Update to version $VERSION"
+  opt_edit="Edit settings"
+  up_prompt="Version ${INSTALLED_VERSION:-1.2.0 or earlier} is installed."
+  up_news=$(changelog_since "$INSTALLED_VERSION")
+  [[ -n $up_news ]] && up_prompt="$up_prompt"$'\n\n'"$up_news"
+  while true; do
+    CHOICE=$(wt_menu "Macintosh Mini Installer v$VERSION" \
+      "$up_prompt" "$opt_up" 2 \
+      "$opt_up"   "" \
+      "$opt_edit" "") || exit 0
+    case "$CHOICE" in
+      "$opt_up") break ;;
+      "$opt_edit")
+        if   [[ $INSTALL_BASILISK    -eq 1 ]]; then configure_existing "$HOME/.basilisk_ii_prefs" 1
+        elif [[ $INSTALL_SHEEPSHAVER -eq 1 ]]; then configure_existing "$HOME/.sheepshaver_prefs" 0
+        else whiptail --backtitle "macintosh-mini" --title "Edit settings" \
+               --msgbox "No editable settings for a hardware-only install." 8 60 </dev/tty || true
+        fi ;;
+      *) exit 0 ;;
+    esac
+  done
+  UPDATE_MODE=quick   # keep every other setting at its installed value
+  [[ -z $PERF ]] && PERF=${INSTALLED_PERF:-0}
+  [[ -z $NEW_HOSTNAME ]] && NEW_HOSTNAME=$(hostname)
 elif [[ $NEED_PREFS -eq 0 && $INSTALL_BASILISK -eq 1 ]]; then
   configure_existing "$HOME/.basilisk_ii_prefs" 1
 elif [[ $NEED_PREFS -eq 0 && $INSTALL_SHEEPSHAVER -eq 1 ]]; then
