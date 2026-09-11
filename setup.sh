@@ -936,6 +936,28 @@ systemd-cat -t "$tag" setarch -R "$bin"
 echo $? > "$exitfile"
 SESSION
   sudo chmod 755 /usr/local/bin/mac-session
+
+  # Hide labwc's own pointer cursor. The emulator draws the Mac cursor into its
+  # framebuffer, so the compositor cursor is a second, redundant arrow — and it
+  # shows for the moment before the emulator maps. Install a cursor theme whose
+  # every shape is a 1x1 transparent image and point XCURSOR at it (launchers
+  # export XCURSOR_THEME=transparent), so labwc renders nothing; the Mac cursor
+  # lives in the emulator's surface and is unaffected.
+  local cdir="$HOME/.local/share/icons/transparent/cursors"
+  mkdir -p "$cdir"
+  base64 -d > "$cdir/left_ptr" <<'CUR'
+WGN1chAAAAAAAAEAAQAAAAIA/f8BAAAAHAAAACQAAAACAP3/AQAAAAEAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAA=
+CUR
+  local n
+  for n in default arrow top_left_arrow left_ptr_watch watch xterm text \
+           hand1 hand2 pointer fleur crosshair sb_h_double_arrow sb_v_double_arrow; do
+    ln -sf left_ptr "$cdir/$n"
+  done
+  cat > "$HOME/.local/share/icons/transparent/index.theme" <<'IDX'
+[Icon Theme]
+Name=transparent
+Comment=Invisible cursor for kiosk
+IDX
 }
 
 # --- Wi-Fi power saving ---------------------------------------------------
@@ -1260,6 +1282,8 @@ setterm --cursor off 2>/dev/null || true
 export XDG_RUNTIME_DIR=/tmp/runtime
 export LIBSEAT_BACKEND=seatd
 export SDL_VIDEODRIVER=x11
+export XCURSOR_THEME=transparent
+export XCURSOR_PATH="$HOME/.local/share/icons:/usr/share/icons"
 mkdir -p "$XDG_RUNTIME_DIR"
 chmod 700 "$XDG_RUNTIME_DIR"
 
@@ -1428,6 +1452,8 @@ setterm --cursor off 2>/dev/null || true
 export XDG_RUNTIME_DIR=/tmp/runtime
 export LIBSEAT_BACKEND=seatd
 export SDL_VIDEODRIVER=x11
+export XCURSOR_THEME=transparent
+export XCURSOR_PATH="$HOME/.local/share/icons:/usr/share/icons"
 mkdir -p "$XDG_RUNTIME_DIR"
 chmod 700 "$XDG_RUNTIME_DIR"
 
