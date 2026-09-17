@@ -32,7 +32,7 @@ set -euo pipefail
 
 REPO_BRANCH="main"   # --branch: test an unmerged branch on a real Pi
 REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/$REPO_BRANCH"
-VERSION="1.4.0"
+VERSION="1.5.0"
 
 # SheepShaver paths (DISK_IMAGE is auto-discovered or set via --disk)
 DISK_IMAGE=""
@@ -797,6 +797,17 @@ Useful if your Macintosh Mini is a desk accessory or display piece." "$cur" 3 \
 fi
 
 
+# An emulator binary needs (re)building when it is missing or was built against
+# GTK. With GTK, every WarningAlert (e.g. slirp finding no DNS server while
+# offline) is a modal dialog the kiosk can't dismiss — `nogui true` doesn't
+# cover alerts in the SDL build. Builds are now configured --with-gtk=no so
+# alerts go to the journal instead; a GTK-linked binary from an older install
+# gets rebuilt once on update.
+needs_build() {
+  [[ -x $1 ]] || return 0
+  ldd "$1" 2>/dev/null | grep -q libgtk
+}
+
 # --- Total step count (for gauge) -----------------------------------------
 TOTAL_STEPS=4   # apt update, apt install, patch_cmdline, record_install
 [[ $WIFI_POWERSAVE -eq 0 ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
@@ -804,17 +815,17 @@ TOTAL_STEPS=4   # apt update, apt install, patch_cmdline, record_install
 [[ -n $TIMEZONE ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
 [[ $INSTALL_MACLOCK -eq 1 ]] && TOTAL_STEPS=$((TOTAL_STEPS+6))
 if [[ $INSTALL_SHEEPSHAVER -eq 1 ]]; then
-  if [[ -x /usr/local/bin/SheepShaver ]]; then
-    TOTAL_STEPS=$((TOTAL_STEPS+9))
-  else
+  if needs_build /usr/local/bin/SheepShaver; then
     TOTAL_STEPS=$((TOTAL_STEPS+12))
+  else
+    TOTAL_STEPS=$((TOTAL_STEPS+9))
   fi
 fi
 if [[ $INSTALL_BASILISK -eq 1 ]]; then
-  if [[ -x /usr/local/bin/BasiliskII ]]; then
-    TOTAL_STEPS=$((TOTAL_STEPS+8))
-  else
+  if needs_build /usr/local/bin/BasiliskII; then
     TOTAL_STEPS=$((TOTAL_STEPS+12))
+  else
+    TOTAL_STEPS=$((TOTAL_STEPS+8))
   fi
 fi
 [[ $PERF -eq 1 ]] && TOTAL_STEPS=$((TOTAL_STEPS+3))
@@ -876,7 +887,7 @@ APT_PKGS=(curl git iw)
 if [[ $INSTALL_SHEEPSHAVER -eq 1 || $INSTALL_BASILISK -eq 1 ]]; then
   APT_PKGS+=(
     build-essential autoconf automake libtool pkg-config
-    libsdl2-dev libgtk-3-dev libgl1-mesa-dev libxkbcommon-dev
+    libsdl2-dev libgl1-mesa-dev libxkbcommon-dev
     libmpfr-dev
     labwc wlr-randr seatd
     alsa-utils
@@ -902,6 +913,7 @@ patch_cmdline() {
     vt.global_cursor_default=0
     console=tty3
     logo.nologo
+    systemd.show_status=0
   )
   # #24 briefly put a video=…rotate=270 arg on main to rotate the console.
   # Rotation now comes from the device-tree panel-orientation (which also rotates
@@ -961,7 +973,10 @@ SESSION
   # set XCURSOR_THEME=transparent only on the labwc command, not exported), so
   # labwc renders nothing; the Mac cursor lives in the emulator's surface and is
   # unaffected. Nothing else on the system selects this theme, so a desktop or
-  # the fallback shell keeps its normal cursor.
+  # the fallback shell keeps its normal cursor. This relies on the emulator
+  # being the only window labwc ever shows: the builds use --with-gtk=no so
+  # emulator alerts log to the journal instead of opening a (pointer-less)
+  # dialog.
   local cdir="$HOME/.local/share/icons/transparent/cursors"
   mkdir -p "$cdir"
   base64 -d > "$cdir/left_ptr" <<'CUR'
@@ -1257,7 +1272,7 @@ SYSCTL
       -o "$HOME/crash.wav" "$REPO_RAW/emulators/chimes/${CRASH_NAME}.wav"
   fi
 
-  if [[ -x /usr/local/bin/SheepShaver ]]; then
+  if ! needs_build /usr/local/bin/SheepShaver; then
     : # already installed; no steps consumed
   else
     run "[sheepshaver] Cloning macemu (kanjitalk755 HEAD)" \
@@ -1267,13 +1282,14 @@ SYSCTL
       cd "$MACEMU_DIR/SheepShaver" || return $?
       make links || return $?
       cd src/Unix || return $?
+      make distclean >/dev/null 2>&1 || true   # existing clone: drop old configure
       local extra_cflags=""
       [[ $PERF -eq 1 ]] && extra_cflags=" -mcpu=cortex-a53 -mtune=cortex-a53"
       CFLAGS="-DMEM_BULK -g -O3${extra_cflags}" \
       CXXFLAGS="-DMEM_BULK -g -O3${extra_cflags}" \
-      ./autogen.sh || return $?
+      ./autogen.sh --with-gtk=no || return $?
     }
-    run "[sheepshaver] Configuring build" prepare_build
+    run "[sheepshaver] Configuring build (no GTK)" prepare_build
 
     do_build() {
       cd "$MACEMU_DIR/SheepShaver/src/Unix" || return $?
@@ -1369,7 +1385,7 @@ EOF
     sudo tee /etc/systemd/system/getty@tty1.service.d/autologin.conf >/dev/null <<EOF
 [Service]
 ExecStart=
-ExecStart=-/sbin/agetty --autologin $USER --noclear --noissue --nohostname %I \$TERM
+ExecStart=-/sbin/agetty --autologin $USER --skip-login --noclear --noissue --nohostname %I \$TERM
 EOF
     sudo systemctl daemon-reload
   }
@@ -1427,7 +1443,7 @@ SYSCTL
       -o "$HOME/crash.wav" "$REPO_RAW/emulators/chimes/${CRASH_NAME}.wav"
   fi
 
-  if [[ -x /usr/local/bin/BasiliskII ]]; then
+  if ! needs_build /usr/local/bin/BasiliskII; then
     : # already installed; no steps consumed
   else
     run "[basilisk] Cloning macemu (kanjitalk755 HEAD)" \
@@ -1437,14 +1453,15 @@ SYSCTL
     # get re-blitted — meaningfully snappier UI, and stable on this Pi's aarch64.
     prepare_basilisk_build() {
       cd "$MACEMU_DIR/BasiliskII/src/Unix" || return $?
+      make distclean >/dev/null 2>&1 || true   # existing clone: drop old configure
       local extra_cflags=""
       [[ $PERF -eq 1 ]] && extra_cflags=" -mcpu=cortex-a53 -mtune=cortex-a53"
       CFLAGS="-g -O3${extra_cflags}" \
       CXXFLAGS="-g -O3${extra_cflags}" \
       ./autogen.sh --enable-sdl-video --enable-sdl-audio \
-        --disable-jit-compiler --enable-vosf || return $?
+        --disable-jit-compiler --enable-vosf --with-gtk=no || return $?
     }
-    run "[basilisk] Configuring build (SDL, no JIT, VOSF)" prepare_basilisk_build
+    run "[basilisk] Configuring build (SDL, no JIT, VOSF, no GTK)" prepare_basilisk_build
 
     do_basilisk_build() {
       cd "$MACEMU_DIR/BasiliskII/src/Unix" || return $?
@@ -1546,7 +1563,7 @@ EOF
     sudo tee /etc/systemd/system/getty@tty1.service.d/autologin.conf >/dev/null <<EOF
 [Service]
 ExecStart=
-ExecStart=-/sbin/agetty --autologin $USER --noclear --noissue --nohostname %I \$TERM
+ExecStart=-/sbin/agetty --autologin $USER --skip-login --noclear --noissue --nohostname %I \$TERM
 EOF
     sudo systemctl daemon-reload
   }

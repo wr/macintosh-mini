@@ -35,7 +35,7 @@ Build tools, runtime libraries, and the kiosk stack:
 sudo apt update
 sudo apt install -y \
   build-essential autoconf automake libtool pkg-config \
-  libsdl2-dev libgtk-3-dev libgl1-mesa-dev libxkbcommon-dev \
+  libsdl2-dev libgl1-mesa-dev libxkbcommon-dev \
   cage wlr-randr seatd \
   git
 ```
@@ -74,7 +74,7 @@ git clone https://github.com/kanjitalk755/macemu.git
 cd macemu/SheepShaver
 make links
 cd src/Unix
-./autogen.sh
+./autogen.sh --with-gtk=no
 ```
 
 Patch the generated `Makefile` to add `-DMEM_BULK` (required on aarch64) and bump `-O2` → `-O3`:
@@ -176,7 +176,7 @@ sudo mkdir -p /etc/systemd/system/getty@tty1.service.d
 sudo tee /etc/systemd/system/getty@tty1.service.d/autologin.conf <<EOF
 [Service]
 ExecStart=
-ExecStart=-/sbin/agetty --autologin $USER --noclear --noissue --nohostname %I \$TERM
+ExecStart=-/sbin/agetty --autologin $USER --skip-login --noclear --noissue --nohostname %I \$TERM
 EOF
 sudo systemctl daemon-reload
 ```
@@ -200,7 +200,7 @@ EOF
 Send kernel/systemd console messages to `tty3` so `tty1` stays black until SheepShaver takes over, and silence the MOTD + last-login banner that flashes on every restart:
 
 ```bash
-sudo sed -i 's|$| quiet loglevel=0 vt.global_cursor_default=0 console=tty3 logo.nologo|' /boot/firmware/cmdline.txt
+sudo sed -i 's|$| quiet loglevel=0 vt.global_cursor_default=0 console=tty3 logo.nologo systemd.show_status=0|' /boot/firmware/cmdline.txt
 touch ~/.hushlogin
 ```
 
