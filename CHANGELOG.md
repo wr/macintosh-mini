@@ -6,6 +6,7 @@ existing Pi shows the entries added since the installed version.
 ## [1.5.0] - 2026-09-16
 - Emulator alerts (e.g. no network for slirp) log to the journal instead of a dialog nobody can click; existing installs rebuild the emulator once.
 - Hide agetty's "automatic login" line and systemd status lines at boot.
+- Black-and-white installer theme, after the System 7 Installer.
 - Bluetooth stays on; it is no longer switched off by the performance option (`--no-bluetooth` to turn it off). Installs that lost it get it back after a reboot.
 
 ## [1.4.0] - 2026-09-11

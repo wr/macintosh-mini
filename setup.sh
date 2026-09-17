@@ -62,11 +62,36 @@ LOG_FILE=$(mktemp /tmp/macintosh-mini-setup.XXXXXX.log)
 DEBUG=0
 
 # --- Whiptail color theme --------------------------------------------------
-# Standard whiptail look with a black/dark-gray root background.
-# NEWT_COLORS is colon-separated; setting only `root` leaves every other
-# element at its default. NEWT's palette is limited to 8 named colors;
-# `black` reads as dark gray on most modern terminals.
-export NEWT_COLORS='root=,black'
+# Black-and-white, after the System 7 Installer: gray desktop, white windows
+# with black borders and titles, black-on-white buttons that invert when
+# focused, a solid black progress bar. NEWT_COLORS wants colon-separated
+# element=fg,bg pairs from newt's 16 named colors.
+NEWT_THEME=(
+  root=black,lightgray
+  roottext=black,lightgray
+  helpline=black,lightgray
+  window=black,white
+  border=black,white
+  shadow=black,black
+  title=black,white
+  label=black,white
+  textbox=black,white
+  acttextbox=white,black
+  entry=black,white
+  disentry=lightgray,white
+  checkbox=black,white
+  actcheckbox=white,black
+  listbox=black,white
+  actlistbox=white,black
+  sellistbox=white,black
+  actsellistbox=white,black
+  button=black,white
+  actbutton=white,black
+  compactbutton=black,white
+  emptyscale=black,lightgray
+  fullscale=white,black
+)
+export NEWT_COLORS=$(IFS=:; echo "${NEWT_THEME[*]}")
 
 # --- Output helpers --------------------------------------------------------
 log()  { printf '\n\033[1;36m==>\033[0m \033[1m%s\033[0m\n' "$*"; }
