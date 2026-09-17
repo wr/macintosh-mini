@@ -48,6 +48,7 @@ POLL_S = 0.001
 # reversing needs a longer run than continuing, so a flick holds the direction
 # it started in.
 LEVEL_PER_COUNT = 4
+DIAL_DIRECTION = -1    # clockwise brightens, as on a compact Mac
 DEADBAND = 1
 REVERSE_DEADBAND = 4
 IDLE_RESET_S = 0.4
@@ -93,6 +94,7 @@ cleaning = False
 NIGHT_FADE_S = 30      # scheduled changes ease in over this long
 WAKE_BEFORE_SUNRISE = timedelta(hours=1)   # dark ends this long before dawn
 NIGHT_CHECK_S = 1.0    # how often the schedule is consulted
+BOOT_GRACE_S = 600     # after a (re)boot past the cutoff, dim instead of dark
 
 # The Zero has no clock battery, so until NTP answers the time is whatever
 # fake-hwclock saved at the last shutdown. Dimming on that would be a guess,
@@ -287,19 +289,29 @@ def clock_synced():
 
 class NightState:
     """Applies the schedule, but lets the dial win: a turn at night wakes the
-    screen, and it stays awake until the next sunset."""
+    screen, and it stays awake until the next sunset.
 
-    def __init__(self):
+    A boot inside the dark window is treated as someone wanting the Mac:
+    for BOOT_GRACE_S after start the schedule's "off" is softened to the
+    dimmed level, so the chime is not followed by a black screen."""
+
+    def __init__(self, dim=0.5, started=None):
         self.scheduled = 1.0
         self.awake = False
+        self.dim = dim
+        self.started = time.monotonic() if started is None else started
 
     def dial_moved(self):
         if self.scheduled < 1.0:
             self.awake = True
 
-    def update(self, scheduled):
+    def update(self, scheduled, now=None):
         if scheduled == 1.0:
             self.awake = False
+        if scheduled == 0.0:
+            now = time.monotonic() if now is None else now
+            if now - self.started < BOOT_GRACE_S:
+                scheduled = self.dim
         self.scheduled = scheduled
         return 1.0 if self.awake else scheduled
 
@@ -391,7 +403,7 @@ def main():
     lgpio.gpio_claim_input(h, DT_PIN, lgpio.SET_PULL_UP)
 
     night = load_night_config(os.environ)
-    state = NightState()
+    state = NightState(dim=night.factor if night else 0.5)
     print(f"Brightness control running. level={level} "
           f"night={'on' if night else 'off'}", flush=True)
 
@@ -414,7 +426,7 @@ def main():
             sample = ((lgpio.gpio_read(h, CLK_PIN) << 1)
                       | lgpio.gpio_read(h, DT_PIN))
             if sample != encoded:
-                accum += TRANSITION[(encoded << 2) | sample]
+                accum += DIAL_DIRECTION * TRANSITION[(encoded << 2) | sample]
                 encoded = sample
                 last_move = time.monotonic()
 
