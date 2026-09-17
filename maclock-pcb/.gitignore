@@ -10,3 +10,8 @@ fp-info-cache
 *.dxf
 gerbers/
 plot/
+
+# root .gitignore hides the lib tables; this project needs them
+!fp-lib-table
+!sym-lib-table
+*.rpt
