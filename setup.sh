@@ -16,6 +16,10 @@
 #   --rom <file>        ROM filename in $HOME (default: ROM)
 #   --hostname <name>   default: leave unchanged
 #   --perf | --no-perf  enable/disable performance optimizations (default: prompt)
+#   --bluetooth | --no-bluetooth
+#                       keep the on-board Bluetooth radio, or turn it off to
+#                       save a second at boot (default: on; re-runs keep the
+#                       installed choice)
 #   --wifi-powersave | --no-wifi-powersave
 #                       leave the wi-fi radio's power saving alone, or turn it
 #                       off so the Pi stays reachable when idle (default: off)
@@ -312,6 +316,7 @@ COLOR_MODE=""
 MODELID=""   # BasiliskII only: 5 (Mac IIci) or 14 (Quadra)
 NEW_HOSTNAME=""
 PERF=""   # "" = prompt, 1 = on, 0 = off
+BLUETOOTH=""   # "" = installed choice or on, 1 = on, 0 = off
 WIFI_POWERSAVE=0   # 0 = turn the radio's power saving off, 1 = leave it alone
 NIGHT_DIM=""       # "" = prompt, 1 = dim the screen at night, 0 = don't
 NIGHT_OFF=""       # "" = prompt, "never", or HH:MM to turn the screen off
@@ -333,6 +338,8 @@ while [[ $# -gt 0 ]]; do
     --hostname)      NEW_HOSTNAME=$2; shift 2 ;;
     --perf)          PERF=1; shift ;;
     --no-perf)       PERF=0; shift ;;
+    --bluetooth)     BLUETOOTH=1; shift ;;
+    --no-bluetooth)  BLUETOOTH=0; shift ;;
     --wifi-powersave)    WIFI_POWERSAVE=1; shift ;;
     --no-wifi-powersave) WIFI_POWERSAVE=0; shift ;;
     --night-dim)     NIGHT_DIM=1; shift ;;
@@ -368,6 +375,7 @@ INSTALLED_VERSION=$(state_get VERSION)
 INSTALLED_MACLOCK=$(state_get MACLOCK)
 INSTALLED_EMULATOR=$(state_get EMULATOR)
 INSTALLED_PERF=$(state_get PERF)
+INSTALLED_BLUETOOTH=$(state_get BLUETOOTH)
 if [[ -z $INSTALLED_VERSION ]]; then
   [[ -f /etc/systemd/system/brightness-control.service ]] && INSTALLED_MACLOCK=1
   grep -qsF "# >>> basilisk-autostart >>>" "$HOME/.profile" && INSTALLED_EMULATOR=basilisk
@@ -691,6 +699,11 @@ elif [[ $NEED_PREFS -eq 0 && $INSTALL_SHEEPSHAVER -eq 1 ]]; then
   configure_existing "$HOME/.sheepshaver_prefs" 0
 fi
 
+# Bluetooth: on unless asked otherwise. No prompt — a re-run keeps what the
+# last run recorded. Before 1.5.0 the perf option turned Bluetooth off as a
+# side effect and recorded nothing, so those installs get it back.
+[[ -z $BLUETOOTH ]] && BLUETOOTH=${INSTALLED_BLUETOOTH:-1}
+
 # Performance optimizations
 if [[ -z $PERF ]]; then
   def=Yes; [[ ${INSTALLED_PERF:-1} == 0 ]] && def=No
@@ -828,7 +841,8 @@ if [[ $INSTALL_BASILISK -eq 1 ]]; then
     TOTAL_STEPS=$((TOTAL_STEPS+8))
   fi
 fi
-[[ $PERF -eq 1 ]] && TOTAL_STEPS=$((TOTAL_STEPS+3))
+[[ $PERF -eq 1 ]] && TOTAL_STEPS=$((TOTAL_STEPS+2))
+TOTAL_STEPS=$((TOTAL_STEPS+1))   # bluetooth
 
 # --- Open the gauge --------------------------------------------------------
 start_gauge
@@ -1046,19 +1060,9 @@ if [[ $PERF -eq 1 ]]; then
   }
   run "[perf] cmdline: skip fsck, no swap" patch_cmdline_perf
 
-  patch_disable_bt() {
-    local f=/boot/firmware/config.txt
-    grep -q '^dtoverlay=disable-bt' "$f" && return 0
-    printf '\n# Disable on-board Bluetooth (perf)\ndtoverlay=disable-bt\n' \
-      | sudo tee -a "$f" >/dev/null
-  }
-  run "[perf] Disabling on-board Bluetooth" patch_disable_bt
-
   mask_services() {
     local services=(
       systemd-networkd-wait-online.service
-      bluetooth.service
-      hciuart.service
       triggerhappy.service
       ModemManager.service
       avahi-daemon.service
@@ -1081,6 +1085,26 @@ if [[ $PERF -eq 1 ]]; then
   }
   run "[perf] Masking unused services" mask_services
 fi
+
+# --- Bluetooth -------------------------------------------------------------
+# Disabling it buys about a second at boot and a few MB; nothing for the
+# emulator. Both directions are applied every run so a flipped choice (or an
+# old install that had it off) takes effect after the next reboot.
+apply_bluetooth() {
+  local f=/boot/firmware/config.txt
+  if [[ $BLUETOOTH -eq 1 ]]; then
+    sudo sed -i '/^# Disable on-board Bluetooth (perf)$/d; /^dtoverlay=disable-bt$/d' "$f"
+    sudo systemctl unmask bluetooth.service hciuart.service 2>/dev/null || true
+    sudo systemctl enable bluetooth.service hciuart.service 2>/dev/null || true
+  else
+    grep -q '^dtoverlay=disable-bt' "$f" \
+      || printf '\n# Disable on-board Bluetooth (perf)\ndtoverlay=disable-bt\n' \
+         | sudo tee -a "$f" >/dev/null
+    sudo systemctl mask bluetooth.service hciuart.service 2>/dev/null || true
+  fi
+}
+if [[ $BLUETOOTH -eq 1 ]]; then run "Keeping Bluetooth on" apply_bluetooth
+else run "Turning Bluetooth off" apply_bluetooth; fi
 
 # =========================================================================
 # maclock — hardware setup
@@ -1593,8 +1617,8 @@ record_install() {
   [[ $INSTALL_BASILISK -eq 1 ]] && emulator=basilisk
   [[ $INSTALL_SHEEPSHAVER -eq 1 ]] && emulator=sheepshaver
   [[ $INSTALL_MACLOCK -eq 1 ]] && maclock=1
-  printf 'VERSION=%s\nMACLOCK=%s\nEMULATOR=%s\nPERF=%s\n' \
-    "$VERSION" "$maclock" "$emulator" "${PERF:-0}" | sudo tee "$INSTALL_STATE" >/dev/null
+  printf 'VERSION=%s\nMACLOCK=%s\nEMULATOR=%s\nPERF=%s\nBLUETOOTH=%s\n' \
+    "$VERSION" "$maclock" "$emulator" "${PERF:-0}" "$BLUETOOTH" | sudo tee "$INSTALL_STATE" >/dev/null
 }
 run "Recording the install" record_install
 
