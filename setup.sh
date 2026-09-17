@@ -16,6 +16,10 @@
 #   --rom <file>        ROM filename in $HOME (default: ROM)
 #   --hostname <name>   default: leave unchanged
 #   --perf | --no-perf  enable/disable performance optimizations (default: prompt)
+#   --bluetooth | --no-bluetooth
+#                       keep the on-board Bluetooth radio, or turn it off to
+#                       save a second at boot (default: on; re-runs keep the
+#                       installed choice)
 #   --wifi-powersave | --no-wifi-powersave
 #                       leave the wi-fi radio's power saving alone, or turn it
 #                       off so the Pi stays reachable when idle (default: off)
@@ -32,7 +36,7 @@ set -euo pipefail
 
 REPO_BRANCH="main"   # --branch: test an unmerged branch on a real Pi
 REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/$REPO_BRANCH"
-VERSION="1.4.0"
+VERSION="1.5.0"
 
 # SheepShaver paths (DISK_IMAGE is auto-discovered or set via --disk)
 DISK_IMAGE=""
@@ -58,11 +62,36 @@ LOG_FILE=$(mktemp /tmp/macintosh-mini-setup.XXXXXX.log)
 DEBUG=0
 
 # --- Whiptail color theme --------------------------------------------------
-# Standard whiptail look with a black/dark-gray root background.
-# NEWT_COLORS is colon-separated; setting only `root` leaves every other
-# element at its default. NEWT's palette is limited to 8 named colors;
-# `black` reads as dark gray on most modern terminals.
-export NEWT_COLORS='root=,black'
+# Black-and-white, after the System 7 Installer: gray desktop, white windows
+# with black borders and titles, black-on-white buttons that invert when
+# focused, a solid black progress bar. NEWT_COLORS wants colon-separated
+# element=fg,bg pairs from newt's 16 named colors.
+NEWT_THEME=(
+  root=black,lightgray
+  roottext=black,lightgray
+  helpline=black,lightgray
+  window=black,white
+  border=black,white
+  shadow=black,black
+  title=black,white
+  label=black,white
+  textbox=black,white
+  acttextbox=white,black
+  entry=black,white
+  disentry=lightgray,white
+  checkbox=black,white
+  actcheckbox=white,black
+  listbox=black,white
+  actlistbox=white,black
+  sellistbox=white,black
+  actsellistbox=white,black
+  button=black,white
+  actbutton=white,black
+  compactbutton=black,white
+  emptyscale=black,lightgray
+  fullscale=white,black
+)
+export NEWT_COLORS=$(IFS=:; echo "${NEWT_THEME[*]}")
 
 # --- Output helpers --------------------------------------------------------
 log()  { printf '\n\033[1;36m==>\033[0m \033[1m%s\033[0m\n' "$*"; }
@@ -312,6 +341,7 @@ COLOR_MODE=""
 MODELID=""   # BasiliskII only: 5 (Mac IIci) or 14 (Quadra)
 NEW_HOSTNAME=""
 PERF=""   # "" = prompt, 1 = on, 0 = off
+BLUETOOTH=""   # "" = installed choice or on, 1 = on, 0 = off
 WIFI_POWERSAVE=0   # 0 = turn the radio's power saving off, 1 = leave it alone
 NIGHT_DIM=""       # "" = prompt, 1 = dim the screen at night, 0 = don't
 NIGHT_OFF=""       # "" = prompt, "never", or HH:MM to turn the screen off
@@ -333,6 +363,8 @@ while [[ $# -gt 0 ]]; do
     --hostname)      NEW_HOSTNAME=$2; shift 2 ;;
     --perf)          PERF=1; shift ;;
     --no-perf)       PERF=0; shift ;;
+    --bluetooth)     BLUETOOTH=1; shift ;;
+    --no-bluetooth)  BLUETOOTH=0; shift ;;
     --wifi-powersave)    WIFI_POWERSAVE=1; shift ;;
     --no-wifi-powersave) WIFI_POWERSAVE=0; shift ;;
     --night-dim)     NIGHT_DIM=1; shift ;;
@@ -368,6 +400,7 @@ INSTALLED_VERSION=$(state_get VERSION)
 INSTALLED_MACLOCK=$(state_get MACLOCK)
 INSTALLED_EMULATOR=$(state_get EMULATOR)
 INSTALLED_PERF=$(state_get PERF)
+INSTALLED_BLUETOOTH=$(state_get BLUETOOTH)
 if [[ -z $INSTALLED_VERSION ]]; then
   [[ -f /etc/systemd/system/brightness-control.service ]] && INSTALLED_MACLOCK=1
   grep -qsF "# >>> basilisk-autostart >>>" "$HOME/.profile" && INSTALLED_EMULATOR=basilisk
@@ -691,6 +724,11 @@ elif [[ $NEED_PREFS -eq 0 && $INSTALL_SHEEPSHAVER -eq 1 ]]; then
   configure_existing "$HOME/.sheepshaver_prefs" 0
 fi
 
+# Bluetooth: on unless asked otherwise. No prompt — a re-run keeps what the
+# last run recorded. Before 1.5.0 the perf option turned Bluetooth off as a
+# side effect and recorded nothing, so those installs get it back.
+[[ -z $BLUETOOTH ]] && BLUETOOTH=${INSTALLED_BLUETOOTH:-1}
+
 # Performance optimizations
 if [[ -z $PERF ]]; then
   def=Yes; [[ ${INSTALLED_PERF:-1} == 0 ]] && def=No
@@ -797,6 +835,17 @@ Useful if your Macintosh Mini is a desk accessory or display piece." "$cur" 3 \
 fi
 
 
+# An emulator binary needs (re)building when it is missing or was built against
+# GTK. With GTK, every WarningAlert (e.g. slirp finding no DNS server while
+# offline) is a modal dialog the kiosk can't dismiss — `nogui true` doesn't
+# cover alerts in the SDL build. Builds are now configured --with-gtk=no so
+# alerts go to the journal instead; a GTK-linked binary from an older install
+# gets rebuilt once on update.
+needs_build() {
+  [[ -x $1 ]] || return 0
+  ldd "$1" 2>/dev/null | grep -q libgtk
+}
+
 # --- Total step count (for gauge) -----------------------------------------
 TOTAL_STEPS=4   # apt update, apt install, patch_cmdline, record_install
 [[ $WIFI_POWERSAVE -eq 0 ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
@@ -804,20 +853,21 @@ TOTAL_STEPS=4   # apt update, apt install, patch_cmdline, record_install
 [[ -n $TIMEZONE ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
 [[ $INSTALL_MACLOCK -eq 1 ]] && TOTAL_STEPS=$((TOTAL_STEPS+6))
 if [[ $INSTALL_SHEEPSHAVER -eq 1 ]]; then
-  if [[ -x /usr/local/bin/SheepShaver ]]; then
-    TOTAL_STEPS=$((TOTAL_STEPS+9))
-  else
+  if needs_build /usr/local/bin/SheepShaver; then
     TOTAL_STEPS=$((TOTAL_STEPS+12))
+  else
+    TOTAL_STEPS=$((TOTAL_STEPS+9))
   fi
 fi
 if [[ $INSTALL_BASILISK -eq 1 ]]; then
-  if [[ -x /usr/local/bin/BasiliskII ]]; then
-    TOTAL_STEPS=$((TOTAL_STEPS+8))
-  else
+  if needs_build /usr/local/bin/BasiliskII; then
     TOTAL_STEPS=$((TOTAL_STEPS+12))
+  else
+    TOTAL_STEPS=$((TOTAL_STEPS+8))
   fi
 fi
-[[ $PERF -eq 1 ]] && TOTAL_STEPS=$((TOTAL_STEPS+3))
+[[ $PERF -eq 1 ]] && TOTAL_STEPS=$((TOTAL_STEPS+2))
+TOTAL_STEPS=$((TOTAL_STEPS+1))   # bluetooth
 
 # --- Open the gauge --------------------------------------------------------
 start_gauge
@@ -876,7 +926,7 @@ APT_PKGS=(curl git iw)
 if [[ $INSTALL_SHEEPSHAVER -eq 1 || $INSTALL_BASILISK -eq 1 ]]; then
   APT_PKGS+=(
     build-essential autoconf automake libtool pkg-config
-    libsdl2-dev libgtk-3-dev libgl1-mesa-dev libxkbcommon-dev
+    libsdl2-dev libgl1-mesa-dev libxkbcommon-dev
     libmpfr-dev
     labwc wlr-randr seatd
     alsa-utils
@@ -902,6 +952,7 @@ patch_cmdline() {
     vt.global_cursor_default=0
     console=tty3
     logo.nologo
+    systemd.show_status=0
   )
   # #24 briefly put a video=…rotate=270 arg on main to rotate the console.
   # Rotation now comes from the device-tree panel-orientation (which also rotates
@@ -961,7 +1012,10 @@ SESSION
   # set XCURSOR_THEME=transparent only on the labwc command, not exported), so
   # labwc renders nothing; the Mac cursor lives in the emulator's surface and is
   # unaffected. Nothing else on the system selects this theme, so a desktop or
-  # the fallback shell keeps its normal cursor.
+  # the fallback shell keeps its normal cursor. This relies on the emulator
+  # being the only window labwc ever shows: the builds use --with-gtk=no so
+  # emulator alerts log to the journal instead of opening a (pointer-less)
+  # dialog.
   local cdir="$HOME/.local/share/icons/transparent/cursors"
   mkdir -p "$cdir"
   base64 -d > "$cdir/left_ptr" <<'CUR'
@@ -1031,19 +1085,9 @@ if [[ $PERF -eq 1 ]]; then
   }
   run "[perf] cmdline: skip fsck, no swap" patch_cmdline_perf
 
-  patch_disable_bt() {
-    local f=/boot/firmware/config.txt
-    grep -q '^dtoverlay=disable-bt' "$f" && return 0
-    printf '\n# Disable on-board Bluetooth (perf)\ndtoverlay=disable-bt\n' \
-      | sudo tee -a "$f" >/dev/null
-  }
-  run "[perf] Disabling on-board Bluetooth" patch_disable_bt
-
   mask_services() {
     local services=(
       systemd-networkd-wait-online.service
-      bluetooth.service
-      hciuart.service
       triggerhappy.service
       ModemManager.service
       avahi-daemon.service
@@ -1066,6 +1110,26 @@ if [[ $PERF -eq 1 ]]; then
   }
   run "[perf] Masking unused services" mask_services
 fi
+
+# --- Bluetooth -------------------------------------------------------------
+# Disabling it buys about a second at boot and a few MB; nothing for the
+# emulator. Both directions are applied every run so a flipped choice (or an
+# old install that had it off) takes effect after the next reboot.
+apply_bluetooth() {
+  local f=/boot/firmware/config.txt
+  if [[ $BLUETOOTH -eq 1 ]]; then
+    sudo sed -i '/^# Disable on-board Bluetooth (perf)$/d; /^dtoverlay=disable-bt$/d' "$f"
+    sudo systemctl unmask bluetooth.service hciuart.service 2>/dev/null || true
+    sudo systemctl enable bluetooth.service hciuart.service 2>/dev/null || true
+  else
+    grep -q '^dtoverlay=disable-bt' "$f" \
+      || printf '\n# Disable on-board Bluetooth (perf)\ndtoverlay=disable-bt\n' \
+         | sudo tee -a "$f" >/dev/null
+    sudo systemctl mask bluetooth.service hciuart.service 2>/dev/null || true
+  fi
+}
+if [[ $BLUETOOTH -eq 1 ]]; then run "Keeping Bluetooth on" apply_bluetooth
+else run "Turning Bluetooth off" apply_bluetooth; fi
 
 # =========================================================================
 # maclock — hardware setup
@@ -1257,7 +1321,7 @@ SYSCTL
       -o "$HOME/crash.wav" "$REPO_RAW/emulators/chimes/${CRASH_NAME}.wav"
   fi
 
-  if [[ -x /usr/local/bin/SheepShaver ]]; then
+  if ! needs_build /usr/local/bin/SheepShaver; then
     : # already installed; no steps consumed
   else
     run "[sheepshaver] Cloning macemu (kanjitalk755 HEAD)" \
@@ -1267,13 +1331,14 @@ SYSCTL
       cd "$MACEMU_DIR/SheepShaver" || return $?
       make links || return $?
       cd src/Unix || return $?
+      make distclean >/dev/null 2>&1 || true   # existing clone: drop old configure
       local extra_cflags=""
       [[ $PERF -eq 1 ]] && extra_cflags=" -mcpu=cortex-a53 -mtune=cortex-a53"
       CFLAGS="-DMEM_BULK -g -O3${extra_cflags}" \
       CXXFLAGS="-DMEM_BULK -g -O3${extra_cflags}" \
-      ./autogen.sh || return $?
+      ./autogen.sh --with-gtk=no || return $?
     }
-    run "[sheepshaver] Configuring build" prepare_build
+    run "[sheepshaver] Configuring build (no GTK)" prepare_build
 
     do_build() {
       cd "$MACEMU_DIR/SheepShaver/src/Unix" || return $?
@@ -1369,7 +1434,7 @@ EOF
     sudo tee /etc/systemd/system/getty@tty1.service.d/autologin.conf >/dev/null <<EOF
 [Service]
 ExecStart=
-ExecStart=-/sbin/agetty --autologin $USER --noclear --noissue --nohostname %I \$TERM
+ExecStart=-/sbin/agetty --autologin $USER --skip-login --noclear --noissue --nohostname %I \$TERM
 EOF
     sudo systemctl daemon-reload
   }
@@ -1427,7 +1492,7 @@ SYSCTL
       -o "$HOME/crash.wav" "$REPO_RAW/emulators/chimes/${CRASH_NAME}.wav"
   fi
 
-  if [[ -x /usr/local/bin/BasiliskII ]]; then
+  if ! needs_build /usr/local/bin/BasiliskII; then
     : # already installed; no steps consumed
   else
     run "[basilisk] Cloning macemu (kanjitalk755 HEAD)" \
@@ -1437,14 +1502,15 @@ SYSCTL
     # get re-blitted — meaningfully snappier UI, and stable on this Pi's aarch64.
     prepare_basilisk_build() {
       cd "$MACEMU_DIR/BasiliskII/src/Unix" || return $?
+      make distclean >/dev/null 2>&1 || true   # existing clone: drop old configure
       local extra_cflags=""
       [[ $PERF -eq 1 ]] && extra_cflags=" -mcpu=cortex-a53 -mtune=cortex-a53"
       CFLAGS="-g -O3${extra_cflags}" \
       CXXFLAGS="-g -O3${extra_cflags}" \
       ./autogen.sh --enable-sdl-video --enable-sdl-audio \
-        --disable-jit-compiler --enable-vosf || return $?
+        --disable-jit-compiler --enable-vosf --with-gtk=no || return $?
     }
-    run "[basilisk] Configuring build (SDL, no JIT, VOSF)" prepare_basilisk_build
+    run "[basilisk] Configuring build (SDL, no JIT, VOSF, no GTK)" prepare_basilisk_build
 
     do_basilisk_build() {
       cd "$MACEMU_DIR/BasiliskII/src/Unix" || return $?
@@ -1546,7 +1612,7 @@ EOF
     sudo tee /etc/systemd/system/getty@tty1.service.d/autologin.conf >/dev/null <<EOF
 [Service]
 ExecStart=
-ExecStart=-/sbin/agetty --autologin $USER --noclear --noissue --nohostname %I \$TERM
+ExecStart=-/sbin/agetty --autologin $USER --skip-login --noclear --noissue --nohostname %I \$TERM
 EOF
     sudo systemctl daemon-reload
   }
@@ -1576,8 +1642,8 @@ record_install() {
   [[ $INSTALL_BASILISK -eq 1 ]] && emulator=basilisk
   [[ $INSTALL_SHEEPSHAVER -eq 1 ]] && emulator=sheepshaver
   [[ $INSTALL_MACLOCK -eq 1 ]] && maclock=1
-  printf 'VERSION=%s\nMACLOCK=%s\nEMULATOR=%s\nPERF=%s\n' \
-    "$VERSION" "$maclock" "$emulator" "${PERF:-0}" | sudo tee "$INSTALL_STATE" >/dev/null
+  printf 'VERSION=%s\nMACLOCK=%s\nEMULATOR=%s\nPERF=%s\nBLUETOOTH=%s\n' \
+    "$VERSION" "$maclock" "$emulator" "${PERF:-0}" "$BLUETOOTH" | sudo tee "$INSTALL_STATE" >/dev/null
 }
 run "Recording the install" record_install
 

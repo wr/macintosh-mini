@@ -195,7 +195,9 @@ far from you. `NIGHT_FACTOR` scales the dial level between sunset and sunrise.
 A cutoff earlier than sunset (a midsummer 22:08 sunset under the 22:00
 default) means dark from sunset. In polar night the screen only dims, since
 no sunrise would end the dark. The Pi has no clock battery, so the schedule
-stays off until NTP has set the time.
+stays off until NTP has set the time. A boot after the cutoff dims for the
+first ten minutes instead of coming up dark, then goes dark unless the dial
+is turned.
 
 ---
 

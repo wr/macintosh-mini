@@ -185,6 +185,34 @@ class DialOverride(unittest.TestCase):
         self.assertEqual(state.update(0.5), 0.5)
 
 
+class BootGrace(unittest.TestCase):
+    # A reboot after the cutoff should not come up to a black screen: the
+    # Mac dims for the first few minutes instead, then goes dark.
+
+    def test_off_is_dimmed_during_grace(self):
+        state = bc.NightState(dim=0.5, started=1000.0)
+        self.assertEqual(state.update(0.0, now=1000.0), 0.5)
+        self.assertEqual(state.update(0.0, now=1000.0 + bc.BOOT_GRACE_S - 1), 0.5)
+
+    def test_off_applies_once_grace_ends(self):
+        state = bc.NightState(dim=0.5, started=1000.0)
+        self.assertEqual(state.update(0.0, now=1000.0 + bc.BOOT_GRACE_S), 0.0)
+
+    def test_grace_does_not_touch_dim_or_day(self):
+        state = bc.NightState(dim=0.5, started=1000.0)
+        self.assertEqual(state.update(0.5, now=1000.0), 0.5)
+        self.assertEqual(state.update(1.0, now=1000.0), 1.0)
+
+    def test_dial_during_grace_still_wakes(self):
+        state = bc.NightState(dim=0.5, started=1000.0)
+        state.update(0.0, now=1000.0)
+        state.dial_moved()
+        self.assertEqual(state.update(0.0, now=1000.0 + bc.BOOT_GRACE_S), 1.0)
+
+    def test_grace_is_ten_minutes(self):
+        self.assertEqual(bc.BOOT_GRACE_S, 600)
+
+
 ZONE_TAB = """\
 # comment line
 #codes\tcoordinates\tTZ\tcomments
