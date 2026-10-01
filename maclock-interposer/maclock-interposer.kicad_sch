@@ -2276,6 +2276,33 @@
 				)
 			)
 		)
+		(property "Manufacturer" "Hong Cheng"
+			(at 100.33 100.33 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "HC-PM254-8.5H-2x20PS"
+			(at 100.33 100.33 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C22436166"
+			(at 100.33 100.33 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(instances
 			(project "maclock-interposer"
 				(path "3aefd1ae-7037-41a5-ae64-48550bbb8a48"
@@ -2301,7 +2328,7 @@
 				)
 			)
 		)
-		(property "Value" "PZ254V-11-07P"
+		(property "Value" "PM254V-11-07-H85"
 			(at 180.34 110.49 0)
 			(effects
 				(font
@@ -2309,7 +2336,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x07_P2.54mm_Vertical"
+		(property "Footprint" "Connector_PinSocket_2.54mm:PinSocket_1x07_P2.54mm_Vertical"
 			(at 180.34 100.33 0)
 			(hide yes)
 			(effects
@@ -2318,7 +2345,7 @@
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://www.lcsc.com/product-detail/C2832270.html"
 			(at 180.34 100.33 0)
 			(hide yes)
 			(effects
@@ -2327,7 +2354,34 @@
 				)
 			)
 		)
-		(property "Description" "Generic connector, single row, 01x07, script generated (kicad-library-utils/schlib/autogen/connector/)"
+		(property "Description" "1x7 female header (socket), 2.54 mm, 8.5 mm, through-hole"
+			(at 180.34 100.33 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "XFCN"
+			(at 180.34 100.33 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "PM254V-11-07-H85"
+			(at 180.34 100.33 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C2832270"
 			(at 180.34 100.33 0)
 			(hide yes)
 			(effects
@@ -2388,6 +2442,33 @@
 			)
 		)
 		(property "Description" "Generic connector, double row, 02x20, odd/even pin numbering scheme (row 1 odd numbers, row 2 even numbers), script generated (kicad-library-utils/schlib/autogen/connector/)"
+			(at 140.97 100.33 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Hanbo Electronic"
+			(at 140.97 100.33 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "HB-PH9-254220PB2GOP"
+			(at 140.97 100.33 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C6332245"
 			(at 140.97 100.33 0)
 			(hide yes)
 			(effects
