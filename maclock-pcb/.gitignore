@@ -15,3 +15,7 @@ plot/
 !fp-lib-table
 !sym-lib-table
 *.rpt
+
+# Fab outputs (regenerate with kicad-cli, see README) and fab-plugin state
+production/
+fabrication-toolkit-options.json
