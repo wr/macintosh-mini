@@ -3290,6 +3290,15 @@
 				)
 			)
 		)
+		(property "Label" "Power"
+			(at 27.94 104.14 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "7c34081b-509a-4355-9a2f-99ec86f0820a")
 		)
@@ -3421,6 +3430,15 @@
 			)
 		)
 		(property "LCSC" "C122410"
+			(at 60.96 106.68 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Label" "Switch"
 			(at 60.96 106.68 0)
 			(hide yes)
 			(effects
@@ -5601,6 +5619,15 @@
 			)
 		)
 		(property "LCSC" "C122410"
+			(at 271.78 53.34 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Label" "Speaker"
 			(at 271.78 53.34 0)
 			(hide yes)
 			(effects

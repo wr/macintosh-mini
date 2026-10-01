@@ -29,7 +29,7 @@ I recorded a walkthrough for how I assembled mine that goes into much more detai
 | Rotary CLK      | Dial A                | 23             | Bend or desolder pin on Pi |
 | Audio           | A+                    | 35             | Bend or desolder pin on Pi |
 | Button 2        | SW2                   | 37             | Bend or desolder pin on Pi |
-| Speaker         | J3                    | —              | Molex PicoBlade 1.25 mm 2-pin; polarity doesn't matter |
+| Speaker         | Speaker (J3)          | —              | Molex PicoBlade 1.25 mm 2-pin; polarity doesn't matter |
 
 Bend, cut, or desolder pins 13, 19, 23, 35, and 37 so they don't plug into the Waveshare display board. Leaving them in can cause odd issues with the buttons and dial on the front of the Mac.
 

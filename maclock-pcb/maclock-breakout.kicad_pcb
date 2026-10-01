@@ -2798,6 +2798,18 @@
 				)
 			)
 		)
+		(property "Label" "Speaker"
+			(at -0.3 4.2 0)
+			(layer "B.SilkS")
+			(uuid "091f22d1-b1ac-423a-8c1c-c583adb43836")
+			(effects
+				(font
+					(size 1.0795 1.0795)
+					(thickness 0.1905)
+				)
+				(justify mirror)
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -3584,6 +3596,18 @@
 					(size 1.27 1.27)
 					(thickness 0.15)
 				)
+			)
+		)
+		(property "Label" "Switch"
+			(at 0 4.2 0)
+			(layer "B.SilkS")
+			(uuid "0424cdd4-353d-4368-8e9c-fa7289fe4c31")
+			(effects
+				(font
+					(size 1.0795 1.0795)
+					(thickness 0.1905)
+				)
+				(justify mirror)
 			)
 		)
 		(attr smd)
@@ -4755,6 +4779,18 @@
 					(size 1.27 1.27)
 					(thickness 0.15)
 				)
+			)
+		)
+		(property "Label" "Power"
+			(at 0 4.2 0)
+			(layer "B.SilkS")
+			(uuid "ae8913c9-277b-47a7-89eb-828b2567f747")
+			(effects
+				(font
+					(size 1.0795 1.0795)
+					(thickness 0.1905)
+				)
+				(justify mirror)
 			)
 		)
 		(attr smd)
@@ -6451,6 +6487,30 @@
 				(bold yes)
 			)
 			(justify left bottom)
+		)
+	)
+	(gr_text "+"
+		(at 140.325 98.5 0)
+		(layer "B.SilkS")
+		(uuid "220aaf34-9ac1-4ac4-9c2c-7352a84f006f")
+		(effects
+			(font
+				(size 0.8 0.8)
+				(thickness 0.15)
+			)
+			(justify mirror)
+		)
+	)
+	(gr_text "-"
+		(at 141.575 98.5 0)
+		(layer "B.SilkS")
+		(uuid "f7ea383b-736a-495c-aaa1-1c11fca728bc")
+		(effects
+			(font
+				(size 0.8 0.8)
+				(thickness 0.15)
+			)
+			(justify mirror)
 		)
 	)
 	(gr_text "Pi GPIO"
