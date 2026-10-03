@@ -1,0 +1,5 @@
+(fp_lib_table
+  (version 7)
+
+  (lib (name "maclock") (type "KiCad") (uri "${KIPRJMOD}/maclock.pretty") (options "") (descr "Project footprints (ENC1, F-Switch E8E8 encoder)"))
+  (lib (name "lcsc") (type "KiCad") (uri "${KIPRJMOD}/lcsc.pretty") (options "") (descr "LCSC/EasyEDA footprints imported with easyeda2kicad")))
