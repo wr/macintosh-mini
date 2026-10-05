@@ -7,7 +7,7 @@
 # Encoder CLK on GPIO 11, DT on GPIO 10.
 # Controls backlight via the kernel pwm-gpio driver on GPIO 18.
 #
-# March 26, 2026 - http://wells.ee/journal/macintosh-mini
+# March 26, 2026 - https://github.com/wr/macintosh-mini/blob/main/BUILD.md
 # ####################################
 
 import math
