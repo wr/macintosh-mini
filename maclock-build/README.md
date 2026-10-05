@@ -12,7 +12,7 @@ I recorded a walkthrough for how I assembled mine that goes into much more detai
 - [Maclock](https://amzn.to/4e7FKrw)
 - [Raspberry Pi Zero 2 W](https://amzn.to/4ac7FVR)
 - [Waveshare 2.8 inch IPS LCD](https://amzn.to/4ue5GaP)
-- [Adafruit PAM8302 audio amp](https://amzn.to/4uITeAP) + small speaker
+- Small 8 Ω 1 W speaker with a Molex PicoBlade 1.25 mm 2-pin plug (often sold as "JST 1.25"), like [Adafruit's](https://www.adafruit.com/product/3923) (the audio amp is on the breakout board)
 - [3D printed screen bezel](../maclock-screen-bezel)
 - [Macintosh Mini breakout board](https://www.pcbway.com/project/shareproject/W654223ASS41_Untitled_kicad_pcb_95cca7e3.html) (if you want brightness, buttons, and sound). Full [bill of materials here](../maclock-pcb).
 
@@ -27,8 +27,9 @@ I recorded a walkthrough for how I assembled mine that goes into much more detai
 | Button 1        | SW1                   | 13             | Bend or desolder pin on Pi |
 | Rotary DT       | Dial B                | 19             | Bend or desolder pin on Pi |
 | Rotary CLK      | Dial A                | 23             | Bend or desolder pin on Pi |
-| Audio (PAM8302) | A+                    | 35             | Bend or desolder pin on Pi |
+| Audio           | A+                    | 35             | Bend or desolder pin on Pi |
 | Button 2        | SW2                   | 37             | Bend or desolder pin on Pi |
+| Speaker         | Speaker (J3)          | —              | Molex PicoBlade 1.25 mm 2-pin; polarity doesn't matter |
 
 Bend, cut, or desolder pins 13, 19, 23, 35, and 37 so they don't plug into the Waveshare display board. Leaving them in can cause odd issues with the buttons and dial on the front of the Mac.
 
@@ -128,6 +129,13 @@ sudo reboot
 ```
 
 Once you reboot your Pi, the screen should start working.
+
+Then turn the Pi's audio output down 4 dB. At full scale the amp on the breakout runs out of swing and the loudest notes of the startup chime crackle:
+
+```bash
+amixer -c Headphones sset PCM -- -4dB
+sudo alsactl store
+```
 
 ---
 
@@ -309,3 +317,9 @@ Anything in that sampling range works, so 1 ms is a middle choice that costs abo
 `ENC_A` and `ENC_B` get no pull-up and no filter cap on the breakout board — they lean on the Pi's internal ~50 kΩ — and that turns out to be fine. Adding a 10 kΩ pull-up was tried and reverted: against a contact that has gone resistive it makes the low level *worse*, and the 100 nF that usually goes with it has a time constant longer than the gaps between real transitions. Sampling every 1 ms is the fix; the hardware needs nothing.
 
 **Audio buzz at low brightness.** The onboard analogue audio is PWM on a digital pin next to the display's, so it picks up interference. Nothing on the software side fixes it — a USB DAC does.
+
+**Audio burbles on battery.** On rev 2026.10 boards, running from the internal 18650 puts a constant burble in the speaker. It gets louder as the brightness goes up, and changes when the charge cable is plugged in.
+
+The Maclock's charging board does not boost the cell to 5 V. Its output is the cell itself: about 4.15 V with no load and about 4.00 V with the Pi running, and the same with the charge cable plugged in. The Pi runs from that and makes its own 3.3 V from it with far less margin than it has on 5 V. The PWM audio pin switches between that 3.3 V and ground, so noise on the Pi's 3.3 V rides straight into the amp. Holding GPIO 19 low with the emulator still running (`pinctrl set 19 op dl`; `pinctrl set 19 a5` restores it) drops the burble to the noise floor, so the amp's own supply and ground are clean. The Pi does not flag the low supply either: `vcgencmd get_throttled` reported `0x0` while it ran at 4.00 V.
+
+Rev 2026.11 rebuilds the audio signal on the board from its own low-noise 3.0 V regulator, which takes the Pi's supply out of the path, but it has not been tested on battery yet. On a 2026.10 board, turn the brightness down.
