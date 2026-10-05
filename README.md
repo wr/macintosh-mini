@@ -1,7 +1,7 @@
 <h1 align="center"><img width="50" alt="happy macs" align="center" src="https://github.com/user-attachments/assets/cb2fd525-ec2b-48ac-8d7f-acda3212f89b" /> Macintosh Mini</h1>
 
 <p align="center">
-  <strong>Turn a Maclock alarm clock into a working Mac with a Raspberry Pi Zero.</strong>
+  <strong>Turn a Maclock alarm clock into a working Mac with a Raspberry Pi</strong>
 </p>
 
 <p align="center">
@@ -14,23 +14,22 @@
 <p align="center">
   <a href="https://www.youtube.com/watch?v=zAbAf5-H5Yo"><img height="400" alt="Macintosh Mini booting into System 7" src="https://github.com/user-attachments/assets/345a346a-67c7-46be-971e-8b5e387e1155" /></a>
   <br />
-  <a href="https://www.youtube.com/watch?v=zAbAf5-H5Yo">Watch the full build on YouTube</a>
+  <a href="https://www.youtube.com/watch?v=zAbAf5-H5Yo">⏵ Watch the full build on YouTube</a>
 </p>
 
 ---
 
 ## What is it?
 
-A [Maclock](https://www.aliexpress.us/w/wholesale-maclock.html) is a cheap alarm clock built into a shockingly accurate miniature Macintosh shell. This project guts one and rebuilds it around a Raspberry Pi Zero running a real 68k or PowerPC emulator, so the tiny Mac actually boots System 7, plays the startup chime, and runs vintage software. Buttons, brightness, sound, Wi-Fi, Bluetooth, and battery all work.
+A [Maclock](https://www.aliexpress.us/w/wholesale-maclock.html) is a cheap alarm clock built into a shockingly accurate miniature Macintosh shell. This project guts one and rebuilds it around a Raspberry Pi Zero running a 68k or PowerPC emulator, so the tiny Mac actually boots System 7, plays the startup chime, and runs vintage software. Buttons, brightness, sound, Wi-Fi, Bluetooth, and battery all work.
 
-## Build or buy one
+## Step 1: Build or buy one
 
-- **Build it yourself.** The [build guide](BUILD.md) covers everything from opening the clock to the first boot: parts, assembly, software and troubleshooting.
-- **Buy a kit or a finished Mac** from [Wells Workshop](https://shop.wells.ee/products/macintosh-mini/?ref=gh-macintosh-mini). Kits come pre-soldered or not.
+- **Build one yourself.** The [build guide](BUILD.md) covers everything from opening the clock to the first boot: parts, assembly, software and troubleshooting.
+- **Buy a maker kit or a finished build.** I sell kits and finished builds from my little maker shop here: [Wells Workshop](https://shop.wells.ee/products/macintosh-mini/?ref=gh-macintosh-mini). Faster than shipping from China, and your purchase supports the continued development of this project.
 
-### Parts
 
-Sourcing the parts yourself? These are the ones I used. The build guide's [parts list](BUILD.md#what-you-need) has the rest, including tools.
+**Sourcing the parts yourself?** These are the ones I used. The build guide's [parts list](BUILD.md#what-you-need) has the rest, including tools.
 
 - [Maclock](https://amzn.to/4e7FKrw)
 - [Raspberry Pi Zero 2 W](https://amzn.to/4ac7FVR)
@@ -45,9 +44,7 @@ Sourcing the parts yourself? These are the ones I used. The build guide's [parts
   <img height="220" alt="Macintosh Mini breakout PCB rotating" src="./docs/maclock-breakout.webp" />
 </p>
 
-## Install the software
-
-The install script does everything: the display, the buttons and dial, and the emulator.
+## Step 2: Install the software
 
 1. Flash **Raspberry Pi OS Lite (64-bit)** to a microSD card with [Raspberry Pi Imager](https://www.raspberrypi.com/software/). Set your Wi-Fi network and turn on SSH in its settings.
 2. Rename your Mac ROM file to `ROM`, and copy it and a disk image to the Pi's home folder:
@@ -56,24 +53,22 @@ The install script does everything: the display, the buttons and dial, and the e
    scp ROM yourdisk.hda <user>@<pi_ip>:~/
    ```
 
-3. SSH into the Pi and run:
+3. The install script is automatic, and guides you through customizations like choosing a boot chime. SSH into the Pi and run:
 
    ```bash
    curl -fsSL https://raw.githubusercontent.com/wr/macintosh-mini/main/setup.sh | bash
    ```
 
-The Pi restarts into Mac OS when it's done. To update, run the same command again; it keeps your disk image and settings. The build guide covers [which ROMs and disk images work](BUILD.md#5-install-the-software), and the [changelog](CHANGELOG.md) lists what each version changed.
+The Pi restarts into Mac OS when it's done. You can run the same command again to install future updates. The build guide covers [which ROMs and disk images work](BUILD.md#5-install-the-software), and the [changelog](CHANGELOG.md) lists what each version changed.
 
-### Manual install (optional)
+If you want to skip the automatic script and install everything yourself, or see exactly what the script changes:
 
-You don't need this if you use the script. It's for doing every step by hand, or seeing exactly what the script changes:
-
-1. [Set up the Pi](maclock-build/): display, audio, brightness dial and buttons.
-2. [Install the emulator](emulators/): Basilisk II or SheepShaver.
+- [Set up the Pi](maclock-build/): display, audio, brightness dial and buttons.
+-  [Install the emulator](emulators/): Basilisk II or SheepShaver.
 
 ## Getting help
 
-Open a [GitHub issue](https://github.com/wr/macintosh-mini/issues) — happy to help.
+Open a [GitHub issue](https://github.com/wr/macintosh-mini/issues) — I'm happy to help, and very responsive!
 
 ## Credits
 
