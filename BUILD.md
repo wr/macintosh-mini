@@ -132,7 +132,9 @@ The fit should be snug, not tight. If the panel has to be forced in, sand the be
 
 **Which emulator.** The installer offers two. **Basilisk II** (the default) emulates a 68k Mac running System 7.0 to 8.5 and is the fastest choice on a Pi Zero 2 W. **SheepShaver** emulates a PowerPC Mac running Mac OS 8.1 or later. It needs a 4 MB PowerPC ROM and is very slow on a Pi Zero, so choose it only for PowerPC-only software.
 
-**Updating.** Run the installer again at any time. It keeps your disk image and settings, and it switches emulator if you pick the other one.
+**Updating.** Run the installer again at any time. It keeps your disk image and settings. To switch emulator, pick the other one; each keeps its own settings.
+
+**Installing by hand.** The [manual install](maclock-build/README.md) walks through every step the installer runs.
 
 ## Using it
 

@@ -6,9 +6,9 @@
 
 <p align="center">
   <a href="#what-is-it">What is it?</a> ⬪
-  <a href="#shopping-list">Shopping list</a> ⬪
   <a href="BUILD.md">Build guide</a> ⬪
-  <a href="#software--quick-install">Software install</a> ⬪
+  <a href="#parts">Parts</a> ⬪
+  <a href="#install-or-update-the-software">Software</a> ⬪
   <a href="#donate">Donate</a>
 </p>
 
@@ -28,11 +28,15 @@
 
 ## What is it?
 
-A [Maclock](https://www.aliexpress.us/w/wholesale-maclock.html) is a cheap alarm clock built into a shockingly accurate miniature Macintosh shell. This project guts one and rebuilds it around a Raspberry Pi Zero running a real 68k or PowerPC emulator, so the tiny Mac actually boots System 7, plays the startup chime, and runs vintage software. Buttons, brightness, sound, wi-fi, bluetooth, and battery all work.
+A [Maclock](https://www.aliexpress.us/w/wholesale-maclock.html) is a cheap alarm clock built into a shockingly accurate miniature Macintosh shell. This project guts one and rebuilds it around a Raspberry Pi Zero running a real 68k or PowerPC emulator, so the tiny Mac actually boots System 7, plays the startup chime, and runs vintage software. Buttons, brightness, sound, Wi-Fi, Bluetooth, and battery all work.
 
-## Shopping List
+## Build one
 
-Or order it all in one place: [the shop](https://shop.wells.ee/products/macintosh-mini/?ref=gh-macintosh-mini) has the kit, pre-soldered or not, with the bezel, speaker and interposer as add-ons, or a finished Mac.
+The [build guide](BUILD.md) takes you from opening the clock to the first boot: parts and tools, assembly, installing the software, and troubleshooting. I also recorded a [video of my build](https://www.youtube.com/watch?v=zAbAf5-H5Yo).
+
+## Parts
+
+Sourcing the parts yourself? These are the ones I used; the [build guide](BUILD.md#what-you-need) lists everything, including tools. Or get it all from [the shop](https://shop.wells.ee/products/macintosh-mini/?ref=gh-macintosh-mini): a kit, pre-soldered or not, with the bezel, speaker and interposer as add-ons, or a finished Mac.
 
 - [Maclock](https://amzn.to/4e7FKrw)
 - [Raspberry Pi Zero 2 W](https://amzn.to/4ac7FVR)
@@ -47,55 +51,24 @@ Or order it all in one place: [the shop](https://shop.wells.ee/products/macintos
   <img height="220" alt="Macintosh Mini breakout PCB rotating" src="./docs/maclock-breakout.webp" />
 </p>
 
-## Hardware Build
+## Install or update the software
 
-Follow the [build guide](BUILD.md) to assemble the Macintosh Mini, from opening the clock to the first boot. I also recorded a [walkthrough video](https://www.youtube.com/watch?v=zAbAf5-H5Yo) of my build. The [Maclock hardware guide](maclock-build/) covers the wiring and drivers in more depth, and every step the installer runs.
+Already built one? Copy your ROM (renamed `ROM`) and a disk image to the Pi's home folder, then run the installer over SSH:
 
-## Software — Quick Install
+```bash
+curl -fsSL https://raw.githubusercontent.com/wr/macintosh-mini/main/setup.sh | bash
+```
 
-1. **Flash the OS.** Install [Raspberry Pi OS (Lite) 64-bit](https://www.raspberrypi.com/software/) onto an SD card.
+Run it again any time to update: it keeps your disk image and settings. [Install the software](BUILD.md#5-install-the-software) in the build guide covers which ROMs and disk images work, and [`CHANGELOG.md`](CHANGELOG.md) lists what each version changed.
 
-2. **Bring your own Mac OS.** Copy a Mac OS disk image and a ROM file to the Pi — the installer auto-discovers them in `$HOME`. Two emulators are offered (it defaults to **Basilisk II**):
+## What's in this repo
 
-   - **Basilisk II** — a 68k Mac running System 7.0–8.5. Fastest option on the Pi Zero 2 W. Needs a **512 KB or 1 MB 68k ROM** (Mac IIci / Quadra — try searching online for `064DC91D`) and a disk image.
-   - **SheepShaver** — PowerPC running Mac OS 8.1+. Needs the **4 MB PowerPC [ROM](https://www.redundantrobot.com/sheepshaver)** and a disk image. Choose this only if you need PPC-era software — it's **very slow on a Pi Zero**.
-
-   Rename your ROM file to `ROM` (no extension). Disk images are readily available online; I recommend the [BlueSCSI image library](https://bluescsi.com/docs/BlueSCSI-Images).
-
-   > **Disk images that work:** any raw hard-disk image — `.hda`, `.img`, `.dsk`, `.hfv`, `.vhd` (the extension doesn't matter) — and Apple `.sparsebundle`.
-   > **Don't work:** `.dmg`, `.image` / `.smi`, `.toast`, or anything still zipped (`.zip` / `.sit`).
-
-   ```bash
-   scp ROM yourdisk.hda <user>@<pi_ip>:~/
-   ```
-
-3. **Run the installer.** SSH into the Pi and run:
-
-   ```bash
-   curl -fsSL https://raw.githubusercontent.com/wr/macintosh-mini/main/setup.sh | bash
-   ```
-
-4. The script reboots your Pi when done, and it should Just Work™️.
-
-## Using it
-
-The Pi boots straight into the Mac. A few controls:
-
-- **Reset button** (GPIO 26): a single press restarts the emulator; a **double press quits to a Pi shell prompt**.
-- **Shut Down** from inside Mac OS (Special → Shut Down) quits to the Pi prompt; **Restart** reboots the Mac in place; a crash auto-reboots.
-- **`macintosh`** — run this from the prompt to boot the Mac again.
-- **Networking** works out of the box (slirp NAT). In the Mac, set TCP/IP to **DHCP**.
-- **Wi-fi stays awake.** The Pi's radio sleeps when idle by default, which makes it drop off the network and answer slowly when you come back to it. The installer turns that off. Pass `--wifi-powersave` to skip that step on a fresh install — it does not undo an install that already turned power saving off.
-
-Re-run the installer any time to **update** an existing install — it keeps your disk image and settings. To **switch emulator**, pick the other one (Basilisk II ⇄ SheepShaver); each core's prefs are preserved.
-
-## The software — manual install
-
-Prefer to do it by hand? Every step the script runs is documented:
-
-- [Maclock hardware guide](https://github.com/wr/macintosh-mini/tree/main/maclock-build)
-- [Basilisk II install guide](https://github.com/wr/macintosh-mini/blob/main/emulators/BasiliskII.md)
-- [SheepShaver install guide](https://github.com/wr/macintosh-mini/blob/main/emulators/SheepShaver.md)
+- [`BUILD.md`](BUILD.md): the build guide.
+- [`setup.sh`](setup.sh): the installer.
+- [`maclock-build/`](maclock-build/): the manual install, part 1. Sets up the Pi's display, dial and buttons by hand, the way the installer does. Also the design notes and known issues.
+- [`emulators/`](emulators/): the manual install, part 2. Builds and runs Basilisk II or SheepShaver. Also the startup chimes.
+- [`maclock-pcb/`](maclock-pcb/): the Macintosh Mini board's KiCad project and bill of materials.
+- [`maclock-screen-bezel/`](maclock-screen-bezel/): the 3D-printable screen bezel.
 
 ## Getting help
 
