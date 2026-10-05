@@ -25,24 +25,8 @@ A [Maclock](https://www.aliexpress.us/w/wholesale-maclock.html) is a cheap alarm
 
 ## Step 1: Build or buy one
 
-- **Build one yourself.** The [build guide](BUILD.md) covers everything from opening the clock to the first boot: parts, assembly, software and troubleshooting.
+- **Build one yourself.** The [build guide](BUILD.md) covers everything from opening the clock to the first boot: the [parts](BUILD.md#what-you-need) and where to buy them, assembly, software and troubleshooting.
 - **Buy a maker kit or a finished build.** I sell kits and finished builds from my little maker shop here: [Wells Workshop](https://shop.wells.ee/products/macintosh-mini/?ref=gh-macintosh-mini). Faster than shipping from China, and your purchase supports the continued development of this project.
-
-
-**Sourcing the parts yourself?** Here's everything you need, with the ones I used:
-
-- [Maclock](https://amzn.to/4e7FKrw)
-- [Raspberry Pi Zero 2 W](https://amzn.to/4ac7FVR)
-- [Waveshare 2.8 inch IPS LCD](https://amzn.to/4ue5GaP)
-- [Adafruit PAM8302 audio amp](https://amzn.to/4uITeAP) + small speaker
-- [3D printed screen bezel](./maclock-screen-bezel)
-- Macintosh Mini breakout board — for brightness, buttons, and sound. Order from [PCBway](https://www.pcbway.com/project/shareproject/W654223ASS41_Untitled_kicad_pcb_95cca7e3.html), or see its [KiCad files and bill of materials](./maclock-pcb/).
-    -  You can [use my referral code](https://pcbway.com/g/AsfKU9) to get $5 off your order, if you want.
-- A way to connect the board to the Pi: the GPIO interposer (an add-on from [Wells Workshop](https://shop.wells.ee/products/macintosh-mini/?ref=gh-macintosh-mini)), or 7 female-to-female jumper wires
-- A microSD card, 16 GB or larger
-- Optional: [MicroUSB to USB-A female cable](https://www.aliexpress.us/item/3256807845070147.html?gatewayAdapt=glo2usa#nav-specification) — to add a USB port to the back. Choose `Color: OTGV8DO-AFH`.
-
-**Tools:** a thin opening pick and a small screwdriver. Flush cutters if you cut the touch pad's wires, and a rotary tool such as a Dremel if you add the USB port.
 
 <p align="center">
   <img height="220" alt="Macintosh Mini breakout PCB rotating" src="./docs/maclock-breakout.webp" />

@@ -40,6 +40,10 @@ The design is open source, so you can also order the bare board from [PCBWay](ht
 - A microSD card, 32 GB (16 GB also works)
 - Optional: a micro-USB to USB-A cable, to add a USB port on the back for a keyboard or mouse
 
+<!-- github-only -->
+**Where to buy:** [Maclock](https://amzn.to/4e7FKrw) · [Raspberry Pi Zero 2 W](https://amzn.to/4ac7FVR) · [Waveshare 2.8-inch LCD](https://amzn.to/4ue5GaP) · [speaker](https://www.adafruit.com/product/3923) · [Macintosh Mini board](https://www.pcbway.com/project/shareproject/W654223ASS41_Untitled_kicad_pcb_95cca7e3.html) from PCBWay ([$5 off with my referral code](https://pcbway.com/g/AsfKU9)) · [micro-USB to USB-A cable](https://www.aliexpress.us/item/3256807845070147.html?gatewayAdapt=glo2usa#nav-specification) (choose `Color: OTGV8DO-AFH`) · the GPIO interposer, from [Wells Workshop](https://shop.wells.ee/products/macintosh-mini/?ref=gh-macintosh-mini)
+<!-- /github-only -->
+
 **Tools**
 
 - A thin opening pick or metal pry tool (the kind used to open iPods)
