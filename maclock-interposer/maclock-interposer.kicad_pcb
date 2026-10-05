@@ -7696,7 +7696,7 @@
 			(justify left mirror)
 		)
 	)
-	(gr_text "rev 2026.10"
+	(gr_text "rev 2026.11"
 		(at 114.5 95.25 0)
 		(layer "B.SilkS")
 		(uuid "3705b632-afbd-410f-9e4b-812245e62877")
