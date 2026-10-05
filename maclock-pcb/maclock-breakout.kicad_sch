@@ -2351,6 +2351,145 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "power:+3V0"
+			(power global)
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 0)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "#PWR"
+				(at 0 -3.81 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "+3V0"
+				(at 0 3.556 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Power symbol creates a global label with name \"+3V0\""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "global power"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "+3V0_0_1"
+				(polyline
+					(pts
+						(xy -0.762 1.27) (xy 0 2.54)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 2.54) (xy 0.762 1.27)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 0) (xy 0 2.54)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "+3V0_1_1"
+				(pin power_in line
+					(at 0 0 90)
+					(length 0)
+					(name ""
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "power:+3V3"
 			(power global)
 			(pin_numbers
@@ -2872,6 +3011,17 @@
 		)
 		(uuid "15aa80c8-564c-4117-b6e4-5b2d8cf5e667")
 	)
+	(text "U2 rebuilds the Pi's PWM audio from a quiet local 3.0 V (U3),\nso noise on the Pi's own supply and ground stays out of it.\nR3 + C1: 16 kHz low-pass. C10 is U3's output capacitor and\nU2's supply bypass; on the board it sits between them."
+		(exclude_from_sim no)
+		(at 167.64 151.13 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left top)
+		)
+		(uuid "1924a947-6aa7-473d-8385-769bc25adef6")
+	)
 	(text "Power"
 		(exclude_from_sim no)
 		(at 15.24 90.17 0)
@@ -2927,17 +3077,6 @@
 			(justify left top)
 		)
 		(uuid "79309d59-0e9c-47da-8019-721383eb68fc")
-	)
-	(text "U2 rebuilds the Pi's PWM audio from a quiet local 3.3 V (U3),\nso noise on the Pi's own supply and ground stays out of it.\nR3 + C1: 16 kHz low-pass. C10 is U3's output capacitor and\nU2's supply bypass; on the board it sits between them."
-		(exclude_from_sim no)
-		(at 167.64 151.13 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left top)
-		)
-		(uuid "7da94c35-d60b-42d9-8985-cbf17ccf86ca")
 	)
 	(text "Buttons"
 		(exclude_from_sim no)
@@ -6298,7 +6437,7 @@
 		)
 	)
 	(symbol
-		(lib_id "power:+3V3")
+		(lib_id "power:+3V0")
 		(at 226.06 38.1 0)
 		(unit 1)
 		(body_style 1)
@@ -6319,7 +6458,7 @@
 				)
 			)
 		)
-		(property "Value" "+3V3"
+		(property "Value" "+3V0"
 			(at 226.06 34.544 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6351,7 +6490,7 @@
 				)
 			)
 		)
-		(property "Description" "Power symbol creates a global label with name \"+3V3\""
+		(property "Description" "Power symbol creates a global label with name \"+3V0\""
 			(at 226.06 38.1 0)
 			(hide yes)
 			(show_name no)
@@ -7608,7 +7747,7 @@
 				)
 			)
 		)
-		(property "Value" "TPS7A2033PDBVR"
+		(property "Value" "TPS7A2030PDBVR"
 			(at 193.04 130.81 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -7640,7 +7779,7 @@
 				)
 			)
 		)
-		(property "Description" "300 mA low-noise LDO, 3.3 V, SOT-23-5"
+		(property "Description" "300 mA low-noise LDO, 3.0 V, SOT-23-5"
 			(at 186.69 137.16 0)
 			(hide yes)
 			(show_name no)
@@ -7662,7 +7801,7 @@
 				)
 			)
 		)
-		(property "MPN" "TPS7A2033PDBVR"
+		(property "MPN" "TPS7A2030PDBVR"
 			(at 186.69 137.16 0)
 			(hide yes)
 			(show_name no)
@@ -7673,7 +7812,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C2862740"
+		(property "LCSC" "C963429"
 			(at 186.69 137.16 0)
 			(hide yes)
 			(show_name no)
@@ -7850,7 +7989,7 @@
 		)
 	)
 	(symbol
-		(lib_id "power:+3V3")
+		(lib_id "power:+3V0")
 		(at 213.36 134.62 0)
 		(unit 1)
 		(body_style 1)
@@ -7871,7 +8010,7 @@
 				)
 			)
 		)
-		(property "Value" "+3V3"
+		(property "Value" "+3V0"
 			(at 213.36 131.064 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -7903,7 +8042,7 @@
 				)
 			)
 		)
-		(property "Description" "Power symbol creates a global label with name \"+3V3\""
+		(property "Description" "Power symbol creates a global label with name \"+3V0\""
 			(at 213.36 134.62 0)
 			(hide yes)
 			(show_name no)
@@ -8114,7 +8253,7 @@
 		)
 	)
 	(symbol
-		(lib_id "power:+3V3")
+		(lib_id "power:+3V0")
 		(at 191.77 99.06 0)
 		(unit 1)
 		(body_style 1)
@@ -8135,7 +8274,7 @@
 				)
 			)
 		)
-		(property "Value" "+3V3"
+		(property "Value" "+3V0"
 			(at 191.77 95.504 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8167,7 +8306,7 @@
 				)
 			)
 		)
-		(property "Description" "Power symbol creates a global label with name \"+3V3\""
+		(property "Description" "Power symbol creates a global label with name \"+3V0\""
 			(at 191.77 99.06 0)
 			(hide yes)
 			(show_name no)

@@ -1756,7 +1756,7 @@
 			(size 1.325 0.6)
 			(layers "B.Cu" "B.Mask" "B.Paste")
 			(roundrect_rratio 0.25)
-			(net "+3V3")
+			(net "+3V0")
 			(uuid "e00058f5-9cd5-48bf-943a-69dbe08e9ad0")
 		)
 		(embedded_fonts no)
@@ -2506,7 +2506,7 @@
 			(size 0.9 0.95)
 			(layers "B.Cu" "B.Mask" "B.Paste")
 			(roundrect_rratio 0.25)
-			(net "+3V3")
+			(net "+3V0")
 			(uuid "56bd5141-e16e-448a-a1df-50b7a439f8f5")
 		)
 		(pad "2" smd roundrect
@@ -3394,7 +3394,7 @@
 			(size 0.715 0.64)
 			(layers "B.Cu" "B.Mask" "B.Paste")
 			(roundrect_rratio 0.25)
-			(net "+3V3")
+			(net "+3V0")
 			(uuid "fab5510b-efd0-4c53-ae20-6c9909b93564")
 		)
 		(pad "2" smd roundrect
@@ -6272,7 +6272,7 @@
 				(justify mirror)
 			)
 		)
-		(property "Value" "TPS7A2033PDBVR"
+		(property "Value" "TPS7A2030PDBVR"
 			(at 0 -2.4 0)
 			(layer "B.Fab")
 			(uuid "c144ff87-3e02-40df-b21b-45755f4e2666")
@@ -6296,7 +6296,7 @@
 				(justify mirror)
 			)
 		)
-		(property "Description" "300 mA low-noise LDO, 3.3 V, SOT-23-5"
+		(property "Description" "300 mA low-noise LDO, 3.0 V, SOT-23-5"
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
@@ -6333,7 +6333,7 @@
 				)
 			)
 		)
-		(property "MPN" "TPS7A2033PDBVR"
+		(property "MPN" "TPS7A2030PDBVR"
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
@@ -6345,7 +6345,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C2862740"
+		(property "LCSC" "C963429"
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
@@ -6662,7 +6662,7 @@
 			(size 1.325 0.6)
 			(layers "B.Cu" "B.Mask" "B.Paste")
 			(roundrect_rratio 0.25)
-			(net "+3V3")
+			(net "+3V0")
 			(uuid "23ac2327-473e-4519-b643-6582092fb19d")
 		)
 		(embedded_fonts no)
@@ -8727,7 +8727,7 @@
 		(end 125.115 91.9025)
 		(width 0.5)
 		(layer "B.Cu")
-		(net "+3V3")
+		(net "+3V0")
 		(uuid "00272020-15b0-46a3-b308-fb145f4cc994")
 	)
 	(segment
@@ -8735,7 +8735,7 @@
 		(end 123.95 90.7375)
 		(width 0.5)
 		(layer "B.Cu")
-		(net "+3V3")
+		(net "+3V0")
 		(uuid "27859934-e5af-4fe1-8b4e-c90968d9b0d4")
 	)
 	(segment
@@ -8743,7 +8743,7 @@
 		(end 122.3 91.375)
 		(width 0.5)
 		(layer "B.Cu")
-		(net "+3V3")
+		(net "+3V0")
 		(uuid "5f1ebe79-1c0a-424a-871b-d60db85a5440")
 	)
 	(segment
@@ -8751,7 +8751,7 @@
 		(end 123.1625 93.375)
 		(width 0.5)
 		(layer "B.Cu")
-		(net "+3V3")
+		(net "+3V0")
 		(uuid "94d1e77b-1f88-4516-a693-b3671f843bca")
 	)
 	(segment
@@ -8759,7 +8759,7 @@
 		(end 122.3 92.5125)
 		(width 0.5)
 		(layer "B.Cu")
-		(net "+3V3")
+		(net "+3V0")
 		(uuid "c974ad1a-4f12-41ef-806d-b7cf35309989")
 	)
 	(segment
@@ -8767,7 +8767,7 @@
 		(end 122.9375 90.7375)
 		(width 0.5)
 		(layer "B.Cu")
-		(net "+3V3")
+		(net "+3V0")
 		(uuid "cc855e9b-fdca-4fe0-87b8-18a4e4d36dad")
 	)
 	(segment

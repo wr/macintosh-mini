@@ -1285,9 +1285,10 @@ QUIT
   run "[maclock] Installing reset-button wrappers" install_restart_wrapper
 
   # Full-scale PWM audio (~3.3 Vpp) through the breakout amp's 2.6x gain asks
-  # for more swing than a 5 V amp can put across 8 ohms, and every chime peaks
-  # at 0 dBFS, so the loudest notes crackle. 4 dB of headroom keeps them clean;
-  # alsa-restore brings the stored level back on every boot.
+  # for more swing than the amp can put across 8 ohms from the clock's ~4 V
+  # battery supply, and every chime peaks at 0 dBFS, so the loudest notes
+  # crackle. 4 dB of headroom keeps them clean; alsa-restore brings the stored
+  # level back on every boot.
   set_audio_level() {
     if ! amixer -q -c Headphones sset PCM -- -4dB; then
       echo "No Headphones card yet; audio level left at its default"
