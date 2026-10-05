@@ -1,6 +1,12 @@
 # Turn a Maclock into a working Mac
 
-The Maclock is a novelty alarm clock shaped like the 1984 Macintosh, sold on AliExpress and Amazon for about $20. Its shell is accurate enough that it can hold a real computer. This guide replaces its insides with a Raspberry Pi Zero 2 W and a 2.8-inch screen, so the clock boots classic Mac OS, plays the startup chime and runs vintage software. The front dial sets the screen brightness, the two buttons restart and shut down, and Wi-Fi, Bluetooth, USB and the internal battery all work.
+<!-- github-only -->
+<p align="center">
+  <img width="360" alt="The finished Macintosh Mini, with a banana for scale" src="docs/macintosh-mini-banana.webp" />
+</p>
+<!-- /github-only -->
+
+The Maclock is a novelty alarm clock shaped like the 1984 Macintosh, sold online for about $20. Its shell is accurate enough that it can hold a real computer. This guide replaces its insides with a Raspberry Pi Zero 2 W and a 2.8-inch screen, so the clock boots classic Mac OS, plays the startup chime and runs vintage software. The front dial sets the screen brightness, the two buttons restart and shut down, and Wi-Fi, Bluetooth, USB and the internal battery all work.
 
 The full build is also on video: [Turning a $20 AliExpress clock into a real vintage Macintosh](https://www.youtube.com/watch?v=zAbAf5-H5Yo) (21 minutes).
 
@@ -11,7 +17,7 @@ The full build is also on video: [Turning a $20 AliExpress clock into a real vin
 <!-- shop:builds -->
 
 <!-- github-only -->
-Kits and a finished Mac are at the [Wells Workshop shop](https://shop.wells.ee/products/macintosh-mini/?ref=gh-macintosh-mini):
+Kits and a finished Mac are available from [Wells Workshop](https://shop.wells.ee/products/macintosh-mini/?ref=gh-macintosh-mini):
 
 - [**Fully assembled**](https://shop.wells.ee/products/macintosh-mini/?ref=gh-macintosh-mini): nothing to build. Copy over your ROM and disk image.
 - [**DIY kit, pre-soldered**](https://shop.wells.ee/products/macintosh-mini/diy-kit-soldered/?ref=gh-macintosh-mini): wire it up, flash the card, close the case. No soldering.

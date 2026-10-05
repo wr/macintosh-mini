@@ -1,6 +1,6 @@
 # Manual install
 
-Everything the [installer](../setup.sh) sets up on the Pi, step by step: the display, audio, backlight, brightness dial and buttons. Follow it to set the Pi up by hand, or to see what the installer changed. To build a Macintosh Mini, start with the [build guide](../BUILD.md) instead; it covers the hardware and the one-line install.
+Everything the [installer](../setup.sh) sets up on the Pi, step by step: the display, audio, backlight, brightness dial and buttons. You don't need this page if you ran the installer. It's for setting the Pi up by hand, or seeing what the installer changed. To build a Macintosh Mini, start with the [build guide](../BUILD.md).
 
 Start from a fresh install of [Raspberry Pi OS Lite (64-bit)](https://www.raspberrypi.com/software/) with SSH turned on. When this page is done, [install the emulator](../emulators/).
 

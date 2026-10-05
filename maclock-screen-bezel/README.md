@@ -1,6 +1,6 @@
 # Macintosh Mini screen bezel
 
-3D-printable bezel that frames the Waveshare 2.8" DPI LCD inside the AliExpress Maclock shell, hiding the gap between the panel and the original screen cutout. Fitting it is [step 4 of the build guide](../BUILD.md#4-fit-the-screen).
+3D-printable bezel that frames the Waveshare 2.8" DPI LCD inside the Maclock's shell, hiding the gap between the panel and the original screen cutout. Fitting it is [step 4 of the build guide](../BUILD.md#4-fit-the-screen).
 
 ## File
 

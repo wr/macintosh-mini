@@ -1,6 +1,6 @@
 # Install the emulator
 
-Build and set up the emulator by hand. This is the second half of a manual install, after [setting up the Pi](../maclock-build/). The [installer](../setup.sh) does all of it for you.
+Build and set up the emulator by hand. This is the second half of a manual install, after [setting up the Pi](../maclock-build/). You don't need it if you ran the [installer](../setup.sh), which does all of this for you.
 
 There are two emulators, both from [kanjitalk755's macemu](https://github.com/kanjitalk755/macemu). Pick one:
 

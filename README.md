@@ -5,23 +5,16 @@
 </p>
 
 <p align="center">
-  <a href="#what-is-it">What is it?</a> ⬪
   <a href="BUILD.md">Build guide</a> ⬪
-  <a href="#parts">Parts</a> ⬪
-  <a href="#install-or-update-the-software">Software</a> ⬪
+  <a href="#install-the-software">Install the software</a> ⬪
+  <a href="https://shop.wells.ee/products/macintosh-mini/?ref=gh-macintosh-mini">Buy a kit</a> ⬪
   <a href="#donate">Donate</a>
 </p>
 
 <p align="center">
   <a href="https://www.youtube.com/watch?v=zAbAf5-H5Yo"><img height="400" alt="Macintosh Mini booting into System 7" src="https://github.com/user-attachments/assets/345a346a-67c7-46be-971e-8b5e387e1155" /></a>
-</p>
-
-<p align="center">
-  I recorded a full build video that <a href="https://www.youtube.com/watch?v=zAbAf5-H5Yo">you can watch here</a>.
-</p>
-
-<p align="center">
-  Rather not source the parts? <a href="https://shop.wells.ee/products/macintosh-mini/?ref=gh-macintosh-mini">Get a kit or a finished Mac</a> from the Wells Workshop shop.
+  <br />
+  <a href="https://www.youtube.com/watch?v=zAbAf5-H5Yo">Watch the full build on YouTube</a>
 </p>
 
 ---
@@ -30,20 +23,21 @@
 
 A [Maclock](https://www.aliexpress.us/w/wholesale-maclock.html) is a cheap alarm clock built into a shockingly accurate miniature Macintosh shell. This project guts one and rebuilds it around a Raspberry Pi Zero running a real 68k or PowerPC emulator, so the tiny Mac actually boots System 7, plays the startup chime, and runs vintage software. Buttons, brightness, sound, Wi-Fi, Bluetooth, and battery all work.
 
-## Build one
+## Build or buy one
 
-The [build guide](BUILD.md) takes you from opening the clock to the first boot: parts and tools, assembly, installing the software, and troubleshooting. I also recorded a [video of my build](https://www.youtube.com/watch?v=zAbAf5-H5Yo).
+- **Build it yourself.** The [build guide](BUILD.md) covers everything from opening the clock to the first boot: parts, assembly, software and troubleshooting.
+- **Buy a kit or a finished Mac** from [Wells Workshop](https://shop.wells.ee/products/macintosh-mini/?ref=gh-macintosh-mini). Kits come pre-soldered or not.
 
-## Parts
+### Parts
 
-Sourcing the parts yourself? These are the ones I used; the [build guide](BUILD.md#what-you-need) lists everything, including tools. Or get it all from [the shop](https://shop.wells.ee/products/macintosh-mini/?ref=gh-macintosh-mini): a kit, pre-soldered or not, with the bezel, speaker and interposer as add-ons, or a finished Mac.
+Sourcing the parts yourself? These are the ones I used. The build guide's [parts list](BUILD.md#what-you-need) has the rest, including tools.
 
 - [Maclock](https://amzn.to/4e7FKrw)
 - [Raspberry Pi Zero 2 W](https://amzn.to/4ac7FVR)
 - [Waveshare 2.8 inch IPS LCD](https://amzn.to/4ue5GaP)
 - [Adafruit PAM8302 audio amp](https://amzn.to/4uITeAP) + small speaker
 - [3D printed screen bezel](./maclock-screen-bezel)
-- Macintosh Mini breakout board — for brightness, buttons, and sound. Order from [PCBway](https://www.pcbway.com/project/shareproject/W654223ASS41_Untitled_kicad_pcb_95cca7e3.html).
+- Macintosh Mini breakout board — for brightness, buttons, and sound. Order from [PCBway](https://www.pcbway.com/project/shareproject/W654223ASS41_Untitled_kicad_pcb_95cca7e3.html), or see its [KiCad files and bill of materials](./maclock-pcb/).
     -  You can [use my referral code](https://pcbway.com/g/AsfKU9) to get $5 off your order, if you want.
 - [MicroUSB to USB-A female cable](https://www.aliexpress.us/item/3256807845070147.html?gatewayAdapt=glo2usa#nav-specification) — to add a USB port to the back. Choose `Color: OTGV8DO-AFH`.
 
@@ -51,24 +45,31 @@ Sourcing the parts yourself? These are the ones I used; the [build guide](BUILD.
   <img height="220" alt="Macintosh Mini breakout PCB rotating" src="./docs/maclock-breakout.webp" />
 </p>
 
-## Install or update the software
+## Install the software
 
-Already built one? Copy your ROM (renamed `ROM`) and a disk image to the Pi's home folder, then run the installer over SSH:
+The install script does everything: the display, the buttons and dial, and the emulator.
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/wr/macintosh-mini/main/setup.sh | bash
-```
+1. Flash **Raspberry Pi OS Lite (64-bit)** to a microSD card with [Raspberry Pi Imager](https://www.raspberrypi.com/software/). Set your Wi-Fi network and turn on SSH in its settings.
+2. Rename your Mac ROM file to `ROM`, and copy it and a disk image to the Pi's home folder:
 
-Run it again any time to update: it keeps your disk image and settings. [Install the software](BUILD.md#5-install-the-software) in the build guide covers which ROMs and disk images work, and [`CHANGELOG.md`](CHANGELOG.md) lists what each version changed.
+   ```bash
+   scp ROM yourdisk.hda <user>@<pi_ip>:~/
+   ```
 
-## What's in this repo
+3. SSH into the Pi and run:
 
-- [`BUILD.md`](BUILD.md): the build guide.
-- [`setup.sh`](setup.sh): the installer.
-- [`maclock-build/`](maclock-build/): the manual install, part 1. Sets up the Pi's display, dial and buttons by hand, the way the installer does. Also the design notes and known issues.
-- [`emulators/`](emulators/): the manual install, part 2. Builds and runs Basilisk II or SheepShaver. Also the startup chimes.
-- [`maclock-pcb/`](maclock-pcb/): the Macintosh Mini board's KiCad project and bill of materials.
-- [`maclock-screen-bezel/`](maclock-screen-bezel/): the 3D-printable screen bezel.
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/wr/macintosh-mini/main/setup.sh | bash
+   ```
+
+The Pi restarts into Mac OS when it's done. To update, run the same command again; it keeps your disk image and settings. The build guide covers [which ROMs and disk images work](BUILD.md#5-install-the-software), and the [changelog](CHANGELOG.md) lists what each version changed.
+
+### Manual install (optional)
+
+You don't need this if you use the script. It's for doing every step by hand, or seeing exactly what the script changes:
+
+1. [Set up the Pi](maclock-build/): display, audio, brightness dial and buttons.
+2. [Install the emulator](emulators/): Basilisk II or SheepShaver.
 
 ## Getting help
 
