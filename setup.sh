@@ -16,12 +16,27 @@
 #   --rom <file>        ROM filename in $HOME (default: ROM)
 #   --hostname <name>   default: leave unchanged
 #   --perf | --no-perf  enable/disable performance optimizations (default: prompt)
+#   --bluetooth | --no-bluetooth
+#                       keep the on-board Bluetooth radio, or turn it off to
+#                       save a second at boot (default: on; re-runs keep the
+#                       installed choice)
+#   --wifi-powersave | --no-wifi-powersave
+#                       leave the wi-fi radio's power saving alone, or turn it
+#                       off so the Pi stays reachable when idle (default: off)
+#   --night-dim | --no-night-dim
+#                       dim the screen from sunset to sunrise (default: prompt)
+#   --night-off <t>     when the screen turns off at night: never, or HH:MM
+#                       (default: prompt; 22:00 on a fresh install)
+#   --timezone <zone>   Area/City for the sunrise schedule (default: keep, or
+#                       prompt when the Pi is still on UTC)
+#   --branch <name>     fetch the helper files from a branch other than main
 #   --debug             show all command output instead of capturing to log
 
 set -euo pipefail
 
-REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/main"
-VERSION="1.1.0"
+REPO_BRANCH="main"   # --branch: test an unmerged branch on a real Pi
+REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/$REPO_BRANCH"
+VERSION="1.5.0"
 
 # SheepShaver paths (DISK_IMAGE is auto-discovered or set via --disk)
 DISK_IMAGE=""
@@ -47,11 +62,36 @@ LOG_FILE=$(mktemp /tmp/macintosh-mini-setup.XXXXXX.log)
 DEBUG=0
 
 # --- Whiptail color theme --------------------------------------------------
-# Standard whiptail look with a black/dark-gray root background.
-# NEWT_COLORS is colon-separated; setting only `root` leaves every other
-# element at its default. NEWT's palette is limited to 8 named colors;
-# `black` reads as dark gray on most modern terminals.
-export NEWT_COLORS='root=,black'
+# Black-and-white, after the System 7 Installer: gray desktop, white windows
+# with black borders and titles, black-on-white buttons that invert when
+# focused, a solid black progress bar. NEWT_COLORS wants colon-separated
+# element=fg,bg pairs from newt's 16 named colors.
+NEWT_THEME=(
+  root=black,lightgray
+  roottext=black,lightgray
+  helpline=black,lightgray
+  window=black,white
+  border=black,white
+  shadow=black,black
+  title=black,white
+  label=black,white
+  textbox=black,white
+  acttextbox=white,black
+  entry=black,white
+  disentry=lightgray,white
+  checkbox=black,white
+  actcheckbox=white,black
+  listbox=black,white
+  actlistbox=white,black
+  sellistbox=white,black
+  actsellistbox=white,black
+  button=black,white
+  actbutton=white,black
+  compactbutton=black,white
+  emptyscale=black,lightgray
+  fullscale=white,black
+)
+export NEWT_COLORS=$(IFS=:; echo "${NEWT_THEME[*]}")
 
 # --- Output helpers --------------------------------------------------------
 log()  { printf '\n\033[1;36m==>\033[0m \033[1m%s\033[0m\n' "$*"; }
@@ -68,6 +108,9 @@ dump_log_on_failure() {
 # --- Progress gauge --------------------------------------------------------
 PROGRESS_FIFO=""
 GAUGE_PID=""
+GAUGE_NOTE="
+This will take a while. Go make yourself a coffee :)
+Your device will automatically reboot when finished."
 USE_GAUGE=0
 TOTAL_STEPS=1
 CURRENT_STEP=0
@@ -77,7 +120,9 @@ start_gauge() {
   PROGRESS_FIFO=$(mktemp -u /tmp/macintosh-mini-progress.XXXXXX)
   mkfifo "$PROGRESS_FIFO"
   whiptail --backtitle "macintosh-mini" --title "Installing" \
-    --gauge "Starting…" 8 72 0 < "$PROGRESS_FIFO" &
+    --gauge "$GAUGE_NOTE
+
+Starting…" 11 72 0 < "$PROGRESS_FIFO" &
   GAUGE_PID=$!
   exec 9> "$PROGRESS_FIFO"
   USE_GAUGE=1
@@ -94,7 +139,7 @@ stop_gauge() {
 emit_gauge() {
   local pct=$1 msg=$2
   [[ $USE_GAUGE -eq 1 ]] || return 0
-  printf 'XXX\n%s\n%s\nXXX\n' "$pct" "$msg" >&9
+  printf 'XXX\n%s\n%s\n\n%s\nXXX\n' "$pct" "$GAUGE_NOTE" "$msg" >&9
 }
 
 step_pct() { echo $(( CURRENT_STEP * 100 / TOTAL_STEPS )); }
@@ -160,12 +205,17 @@ ensure_whiptail() {
 }
 
 wt_menu() {
-  # Args: title, prompt, default_tag, list_height, then pairs of tag/label.
+  # Args: [--nocancel], title, prompt, default_tag, list_height, then tag/label
+  # pairs. --nocancel drops the Cancel button (use when an Exit item in the
+  # list already covers leaving, so the button isn't a redundant duplicate).
+  local nocancel=""
+  [[ $1 == --nocancel ]] && { nocancel=--nocancel; shift; }
   local title=$1 prompt=$2 default=$3 list_height=$4
   shift 4
   local extra=8; [[ -z $prompt ]] && extra=7
+  local newlines=${prompt//[!$'\n']/}; extra=$(( extra + ${#newlines} ))
   local total_height=$(( list_height + extra ))
-  whiptail --backtitle "macintosh-mini" --title "$title" \
+  whiptail --backtitle "macintosh-mini" --title "$title" $nocancel \
     --default-item "$default" \
     --menu "$prompt" "$total_height" 78 "$list_height" \
     "$@" 3>&1 1>&2 2>&3 </dev/tty
@@ -291,6 +341,12 @@ COLOR_MODE=""
 MODELID=""   # BasiliskII only: 5 (Mac IIci) or 14 (Quadra)
 NEW_HOSTNAME=""
 PERF=""   # "" = prompt, 1 = on, 0 = off
+BLUETOOTH=""   # "" = installed choice or on, 1 = on, 0 = off
+WIFI_POWERSAVE=0   # 0 = turn the radio's power saving off, 1 = leave it alone
+NIGHT_DIM=""       # "" = prompt, 1 = dim the screen at night, 0 = don't
+NIGHT_OFF=""       # "" = prompt, "never", or HH:MM to turn the screen off
+TIMEZONE=""        # Area/City to set; the night schedule needs a real one
+NIGHT_CONF=/etc/default/brightness-control
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -307,6 +363,15 @@ while [[ $# -gt 0 ]]; do
     --hostname)      NEW_HOSTNAME=$2; shift 2 ;;
     --perf)          PERF=1; shift ;;
     --no-perf)       PERF=0; shift ;;
+    --bluetooth)     BLUETOOTH=1; shift ;;
+    --no-bluetooth)  BLUETOOTH=0; shift ;;
+    --wifi-powersave)    WIFI_POWERSAVE=1; shift ;;
+    --no-wifi-powersave) WIFI_POWERSAVE=0; shift ;;
+    --night-dim)     NIGHT_DIM=1; shift ;;
+    --no-night-dim)  NIGHT_DIM=0; shift ;;
+    --night-off)     NIGHT_OFF=$2; shift 2 ;;
+    --timezone)      TIMEZONE=$2; shift 2 ;;
+    --branch)        REPO_BRANCH=$2; REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/$REPO_BRANCH"; shift 2 ;;
     --debug)         DEBUG=1; shift ;;
     *) die "Unknown option: $1" ;;
   esac
@@ -325,6 +390,70 @@ printf '  log: %s%s\n' "$LOG_FILE" "$([[ $DEBUG -eq 1 ]] && echo '  [debug mode:
 
 ensure_sudo
 ensure_whiptail
+
+# --- Existing install? -----------------------------------------------------
+# The installer records what it set up so a re-run knows it is an update.
+# Installs before 1.3.0 left no record, so fall back to what is on disk.
+INSTALL_STATE=/etc/macintosh-mini.conf
+state_get() { { sed -n "s/^$1=//p" "$INSTALL_STATE" | head -1; } 2>/dev/null || true; }
+INSTALLED_VERSION=$(state_get VERSION)
+INSTALLED_MACLOCK=$(state_get MACLOCK)
+INSTALLED_EMULATOR=$(state_get EMULATOR)
+INSTALLED_PERF=$(state_get PERF)
+INSTALLED_BLUETOOTH=$(state_get BLUETOOTH)
+if [[ -z $INSTALLED_VERSION ]]; then
+  [[ -f /etc/systemd/system/brightness-control.service ]] && INSTALLED_MACLOCK=1
+  grep -qsF "# >>> basilisk-autostart >>>" "$HOME/.profile" && INSTALLED_EMULATOR=basilisk
+  grep -qsF "# >>> sheepshaver-autostart >>>" "$HOME/.profile" && INSTALLED_EMULATOR=sheepshaver
+  grep -qs "fsck.mode=skip" /boot/firmware/cmdline.txt && INSTALLED_PERF=1
+fi
+
+# Print the CHANGELOG.md bullet lines added since the installed version, as
+# compact "New in <ver>:" blocks for the update menu. CHANGELOG.md in the repo
+# is the source of truth. Best-effort: prints nothing if offline, missing, or
+# unparseable, so the caller just shows the menu without a what's-new section.
+changelog_since() {
+  local from=${1:-} md v versions show=()
+  md=$(curl -fsSL --retry 2 "$REPO_RAW/CHANGELOG.md" 2>/dev/null) || return 0
+  [[ -n $md ]] || return 0
+  versions=$(printf '%s\n' "$md" | sed -n 's/^## \[\([0-9][0-9.]*\)\].*/\1/p')
+  [[ -n $versions ]] || return 0
+  while IFS= read -r v; do
+    [[ -n $v ]] || continue
+    # skip anything newer than what we are installing…
+    [[ "$v" != "$VERSION" && "$(printf '%s\n%s\n' "$v" "$VERSION" | sort -V | tail -1)" == "$v" ]] && continue
+    # …and anything at or older than what is already installed.
+    if [[ -n $from ]]; then
+      [[ "$v" == "$from" ]] && continue
+      [[ "$(printf '%s\n%s\n' "$v" "$from" | sort -V | tail -1)" == "$from" ]] && continue
+    fi
+    show+=("$v")
+  done <<< "$versions"
+  [[ ${#show[@]} -gt 0 ]] || return 0
+  for v in "${show[@]}"; do
+    printf 'New in %s:\n' "$v"
+    printf '%s\n' "$md" | awk -v ver="$v" '
+      $0 ~ "^## \\[" ver "\\]" {p=1; next}
+      p && /^## \[/ {exit}
+      p && /^- / {print}
+    '
+  done
+}
+
+UPDATE_MODE=""   # "" = fresh install or flags given, quick = keep settings
+# An existing install with no flags is an update. Detect it here so the fresh
+# menu and prefs prompts below skip; the update menu itself is shown later (at
+# the reconfigure step), once the emulator settings editor it opens is defined.
+IS_UPDATE=0
+if [[ $INSTALL_MACLOCK -eq 0 && $INSTALL_SHEEPSHAVER -eq 0 && $INSTALL_BASILISK -eq 0 \
+      && ( -n $INSTALLED_MACLOCK || -n $INSTALLED_EMULATOR ) ]]; then
+  IS_UPDATE=1
+  [[ $INSTALLED_MACLOCK == 1 ]] && INSTALL_MACLOCK=1
+  case "$INSTALLED_EMULATOR" in
+    basilisk)    INSTALL_BASILISK=1 ;;
+    sheepshaver) INSTALL_SHEEPSHAVER=1 ;;
+  esac
+fi
 
 # --- Whiptail prompts ------------------------------------------------------
 if [[ $INSTALL_MACLOCK -eq 0 && $INSTALL_SHEEPSHAVER -eq 0 && $INSTALL_BASILISK -eq 0 ]]; then
@@ -527,7 +656,8 @@ configure_existing() {  # $1=prefs  $2=is_basilisk
       1)  cur_color="Black & White 1-bit" ;;
       *)  cur_color="${cur_depth:-?}-bit" ;;
     esac
-    # OK = change the highlighted setting; Continue = proceed keeping settings.
+    # Each row edits its setting in place (applied immediately). Select = edit
+    # the highlighted setting; Back = return to the previous menu.
     if [[ $isb -eq 1 ]]; then
       cur_modelid=$(pref_get "$prefs" modelid)
       case "${cur_modelid:-}" in
@@ -536,7 +666,7 @@ configure_existing() {  # $1=prefs  $2=is_basilisk
         *)  cur_model="modelid ${cur_modelid:-?}" ;;
       esac
       pick=$(whiptail --backtitle "macintosh-mini" --title "Emulator Settings" \
-          --ok-button "Change" --cancel-button "Continue" --menu "" 13 72 4 \
+          --ok-button "Select" --cancel-button "Back" --menu "" 13 72 4 \
           "Disk image:"    "${cur_disk:-unknown}" \
           "Startup chime:" "${cur_chime:-—}" \
           "Color depth:"   "$cur_color" \
@@ -544,7 +674,7 @@ configure_existing() {  # $1=prefs  $2=is_basilisk
           3>&1 1>&2 2>&3 </dev/tty) || break
     else
       pick=$(whiptail --backtitle "macintosh-mini" --title "Emulator Settings" \
-          --ok-button "Change" --cancel-button "Continue" --menu "" 12 72 3 \
+          --ok-button "Select" --cancel-button "Back" --menu "" 12 72 3 \
           "Disk image:"    "${cur_disk:-unknown}" \
           "Startup chime:" "${cur_chime:-—}" \
           "Color depth:"   "$cur_color" \
@@ -559,15 +689,50 @@ configure_existing() {  # $1=prefs  $2=is_basilisk
   done
 }
 
-if [[ $NEED_PREFS -eq 0 && $INSTALL_BASILISK -eq 1 ]]; then
+if [[ $IS_UPDATE -eq 1 ]]; then
+  # The update's main menu. "Edit settings" opens the emulator settings editor
+  # as a modal (its Back returns here); "Update to version X" proceeds, keeping
+  # every other setting. Cancel/Esc exits. What's new is folded into the prompt
+  # (wt_menu grows the box per newline) so it's on the first screen.
+  opt_up="Update to version $VERSION"
+  opt_edit="Edit settings"
+  up_prompt="Version ${INSTALLED_VERSION:-1.2.0 or earlier} is installed."
+  up_news=$(changelog_since "$INSTALLED_VERSION")
+  [[ -n $up_news ]] && up_prompt="$up_prompt"$'\n\n'"$up_news"
+  while true; do
+    CHOICE=$(wt_menu "Macintosh Mini Installer v$VERSION" \
+      "$up_prompt" "$opt_up" 2 \
+      "$opt_up"   "" \
+      "$opt_edit" "") || exit 0
+    case "$CHOICE" in
+      "$opt_up") break ;;
+      "$opt_edit")
+        if   [[ $INSTALL_BASILISK    -eq 1 ]]; then configure_existing "$HOME/.basilisk_ii_prefs" 1
+        elif [[ $INSTALL_SHEEPSHAVER -eq 1 ]]; then configure_existing "$HOME/.sheepshaver_prefs" 0
+        else whiptail --backtitle "macintosh-mini" --title "Edit settings" \
+               --msgbox "No editable settings for a hardware-only install." 8 60 </dev/tty || true
+        fi ;;
+      *) exit 0 ;;
+    esac
+  done
+  UPDATE_MODE=quick   # keep every other setting at its installed value
+  [[ -z $PERF ]] && PERF=${INSTALLED_PERF:-0}
+  [[ -z $NEW_HOSTNAME ]] && NEW_HOSTNAME=$(hostname)
+elif [[ $NEED_PREFS -eq 0 && $INSTALL_BASILISK -eq 1 ]]; then
   configure_existing "$HOME/.basilisk_ii_prefs" 1
 elif [[ $NEED_PREFS -eq 0 && $INSTALL_SHEEPSHAVER -eq 1 ]]; then
   configure_existing "$HOME/.sheepshaver_prefs" 0
 fi
 
+# Bluetooth: on unless asked otherwise. No prompt — a re-run keeps what the
+# last run recorded. Before 1.5.0 the perf option turned Bluetooth off as a
+# side effect and recorded nothing, so those installs get it back.
+[[ -z $BLUETOOTH ]] && BLUETOOTH=${INSTALLED_BLUETOOTH:-1}
+
 # Performance optimizations
 if [[ -z $PERF ]]; then
-  PERF_CHOICE=$(wt_menu "Performance Optimizations" "" "Yes" 2 \
+  def=Yes; [[ ${INSTALLED_PERF:-1} == 0 ]] && def=No
+  PERF_CHOICE=$(wt_menu "Performance Optimizations" "" "$def" 2 \
     "Yes"  "Faster — more RAM, fewer background services" \
     "No"   "Stock install") || die "Cancelled"
   case "$PERF_CHOICE" in Yes) PERF=1 ;; No) PERF=0 ;; esac
@@ -581,26 +746,128 @@ if [[ -z $NEW_HOSTNAME ]]; then
 fi
 NEW_HOSTNAME=${NEW_HOSTNAME// /-}
 
+# Night dimming (maclock only). Sunset to sunrise the backlight runs at half
+# the dial level and goes dark from NIGHT_OFF_AT; see brightness_control.py.
+# The script takes its location from the timezone, so a Pi still on UTC gets
+# a picker like raspi-config's. A re-run defaults to whatever the last run chose.
+conf_get() { { sed -n "s/^$1=//p" "$NIGHT_CONF" | head -1; } 2>/dev/null || true; }
+
+current_timezone() {
+  local tz
+  tz=$(timedatectl show -p Timezone --value 2>/dev/null) || tz=$(cat /etc/timezone 2>/dev/null) || true
+  # Etc/* zones (UTC, GMT+5 ...) have no city, so no place to compute a
+  # sunrise for
+  case "$tz" in ""|UTC|Universal|GMT|Etc/*) return 1 ;; esac
+  printf '%s' "$tz"
+}
+
+pick_timezone() {
+  # zone.tab, not zone1970.tab: the latter folds Oslo, Stockholm, Amsterdam
+  # and a hundred others into one zone each, and nobody will find their
+  # city under Berlin. raspi-config reads the same table.
+  local tab=/usr/share/zoneinfo/zone.tab
+  [[ -f $tab ]] || tab=/usr/share/zoneinfo/zone1970.tab
+  [[ -f $tab ]] || die "No tzdata zone table at /usr/share/zoneinfo"
+  local areas=() cities=() item area city
+  while read -r item; do areas+=("$item" ""); done \
+    < <(awk -F'\t' '!/^#/ { split($3, p, "/"); print p[1] }' "$tab" | sort -u)
+  area=$(wt_menu "Timezone" "Pick your area:" "${areas[0]}" 12 "${areas[@]}") \
+    || return 1
+  while read -r item; do cities+=("$item" ""); done \
+    < <(awk -F'\t' -v a="$area/" '!/^#/ && index($3, a) == 1 { print substr($3, length(a) + 1) }' "$tab" | sort)
+  city=$(wt_menu "Timezone" "Pick the nearest city in $area:" "${cities[0]}" 14 "${cities[@]}") \
+    || return 1
+  TIMEZONE="$area/$city"
+}
+
+if [[ -n $TIMEZONE && ! -f /usr/share/zoneinfo/$TIMEZONE ]]; then
+  die "Unknown timezone: $TIMEZONE (see: timedatectl list-timezones)"
+fi
+if [[ -n $NIGHT_OFF && ! $NIGHT_OFF =~ ^(never|([01][0-9]|2[0-3]):[0-5][0-9])$ ]]; then
+  die "--night-off takes 'never' or HH:MM, not '$NIGHT_OFF'"
+fi
+if [[ $INSTALL_MACLOCK -eq 1 && $UPDATE_MODE != quick ]]; then
+  if [[ -z $NIGHT_DIM ]]; then
+    # Stock Pi OS images ship Europe/London, so a zone that looks set may
+    # not be. Show it and offer the picker either way.
+    tz=${TIMEZONE:-$(current_timezone || echo "not set")}
+    yes_tag="Yes (timezone: $tz)"
+    cur=No; [[ $(conf_get NIGHT_DIM) == 1 ]] && cur=$yes_tag
+    NIGHT_CHOICE=$(wt_menu "Night Dimming" \
+      "Do you want your screen to dim automatically from sunset to sunrise?
+Useful if your Macintosh Mini is a desk accessory or display piece." "$cur" 3 \
+      "$yes_tag"          "" \
+      "Update timezone"   "" \
+      "No"                "") || die "Cancelled"
+    case "$NIGHT_CHOICE" in
+      "Yes"*)            NIGHT_DIM=1 ;;
+      "Update timezone") NIGHT_DIM=1; pick_timezone || die "Cancelled" ;;
+      No)                NIGHT_DIM=0 ;;
+    esac
+  fi
+  # The schedule needs a real zone: UTC has no reference city
+  if [[ $NIGHT_DIM -eq 1 && -z $TIMEZONE ]] && ! current_timezone >/dev/null; then
+    pick_timezone || die "Cancelled"
+  fi
+  if [[ $NIGHT_DIM -eq 1 && -z $NIGHT_OFF ]]; then
+    # A hand-edited time that is not one of the presets gets its own entry,
+    # so pressing Enter keeps it
+    off_now=$(conf_get NIGHT_OFF_AT); keep=()
+    case "$off_now" in
+      21:00) cur="9 PM" ;;  22:00) cur="10 PM" ;;  23:00) cur="11 PM" ;;
+      00:00) cur="12 AM" ;; 01:00) cur="1 AM" ;;
+      "") if grep -q '^NIGHT_OFF_AT=$' "$NIGHT_CONF" 2>/dev/null; then cur=Never; else cur="10 PM"; fi ;;
+      *) cur="Keep $off_now"; keep=("$cur" "") ;;
+    esac
+    OFF_CHOICE=$(wt_menu "Night Dimming" "Do you want your screen to turn off at night?
+(It comes back on 1 hour before sunrise.)" "$cur" $(( 6 + ${#keep[@]} / 2 )) \
+      "Never" "" "9 PM" "" "10 PM" "" "11 PM" "" "12 AM" "" "1 AM" "" ${keep[@]+"${keep[@]}"}) || die "Cancelled"
+    case "$OFF_CHOICE" in
+      Keep*)   NIGHT_OFF=$off_now ;;
+      Never)   NIGHT_OFF=never ;;
+      "9 PM")  NIGHT_OFF=21:00 ;;
+      "10 PM") NIGHT_OFF=22:00 ;;
+      "11 PM") NIGHT_OFF=23:00 ;;
+      "12 AM") NIGHT_OFF=00:00 ;;
+      "1 AM")  NIGHT_OFF=01:00 ;;
+    esac
+  fi
+fi
+
+
+# An emulator binary needs (re)building when it is missing or was built against
+# GTK. With GTK, every WarningAlert (e.g. slirp finding no DNS server while
+# offline) is a modal dialog the kiosk can't dismiss — `nogui true` doesn't
+# cover alerts in the SDL build. Builds are now configured --with-gtk=no so
+# alerts go to the journal instead; a GTK-linked binary from an older install
+# gets rebuilt once on update.
+needs_build() {
+  [[ -x $1 ]] || return 0
+  ldd "$1" 2>/dev/null | grep -q libgtk
+}
 
 # --- Total step count (for gauge) -----------------------------------------
-TOTAL_STEPS=3   # apt update, apt install, patch_cmdline
+TOTAL_STEPS=4   # apt update, apt install, patch_cmdline, record_install
+[[ $WIFI_POWERSAVE -eq 0 ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
 [[ -n $NEW_HOSTNAME && $NEW_HOSTNAME != "$CUR_HOSTNAME" ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
+[[ -n $TIMEZONE ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
 [[ $INSTALL_MACLOCK -eq 1 ]] && TOTAL_STEPS=$((TOTAL_STEPS+7))
 if [[ $INSTALL_SHEEPSHAVER -eq 1 ]]; then
-  if [[ -x /usr/local/bin/SheepShaver ]]; then
-    TOTAL_STEPS=$((TOTAL_STEPS+9))
-  else
+  if needs_build /usr/local/bin/SheepShaver; then
     TOTAL_STEPS=$((TOTAL_STEPS+12))
+  else
+    TOTAL_STEPS=$((TOTAL_STEPS+9))
   fi
 fi
 if [[ $INSTALL_BASILISK -eq 1 ]]; then
-  if [[ -x /usr/local/bin/BasiliskII ]]; then
-    TOTAL_STEPS=$((TOTAL_STEPS+8))
-  else
+  if needs_build /usr/local/bin/BasiliskII; then
     TOTAL_STEPS=$((TOTAL_STEPS+12))
+  else
+    TOTAL_STEPS=$((TOTAL_STEPS+8))
   fi
 fi
-[[ $PERF -eq 1 ]] && TOTAL_STEPS=$((TOTAL_STEPS+3))
+[[ $PERF -eq 1 ]] && TOTAL_STEPS=$((TOTAL_STEPS+2))
+TOTAL_STEPS=$((TOTAL_STEPS+1))   # bluetooth
 
 # --- Open the gauge --------------------------------------------------------
 start_gauge
@@ -610,23 +877,58 @@ trap 'stop_gauge' EXIT
 if [[ -n $NEW_HOSTNAME && $NEW_HOSTNAME != "$CUR_HOSTNAME" ]]; then
   set_host() {
     sudo hostnamectl set-hostname "$NEW_HOSTNAME" || return $?
-    if grep -qE "^127\.0\.1\.1[[:space:]]+$CUR_HOSTNAME" /etc/hosts; then
-      sudo sed -i "s/^127\.0\.1\.1[[:space:]]\+$CUR_HOSTNAME.*/127.0.1.1\t$NEW_HOSTNAME/" /etc/hosts
-    else
-      printf '127.0.1.1\t%s\n' "$NEW_HOSTNAME" | sudo tee -a /etc/hosts >/dev/null
+    # Collapse every 127.0.1.1 line into a single one carrying the new name.
+    # Matching on the old hostname instead would append a second line whenever
+    # /etc/hosts and the running hostname disagree, which is exactly what
+    # cloud-init leaves behind.
+    local tmp; tmp=$(mktemp)
+    awk -v name="$NEW_HOSTNAME" '
+      /^127\.0\.1\.1[ \t]/ { if (!seen++) print "127.0.1.1\t" name; next }
+      { print }
+      END { if (!seen) print "127.0.1.1\t" name }
+    ' /etc/hosts > "$tmp"
+    # Never copy a short write over /etc/hosts: losing it breaks localhost
+    # resolution and every later sudo on a machine with no console.
+    if [[ -s $tmp ]] && grep -qE "^127\.0\.1\.1[[:space:]]" "$tmp"; then
+      sudo cp "$tmp" /etc/hosts
+    fi
+    rm -f "$tmp"
+
+    # Current Pi OS images ship cloud-init, which rewrites the hostname from
+    # its own cached config on every boot and puts the old name straight back.
+    # Tell it to leave the hostname alone.
+    [[ -f /etc/cloud/cloud.cfg ]] || return 0
+    sudo install -d /etc/cloud/cloud.cfg.d
+    printf '# Hostname is set locally; do not let cloud-init reset it each boot.\npreserve_hostname: true\n' \
+      | sudo tee /etc/cloud/cloud.cfg.d/99-preserve-hostname.cfg >/dev/null
+
+    # cloud-init also regenerates /etc/hosts when manage_etc_hosts is on, which
+    # re-adds the old short name as an alias. That setting comes from the image's
+    # user-data, which outranks anything dropped in cloud.cfg.d, so switch the
+    # module off instead.
+    if grep -qE '^[[:space:]]*-[[:space:]]+update_etc_hosts[[:space:]]*$' /etc/cloud/cloud.cfg; then
+      [[ -f /etc/cloud/cloud.cfg.orig ]] \
+        || sudo cp /etc/cloud/cloud.cfg /etc/cloud/cloud.cfg.orig
+      sudo sed -i -E 's|^([[:space:]]*)-[[:space:]]+update_etc_hosts[[:space:]]*$|\1# - update_etc_hosts   # disabled by macintosh-mini: /etc/hosts is managed locally|' \
+        /etc/cloud/cloud.cfg
     fi
   }
   run "Setting hostname: $CUR_HOSTNAME → $NEW_HOSTNAME" set_host
 fi
 
+# --- Timezone -------------------------------------------------------------
+if [[ -n $TIMEZONE ]]; then
+  run "Setting timezone: $TIMEZONE" sudo timedatectl set-timezone "$TIMEZONE"
+fi
+
 # --- apt packages ---------------------------------------------------------
-APT_PKGS=(curl git)
+APT_PKGS=(curl git iw)
 if [[ $INSTALL_SHEEPSHAVER -eq 1 || $INSTALL_BASILISK -eq 1 ]]; then
   APT_PKGS+=(
     build-essential autoconf automake libtool pkg-config
-    libsdl2-dev libgtk-3-dev libgl1-mesa-dev libxkbcommon-dev
+    libsdl2-dev libgl1-mesa-dev libxkbcommon-dev
     libmpfr-dev
-    cage wlr-randr seatd
+    labwc wlr-randr seatd
     alsa-utils
   )
 fi
@@ -637,12 +939,142 @@ run "Updating apt index" sudo apt-get update
 run "Installing ${#APT_PKGS[@]} apt packages" sudo apt-get install -y "${APT_PKGS[@]}"
 
 # --- Quiet boot -----------------------------------------------------------
+# Ensure each kernel arg is present. Idempotent per-token so re-running on an
+# existing install adds anything new instead of bailing the moment one old
+# token is found. cmdline.txt is a single line. Display rotation is handled
+# entirely at the device-tree level (config.txt overlay rotate=90 -> DRM
+# panel-orientation, which rotates fbcon too), so there is no video= arg here.
 patch_cmdline() {
-  local f=/boot/firmware/cmdline.txt
-  grep -q 'vt.global_cursor_default=0' "$f" && return 0
-  sudo sed -i 's|$| quiet loglevel=0 vt.global_cursor_default=0 console=tty3 logo.nologo|' "$f"
+  local f=/boot/firmware/cmdline.txt t
+  local tokens=(
+    quiet
+    loglevel=0
+    vt.global_cursor_default=0
+    console=tty3
+    logo.nologo
+    systemd.show_status=0
+  )
+  # #24 briefly put a video=…rotate=270 arg on main to rotate the console.
+  # Rotation now comes from the device-tree panel-orientation (which also rotates
+  # fbcon), so strip that arg — left in place it double-rotates the console
+  # against rotate=90. Harmless no-op on 1.3.0 installs, which never had it.
+  sudo sed -i 's| video=DPI-1:480x640M@60,rotate=270||g' "$f"
+  for t in "${tokens[@]}"; do
+    grep -qF -- "$t" "$f" || sudo sed -i "s|\$| $t|" "$f"
+  done
 }
 run "Configuring quiet boot (cmdline.txt)" patch_cmdline
+
+# Shared labwc kiosk config, written when an emulator launcher is
+# installed. rc.xml strips the titlebar for the emulator windows; mac-session
+# runs one emulator and lets `labwc -S` terminate the compositor when it exits.
+write_labwc_kiosk() {
+  mkdir -p "$HOME/.config/labwc"
+  # Single-app kiosk: force every window fullscreen and undecorated. Fullscreen
+  # gives the emulator exclusive pointer focus so it hides the host cursor —
+  # otherwise the compositor cursor and the guest (Mac) cursor both show. "*"
+  # matches all windows, so this doesn't depend on the emulator's WM_CLASS.
+  cat > "$HOME/.config/labwc/rc.xml" <<'XML'
+<?xml version="1.0"?>
+<labwc_config>
+  <windowRules>
+    <windowRule identifier="*" serverDecoration="no" matchOnce="true">
+      <action name="ToggleFullscreen"/>
+    </windowRule>
+  </windowRules>
+</labwc_config>
+XML
+  sudo tee /usr/local/bin/mac-session >/dev/null <<'SESSION'
+#!/bin/sh
+# labwc session command: labwc -S "mac-session <tag> <bin> <exitfile>".
+# labwc exits when this returns. Rotation is meant to come from the DRM
+# panel-orientation (config.txt overlay rotate=90), which labwc applies before
+# the first frame — no flash. Only if the panel came up un-rotated (overlay
+# ignored rotate=) do we fall back to a one-shot wlr-randr transform; that
+# reintroduces the brief flash, so it is only a safety net. Target the DPI
+# panel connector by name — never a stray output — so an emulator-only install
+# on some other display (e.g. HDMI) is left alone.
+tag=$1; bin=$2; exitfile=$3
+if wlr-randr 2>/dev/null | grep -q "Transform: normal"; then
+  for o in DPI-1 Unknown-1; do
+    wlr-randr --output "$o" --transform 270 2>/dev/null && break
+  done
+fi
+systemd-cat -t "$tag" setarch -R "$bin"
+echo $? > "$exitfile"
+SESSION
+  sudo chmod 755 /usr/local/bin/mac-session
+
+  # Hide labwc's own pointer cursor. The emulator draws the Mac cursor into its
+  # framebuffer, so the compositor cursor is a second, redundant arrow — and it
+  # shows for the moment before the emulator maps. Install a cursor theme whose
+  # every shape is a 1x1 transparent image and point XCURSOR at it (launchers
+  # set XCURSOR_THEME=transparent only on the labwc command, not exported), so
+  # labwc renders nothing; the Mac cursor lives in the emulator's surface and is
+  # unaffected. Nothing else on the system selects this theme, so a desktop or
+  # the fallback shell keeps its normal cursor. This relies on the emulator
+  # being the only window labwc ever shows: the builds use --with-gtk=no so
+  # emulator alerts log to the journal instead of opening a (pointer-less)
+  # dialog.
+  local cdir="$HOME/.local/share/icons/transparent/cursors"
+  mkdir -p "$cdir"
+  base64 -d > "$cdir/left_ptr" <<'CUR'
+WGN1chAAAAAAAAEAAQAAAAIA/f8BAAAAHAAAACQAAAACAP3/AQAAAAEAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAA=
+CUR
+  local n
+  for n in default arrow top_left_arrow left_ptr_watch watch xterm text \
+           hand1 hand2 pointer fleur crosshair sb_h_double_arrow sb_v_double_arrow; do
+    ln -sf left_ptr "$cdir/$n"
+  done
+  cat > "$HOME/.local/share/icons/transparent/index.theme" <<'IDX'
+[Icon Theme]
+Name=transparent
+Comment=Invisible cursor for kiosk
+IDX
+}
+
+# --- Wi-Fi power saving ---------------------------------------------------
+# The radio parks itself when nothing is talking to it, so the Pi drops off the
+# network while idle and takes a while to answer again. Turn that off three
+# ways: a NetworkManager default, the saved wi-fi profile, and a boot-time unit
+# for anything NetworkManager does not manage. Applied live with iw as well, so
+# it takes effect without restarting NetworkManager and dropping this session.
+if [[ $WIFI_POWERSAVE -eq 0 ]]; then
+  disable_wifi_powersave() {
+    sudo install -d /etc/NetworkManager/conf.d
+    printf '[connection]\nwifi.powersave = 2\n' \
+      | sudo tee /etc/NetworkManager/conf.d/99-wifi-powersave-off.conf >/dev/null
+
+    # Match on UUID, not name: nmcli's terse output escapes a colon in a
+    # profile name as \:, which splits wrong on -F: and drops the profile, and
+    # two profiles can share a name but never a UUID.
+    local uuid
+    while IFS= read -r uuid; do
+      [[ -n $uuid ]] || continue
+      sudo nmcli connection modify "$uuid" 802-11-wireless.powersave 2 || true
+    done < <(nmcli -t -f UUID,TYPE connection show 2>/dev/null \
+             | awk -F: '$2 == "802-11-wireless" { print $1 }')
+
+    sudo tee /etc/systemd/system/wifi-powersave-off.service >/dev/null <<'UNIT'
+[Unit]
+Description=Disable Wi-Fi power saving
+Wants=sys-subsystem-net-devices-wlan0.device
+After=sys-subsystem-net-devices-wlan0.device NetworkManager.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=-/usr/sbin/iw dev wlan0 set power_save off
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+    sudo systemctl daemon-reload
+    sudo systemctl enable wifi-powersave-off.service
+    sudo systemctl restart wifi-powersave-off.service
+  }
+  run "Turning off Wi-Fi power saving" disable_wifi_powersave
+fi
 
 # --- Performance optimizations -------------------------------------------
 if [[ $PERF -eq 1 ]]; then
@@ -653,19 +1085,9 @@ if [[ $PERF -eq 1 ]]; then
   }
   run "[perf] cmdline: skip fsck, no swap" patch_cmdline_perf
 
-  patch_disable_bt() {
-    local f=/boot/firmware/config.txt
-    grep -q '^dtoverlay=disable-bt' "$f" && return 0
-    printf '\n# Disable on-board Bluetooth (perf)\ndtoverlay=disable-bt\n' \
-      | sudo tee -a "$f" >/dev/null
-  }
-  run "[perf] Disabling on-board Bluetooth" patch_disable_bt
-
   mask_services() {
     local services=(
       systemd-networkd-wait-online.service
-      bluetooth.service
-      hciuart.service
       triggerhappy.service
       ModemManager.service
       avahi-daemon.service
@@ -688,6 +1110,26 @@ if [[ $PERF -eq 1 ]]; then
   }
   run "[perf] Masking unused services" mask_services
 fi
+
+# --- Bluetooth -------------------------------------------------------------
+# Disabling it buys about a second at boot and a few MB; nothing for the
+# emulator. Both directions are applied every run so a flipped choice (or an
+# old install that had it off) takes effect after the next reboot.
+apply_bluetooth() {
+  local f=/boot/firmware/config.txt
+  if [[ $BLUETOOTH -eq 1 ]]; then
+    sudo sed -i '/^# Disable on-board Bluetooth (perf)$/d; /^dtoverlay=disable-bt$/d' "$f"
+    sudo systemctl unmask bluetooth.service hciuart.service 2>/dev/null || true
+    sudo systemctl enable bluetooth.service hciuart.service 2>/dev/null || true
+  else
+    grep -q '^dtoverlay=disable-bt' "$f" \
+      || printf '\n# Disable on-board Bluetooth (perf)\ndtoverlay=disable-bt\n' \
+         | sudo tee -a "$f" >/dev/null
+    sudo systemctl mask bluetooth.service hciuart.service 2>/dev/null || true
+  fi
+}
+if [[ $BLUETOOTH -eq 1 ]]; then run "Keeping Bluetooth on" apply_bluetooth
+else run "Turning Bluetooth off" apply_bluetooth; fi
 
 # =========================================================================
 # maclock — hardware setup
@@ -727,6 +1169,15 @@ if [[ $INSTALL_MACLOCK -eq 1 ]]; then
       # loading the overlay twice just makes the second probe fail.
       grep -q '^dtoverlay=pwm-gpio,gpio=18$' "$f" || sudo sed -i \
         '0,/^dtoverlay=audremap-pin19$/s//&\ndtoverlay=pwm-gpio,gpio=18/' "$f"
+      # display_rotate=3 (shipped through 1.3.0) is ignored under vc4-kms — drop
+      # the dead line.
+      sudo sed -i '/^display_rotate=3$/d' "$f"
+      # Add the panel rotation: rotate=90 on the DPI overlay sets the DRM
+      # panel-orientation, honored at init by fbcon (console) and labwc
+      # (emulator) — a rotated first frame, no flash. (Idempotent: a line that
+      # already carries ,rotate=90 no longer matches the bare form.)
+      sudo sed -i \
+        's|^dtoverlay=vc4-kms-dpi-2inch8$|dtoverlay=vc4-kms-dpi-2inch8,rotate=90|' "$f"
       return 0
     fi
     sudo tee -a "$f" >/dev/null <<'EOF'
@@ -737,8 +1188,9 @@ dtoverlay=waveshare-28dpi-3b-4b-notouch
 dtoverlay=waveshare-28dpi-3b
 dtoverlay=waveshare-28dpi-4b
 #dtoverlay=waveshare-touch-28dpi
-dtoverlay=vc4-kms-dpi-2inch8
-display_rotate=3
+# rotate=90 sets the DRM panel-orientation, honored at init by fbcon (console)
+# and labwc (emulator) — rotated from the first frame, no flash.
+dtoverlay=vc4-kms-dpi-2inch8,rotate=90
 
 # Audio — PWM on GPIO 19 only, which is the one physically wired. The stock
 # audremap,pins_18_19 also claims GPIO 18 and blocks the backlight PWM.
@@ -759,6 +1211,39 @@ EOF
   }
   run "[maclock] Patching config.txt" patch_config
 
+  write_night_conf() {
+    [[ -n $NIGHT_DIM ]] || return 0
+    local lat lon factor off_at
+    # A hand-set location survives re-runs
+    lat=$(conf_get LAT); lon=$(conf_get LON)
+    factor=$(conf_get NIGHT_FACTOR); factor=${factor:-0.5}
+    if [[ $NIGHT_OFF == never ]]; then
+      off_at=""
+    elif [[ -n $NIGHT_OFF ]]; then
+      off_at=$NIGHT_OFF
+    elif grep -q '^NIGHT_OFF_AT=' "$NIGHT_CONF" 2>/dev/null; then
+      # Blank is a valid setting (dim, never dark), so only fall back to
+      # the default when the key is absent entirely.
+      off_at=$(conf_get NIGHT_OFF_AT)
+    else
+      off_at=22:00
+    fi
+    sudo tee "$NIGHT_CONF" >/dev/null <<EOF
+# Night dimming for the maclock backlight. Read by brightness-control.service;
+# after editing: sudo systemctl restart brightness-control
+NIGHT_DIM=$NIGHT_DIM
+# Optional. Blank, the location is the timezone's reference city from tzdata.
+# Set both in decimal degrees (north and east positive) for a closer fix.
+LAT=$lat
+LON=$lon
+# Sunset to sunrise, the dial level is multiplied by this
+NIGHT_FACTOR=$factor
+# From this time the screen goes fully dark, until an hour before sunrise.
+# Blank to only dim.
+NIGHT_OFF_AT=$off_at
+EOF
+  }
+
   install_gpio_helpers() {
     for f in brightness_control.py button_handler.py; do
       curl -fL --retry 3 -o "/tmp/$f" "$REPO_RAW/maclock-build/$f" || return $?
@@ -768,12 +1253,15 @@ EOF
       curl -fL --retry 3 -o "/tmp/$f" "$REPO_RAW/maclock-build/$f" || return $?
       sudo install -m644 "/tmp/$f" "/etc/systemd/system/$f" || return $?
     done
+    write_night_conf || return $?
     sudo systemctl daemon-reload
     # reenable, not enable: the unit moved from multi-user.target to
     # sysinit.target, and plain enable only adds the new symlink.
     sudo systemctl reenable brightness-control.service button-handler.service
-    sudo systemctl start brightness-control.service button-handler.service
+    # restart, not start: on an update the old script is still running
+    sudo systemctl restart brightness-control.service button-handler.service
   }
+
   run "[maclock] Installing GPIO helpers + systemd units" install_gpio_helpers
 
   install_restart_wrapper() {
@@ -846,7 +1334,7 @@ SYSCTL
       -o "$HOME/crash.wav" "$REPO_RAW/emulators/chimes/${CRASH_NAME}.wav"
   fi
 
-  if [[ -x /usr/local/bin/SheepShaver ]]; then
+  if ! needs_build /usr/local/bin/SheepShaver; then
     : # already installed; no steps consumed
   else
     run "[sheepshaver] Cloning macemu (kanjitalk755 HEAD)" \
@@ -856,13 +1344,14 @@ SYSCTL
       cd "$MACEMU_DIR/SheepShaver" || return $?
       make links || return $?
       cd src/Unix || return $?
+      make distclean >/dev/null 2>&1 || true   # existing clone: drop old configure
       local extra_cflags=""
       [[ $PERF -eq 1 ]] && extra_cflags=" -mcpu=cortex-a53 -mtune=cortex-a53"
       CFLAGS="-DMEM_BULK -g -O3${extra_cflags}" \
       CXXFLAGS="-DMEM_BULK -g -O3${extra_cflags}" \
-      ./autogen.sh || return $?
+      ./autogen.sh --with-gtk=no || return $?
     }
-    run "[sheepshaver] Configuring build" prepare_build
+    run "[sheepshaver] Configuring build (no GTK)" prepare_build
 
     do_build() {
       cd "$MACEMU_DIR/SheepShaver/src/Unix" || return $?
@@ -875,12 +1364,13 @@ SYSCTL
   fi
 
   install_launcher() {
+    write_labwc_kiosk
     sudo tee /usr/local/bin/sheepshaver.sh >/dev/null <<'LAUNCHER'
 #!/bin/bash
-# Launches SheepShaver fullscreen via cage on the current TTY.
+# Launches SheepShaver fullscreen via labwc on the current TTY.
 # Relaunch: exit 0 (Mac Shut Down) or 143 (double-reset) -> Pi prompt;
 # crash -> relaunch; Mac Restart reboots the VM in place.
-ulimit -c 0   # no core dumps when killed abruptly (reset stops cage mid-render)
+ulimit -c 0   # no core dumps when killed abruptly (reset stops labwc mid-render)
 clear 2>/dev/null
 printf '\033[?25l' 2>/dev/null
 setterm --cursor off 2>/dev/null || true
@@ -901,13 +1391,13 @@ fi
 aplay -q /usr/local/bin/chime.wav 2>/dev/null &
 
 rm -f /tmp/sheepshaver.exit
-cage -s -- sh -c '
-  sleep 1
-  wlr-randr --output DPI-1 --transform 270 2>/dev/null
-  wlr-randr --output Unknown-1 --transform 270 2>/dev/null
-  systemd-cat -t sheepshaver setarch -R SheepShaver
-  echo $? > /tmp/sheepshaver.exit
-'
+# labwc reads ~/.config/labwc/rc.xml and rotates the output from the DRM
+# panel-orientation at init (rotated first frame, no flash). -S runs the
+# session command and terminates labwc when it (the emulator) exits.
+# XCURSOR_* is set only for labwc (not exported) so the invisible cursor never
+# leaks into the fallback shell or a desktop started from it.
+XCURSOR_THEME=transparent XCURSOR_PATH="$HOME/.local/share/icons:/usr/share/icons" \
+  labwc -S "/usr/local/bin/mac-session sheepshaver SheepShaver /tmp/sheepshaver.exit"
 rc=$(cat /tmp/sheepshaver.exit 2>/dev/null || echo 99)
 rm -f /tmp/sheepshaver.exit
 
@@ -957,7 +1447,7 @@ EOF
     sudo tee /etc/systemd/system/getty@tty1.service.d/autologin.conf >/dev/null <<EOF
 [Service]
 ExecStart=
-ExecStart=-/sbin/agetty --autologin $USER --noclear --noissue --nohostname %I \$TERM
+ExecStart=-/sbin/agetty --autologin $USER --skip-login --noclear --noissue --nohostname %I \$TERM
 EOF
     sudo systemctl daemon-reload
   }
@@ -1015,7 +1505,7 @@ SYSCTL
       -o "$HOME/crash.wav" "$REPO_RAW/emulators/chimes/${CRASH_NAME}.wav"
   fi
 
-  if [[ -x /usr/local/bin/BasiliskII ]]; then
+  if ! needs_build /usr/local/bin/BasiliskII; then
     : # already installed; no steps consumed
   else
     run "[basilisk] Cloning macemu (kanjitalk755 HEAD)" \
@@ -1025,14 +1515,15 @@ SYSCTL
     # get re-blitted — meaningfully snappier UI, and stable on this Pi's aarch64.
     prepare_basilisk_build() {
       cd "$MACEMU_DIR/BasiliskII/src/Unix" || return $?
+      make distclean >/dev/null 2>&1 || true   # existing clone: drop old configure
       local extra_cflags=""
       [[ $PERF -eq 1 ]] && extra_cflags=" -mcpu=cortex-a53 -mtune=cortex-a53"
       CFLAGS="-g -O3${extra_cflags}" \
       CXXFLAGS="-g -O3${extra_cflags}" \
       ./autogen.sh --enable-sdl-video --enable-sdl-audio \
-        --disable-jit-compiler --enable-vosf || return $?
+        --disable-jit-compiler --enable-vosf --with-gtk=no || return $?
     }
-    run "[basilisk] Configuring build (SDL, no JIT, VOSF)" prepare_basilisk_build
+    run "[basilisk] Configuring build (SDL, no JIT, VOSF, no GTK)" prepare_basilisk_build
 
     do_basilisk_build() {
       cd "$MACEMU_DIR/BasiliskII/src/Unix" || return $?
@@ -1045,12 +1536,13 @@ SYSCTL
   fi
 
   install_basilisk_launcher() {
+    write_labwc_kiosk
     sudo tee /usr/local/bin/basilisk.sh >/dev/null <<'LAUNCHER'
 #!/bin/bash
-# Launches BasiliskII fullscreen via cage on the current TTY.
+# Launches BasiliskII fullscreen via labwc on the current TTY.
 # Relaunch: exit 0 (Mac Shut Down) or 143 (double-reset) -> Pi prompt;
 # crash -> relaunch; Mac Restart reboots the VM in place.
-ulimit -c 0   # no core dumps when killed abruptly (reset stops cage mid-render)
+ulimit -c 0   # no core dumps when killed abruptly (reset stops labwc mid-render)
 clear 2>/dev/null
 printf '\033[?25l' 2>/dev/null
 setterm --cursor off 2>/dev/null || true
@@ -1071,13 +1563,13 @@ fi
 aplay -q /usr/local/bin/chime.wav 2>/dev/null &
 
 rm -f /tmp/basilisk.exit
-cage -s -- sh -c '
-  sleep 1
-  wlr-randr --output DPI-1 --transform 270 2>/dev/null
-  wlr-randr --output Unknown-1 --transform 270 2>/dev/null
-  systemd-cat -t basilisk setarch -R BasiliskII
-  echo $? > /tmp/basilisk.exit
-'
+# labwc reads ~/.config/labwc/rc.xml and rotates the output from the DRM
+# panel-orientation at init (rotated first frame, no flash). -S runs the
+# session command and terminates labwc when it (the emulator) exits.
+# XCURSOR_* is set only for labwc (not exported) so the invisible cursor never
+# leaks into the fallback shell or a desktop started from it.
+XCURSOR_THEME=transparent XCURSOR_PATH="$HOME/.local/share/icons:/usr/share/icons" \
+  labwc -S "/usr/local/bin/mac-session basilisk BasiliskII /tmp/basilisk.exit"
 rc=$(cat /tmp/basilisk.exit 2>/dev/null || echo 99)
 rm -f /tmp/basilisk.exit
 
@@ -1133,7 +1625,7 @@ EOF
     sudo tee /etc/systemd/system/getty@tty1.service.d/autologin.conf >/dev/null <<EOF
 [Service]
 ExecStart=
-ExecStart=-/sbin/agetty --autologin $USER --noclear --noissue --nohostname %I \$TERM
+ExecStart=-/sbin/agetty --autologin $USER --skip-login --noclear --noissue --nohostname %I \$TERM
 EOF
     sudo systemctl daemon-reload
   }
@@ -1156,6 +1648,17 @@ EOF
   }
   run "[basilisk] Appending autostart to ~/.profile" patch_profile_basilisk
 fi
+
+# --- Record what was installed, so the next run knows it is an update -----
+record_install() {
+  local emulator=$INSTALLED_EMULATOR maclock=${INSTALLED_MACLOCK:-0}
+  [[ $INSTALL_BASILISK -eq 1 ]] && emulator=basilisk
+  [[ $INSTALL_SHEEPSHAVER -eq 1 ]] && emulator=sheepshaver
+  [[ $INSTALL_MACLOCK -eq 1 ]] && maclock=1
+  printf 'VERSION=%s\nMACLOCK=%s\nEMULATOR=%s\nPERF=%s\nBLUETOOTH=%s\n' \
+    "$VERSION" "$maclock" "$emulator" "${PERF:-0}" "$BLUETOOTH" | sudo tee "$INSTALL_STATE" >/dev/null
+}
+run "Recording the install" record_install
 
 # --- Done -----------------------------------------------------------------
 emit_gauge 100 "Done"

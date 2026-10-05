@@ -9,7 +9,7 @@
 #
 # Edit the COMMANDS / DOUBLE_COMMANDS dicts below to set what each button does.
 #
-# March 26, 2026 - http://wells.ee/journal/macintosh-mini
+# March 26, 2026 - https://github.com/wr/macintosh-mini/blob/main/BUILD.md
 # ####################################
 
 import signal

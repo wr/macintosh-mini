@@ -7,7 +7,7 @@
 <p align="center">
   <a href="#what-is-it">What is it?</a> ⬪
   <a href="#shopping-list">Shopping list</a> ⬪
-  <a href="#hardware-build">Hardware build</a> ⬪
+  <a href="BUILD.md">Build guide</a> ⬪
   <a href="#software--quick-install">Software install</a> ⬪
   <a href="#donate">Donate</a>
 </p>
@@ -20,6 +20,10 @@
   I recorded a full build video that <a href="https://www.youtube.com/watch?v=zAbAf5-H5Yo">you can watch here</a>.
 </p>
 
+<p align="center">
+  Rather not source the parts? <a href="https://shop.wells.ee/products/macintosh-mini/?ref=gh-macintosh-mini">Get a kit or a finished Mac</a> from the Wells Workshop shop.
+</p>
+
 ---
 
 ## What is it?
@@ -27,6 +31,8 @@
 A [Maclock](https://www.aliexpress.us/w/wholesale-maclock.html) is a cheap alarm clock built into a shockingly accurate miniature Macintosh shell. This project guts one and rebuilds it around a Raspberry Pi Zero running a real 68k or PowerPC emulator, so the tiny Mac actually boots System 7, plays the startup chime, and runs vintage software. Buttons, brightness, sound, wi-fi, bluetooth, and battery all work.
 
 ## Shopping List
+
+Or order it all in one place: [the shop](https://shop.wells.ee/products/macintosh-mini/?ref=gh-macintosh-mini) has the kit, pre-soldered or not, with the bezel, speaker and interposer as add-ons, or a finished Mac.
 
 - [Maclock](https://amzn.to/4e7FKrw)
 - [Raspberry Pi Zero 2 W](https://amzn.to/4ac7FVR)
@@ -43,7 +49,7 @@ A [Maclock](https://www.aliexpress.us/w/wholesale-maclock.html) is a cheap alarm
 
 ## Hardware Build
 
-Follow the [Maclock hardware guide](https://github.com/wr/macintosh-mini/tree/main/maclock-build) to assemble the Macintosh Mini. I also recorded a [walkthrough video](https://www.youtube.com/watch?v=zAbAf5-H5Yo) that goes into much more detail than the written guide.
+Follow the [build guide](BUILD.md) to assemble the Macintosh Mini, from opening the clock to the first boot. I also recorded a [walkthrough video](https://www.youtube.com/watch?v=zAbAf5-H5Yo) of my build. The [Maclock hardware guide](maclock-build/) covers the wiring and drivers in more depth, and every step the installer runs.
 
 ## Software — Quick Install
 
@@ -79,6 +85,7 @@ The Pi boots straight into the Mac. A few controls:
 - **Shut Down** from inside Mac OS (Special → Shut Down) quits to the Pi prompt; **Restart** reboots the Mac in place; a crash auto-reboots.
 - **`macintosh`** — run this from the prompt to boot the Mac again.
 - **Networking** works out of the box (slirp NAT). In the Mac, set TCP/IP to **DHCP**.
+- **Wi-fi stays awake.** The Pi's radio sleeps when idle by default, which makes it drop off the network and answer slowly when you come back to it. The installer turns that off. Pass `--wifi-powersave` to skip that step on a fresh install — it does not undo an install that already turned power saving off.
 
 Re-run the installer any time to **update** an existing install — it keeps your disk image and settings. To **switch emulator**, pick the other one (Basilisk II ⇄ SheepShaver); each core's prefs are preserved.
 

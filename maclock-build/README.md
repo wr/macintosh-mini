@@ -174,15 +174,124 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now brightness-control button-handler
 ```
 
+#### Night dimming (optional)
+
+The dial script can follow the sun. From sunset the backlight runs at half the
+dial level, from 10pm it goes fully dark until an hour before sunrise, and at
+sunrise it comes back to wherever the dial was. Turning the dial at night
+wakes the screen until the next sunset. Sunrise and sunset are computed on the
+Pi, offline, for the reference city of the system timezone, using the
+coordinates tzdata ships in its zone tables. Stock Pi OS images come set to Europe/London, so check that
+first; the [setup script](../setup.sh) shows the zone and offers a picker. By
+hand:
+
+```bash
+sudo timedatectl set-timezone America/New_York   # timedatectl list-timezones
+sudo tee /etc/default/brightness-control >/dev/null <<'EOF'
+NIGHT_DIM=1
+LAT=
+LON=
+NIGHT_FACTOR=0.5
+NIGHT_OFF_AT=22:00
+EOF
+sudo systemctl restart brightness-control
+```
+
+`LAT`/`LON` are optional: fill both in (decimal degrees) if the zone's city is
+far from you. `NIGHT_FACTOR` scales the dial level between sunset and sunrise.
+`NIGHT_OFF_AT` is when the screen goes dark; leave it blank to only ever dim.
+A cutoff earlier than sunset (a midsummer 22:08 sunset under the 22:00
+default) means dark from sunset. In polar night the screen only dims, since
+no sunrise would end the dark. The Pi has no clock battery, so the schedule
+stays off until NTP has set the time. A boot after the cutoff dims for the
+first ten minutes instead of coming up dark, then goes dark unless the dial
+is turned.
+
 ---
 
-### 4. Install the emulator
+### 4. Keep the wi-fi awake
+
+The Pi Zero 2 W ships with wi-fi power saving on. The radio parks itself when
+nothing is talking to it, so the Pi falls off the network while idle and is slow
+to answer when you come back — ssh hangs for a while before it wakes up.
+
+Turn it off in three places, so it holds whether NetworkManager is driving the
+link or not:
+
+```bash
+# 1. NetworkManager's default for new connections
+printf '[connection]\nwifi.powersave = 2\n' \
+  | sudo tee /etc/NetworkManager/conf.d/99-wifi-powersave-off.conf
+
+# 2. the wi-fi profile you are already on
+sudo nmcli connection modify "<your-ssid>" 802-11-wireless.powersave 2
+
+# 3. a boot-time unit, for anything NetworkManager does not manage
+sudo tee /etc/systemd/system/wifi-powersave-off.service <<'UNIT'
+[Unit]
+Description=Disable Wi-Fi power saving
+Wants=sys-subsystem-net-devices-wlan0.device
+After=sys-subsystem-net-devices-wlan0.device NetworkManager.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=-/usr/sbin/iw dev wlan0 set power_save off
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now wifi-powersave-off
+```
+
+Apply it to the running radio too, so you do not have to reboot:
+
+```bash
+sudo iw dev wlan0 set power_save off
+```
+
+Check it took:
+
+```bash
+iw dev wlan0 get power_save
+```
+
+You want `Power save: off`. Note `iw` lives in `/usr/sbin`, which is not on a
+normal user's `PATH` over ssh — use the full path or `sudo` if the command is
+not found.
+
+Do **not** restart NetworkManager to apply this. It drops the wi-fi, which cuts
+the ssh session you are running these commands over.
+
+---
+
+### 5. Install the emulator
 
 The hardware side of the maclock is now done. The [setup script](../setup.sh) installs **Basilisk II**; manual build steps are in the [Basilisk II guide](../emulators/BasiliskII.md) (or the [SheepShaver guide](../emulators/SheepShaver.md) for PowerPC).
 
 ---
 
 ## Known Issues
+
+**cloud-init owns the hostname, and `hostnamectl` alone will not stick.** Current Pi OS images ship cloud-init, whose `update_hostname` module runs on *every* boot and rewrites the name from its own config. Set the hostname by hand and it comes back as the old one after a reboot.
+
+Editing `hostname:` in `/boot/firmware/user-data` does not help either. cloud-init caches user-data per instance and does not re-read that file unless the instance ID changes, so it keeps applying the name it first saw. The fix is to tell it to stop managing the hostname:
+
+```bash
+printf 'preserve_hostname: true\n' \
+  | sudo tee /etc/cloud/cloud.cfg.d/99-preserve-hostname.cfg
+sudo hostnamectl set-hostname <your-name>
+```
+
+If `/etc/hosts` still shows the old name as an alias on the `127.0.1.1` line, that is cloud-init's `manage_etc_hosts`, which comes from the image's user-data and outranks anything in `cloud.cfg.d`. Comment the module out of the list in `/etc/cloud/cloud.cfg`:
+
+```
+# - update_etc_hosts
+```
+
+The setup script does all of this for you when you give it a hostname.
 
 **No hardware PWM for the backlight.** The Pi's PWM peripheral has two channels and the analogue audio output uses both of them, so the backlight cannot have one. Enabling a hardware PWM channel does work — the backlight dims perfectly — but it kills sound for the rest of the boot, and disabling it again does not bring sound back:
 

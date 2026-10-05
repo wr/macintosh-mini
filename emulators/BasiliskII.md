@@ -31,7 +31,7 @@ You can also do everything the script does by yourself by following these steps.
 sudo apt update
 sudo apt install -y \
   build-essential autoconf automake libtool pkg-config \
-  libsdl2-dev libgtk-3-dev libgl1-mesa-dev libxkbcommon-dev libmpfr-dev \
+  libsdl2-dev libgl1-mesa-dev libxkbcommon-dev libmpfr-dev \
   cage wlr-randr seatd alsa-utils \
   git
 ```
@@ -68,7 +68,7 @@ git clone https://github.com/kanjitalk755/macemu.git
 cd macemu/BasiliskII/src/Unix
 CFLAGS="-g -O3 -mcpu=cortex-a53 -mtune=cortex-a53" \
 CXXFLAGS="-g -O3 -mcpu=cortex-a53 -mtune=cortex-a53" \
-./autogen.sh --enable-sdl-video --enable-sdl-audio --disable-jit-compiler --enable-vosf
+./autogen.sh --enable-sdl-video --enable-sdl-audio --disable-jit-compiler --enable-vosf --with-gtk=no
 make -j"$(nproc)"
 sudo install -m755 BasiliskII /usr/local/bin/BasiliskII
 ```
@@ -171,7 +171,7 @@ sudo mkdir -p /etc/systemd/system/getty@tty1.service.d
 sudo tee /etc/systemd/system/getty@tty1.service.d/autologin.conf <<EOF
 [Service]
 ExecStart=
-ExecStart=-/sbin/agetty --autologin $USER --noclear --noissue --nohostname %I \$TERM
+ExecStart=-/sbin/agetty --autologin $USER --skip-login --noclear --noissue --nohostname %I \$TERM
 EOF
 sudo systemctl daemon-reload
 ```
@@ -191,7 +191,7 @@ EOF
 ### 8. Quiet boot (optional but recommended)
 
 ```bash
-sudo sed -i 's|$| quiet loglevel=0 vt.global_cursor_default=0 console=tty3 logo.nologo|' /boot/firmware/cmdline.txt
+sudo sed -i 's|$| quiet loglevel=0 vt.global_cursor_default=0 console=tty3 logo.nologo systemd.show_status=0|' /boot/firmware/cmdline.txt
 touch ~/.hushlogin
 ```
 
