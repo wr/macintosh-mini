@@ -585,7 +585,7 @@ NEW_HOSTNAME=${NEW_HOSTNAME// /-}
 # --- Total step count (for gauge) -----------------------------------------
 TOTAL_STEPS=3   # apt update, apt install, patch_cmdline
 [[ -n $NEW_HOSTNAME && $NEW_HOSTNAME != "$CUR_HOSTNAME" ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
-[[ $INSTALL_MACLOCK -eq 1 ]] && TOTAL_STEPS=$((TOTAL_STEPS+5))
+[[ $INSTALL_MACLOCK -eq 1 ]] && TOTAL_STEPS=$((TOTAL_STEPS+7))
 if [[ $INSTALL_SHEEPSHAVER -eq 1 ]]; then
   if [[ -x /usr/local/bin/SheepShaver ]]; then
     TOTAL_STEPS=$((TOTAL_STEPS+9))
@@ -795,6 +795,19 @@ QUIT
     sudo chmod 755 /usr/local/bin/sheepshaver-restart.sh /usr/local/bin/macintosh-quit.sh
   }
   run "[maclock] Installing reset-button wrappers" install_restart_wrapper
+
+  # Full-scale PWM audio (~3.3 Vpp) through the breakout amp's 2.6x gain asks
+  # for more swing than a 5 V amp can put across 8 ohms, and every chime peaks
+  # at 0 dBFS, so the loudest notes crackle. 4 dB of headroom keeps them clean;
+  # alsa-restore brings the stored level back on every boot.
+  set_audio_level() {
+    if ! amixer -q -c Headphones sset PCM -- -4dB; then
+      echo "No Headphones card yet; audio level left at its default"
+      return 0
+    fi
+    sudo alsactl store
+  }
+  run "[maclock] Setting audio level to -4 dB" set_audio_level
 fi
 
 # =========================================================================

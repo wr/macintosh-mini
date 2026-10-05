@@ -130,6 +130,13 @@ sudo reboot
 
 Once you reboot your Pi, the screen should start working.
 
+Then turn the Pi's audio output down 4 dB. At full scale the amp on the breakout runs out of swing and the loudest notes of the startup chime crackle:
+
+```bash
+amixer -c Headphones sset PCM -- -4dB
+sudo alsactl store
+```
+
 ---
 
 ### 2. Buttons and brightness dial
