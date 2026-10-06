@@ -36,7 +36,7 @@ The design is open source, so you can also order the bare board from [PCBWay](ht
 - The Macintosh Mini board, which connects the clock's dial, buttons, power switch, battery and speaker to the Pi, and carries the audio amplifier
 - A small speaker: 8 Ω, 1 W, 28–40 mm, with a 1.25 mm PicoBlade plug (often sold as "JST 1.25")
 - A 3D-printed screen bezel ([STL file](maclock-screen-bezel/))
-- A way to connect the board to the Pi: the GPIO interposer (recommended) or 7 female jumper wires
+- A way to connect the board to the Pi: the GPIO interposer (recommended), or 7 jumper wires with a female end on one side
 - A microSD card, 32 GB (16 GB also works)
 - Optional: a micro-USB to USB-A cable, to add a USB port on the back for a keyboard or mouse
 
@@ -49,6 +49,7 @@ The design is open source, so you can also order the bare board from [PCBWay](ht
 - A thin opening pick or metal pry tool (the kind used to open iPods)
 - A small screwdriver
 - Flush cutters, if you remove the touch pad's wires
+- A soldering iron, if you use wires instead of the interposer
 - A rotary tool such as a Dremel, if you add a USB port
 - A computer to flash the SD card and copy files to the Pi
 
@@ -83,7 +84,7 @@ The Macintosh Mini board talks to the Pi over five GPIO pins: the dial (two pins
   <img src="docs/drawings/interposer.svg" width="800" alt="Both sides of the GPIO interposer: on the screen side, the 2×20 header the display plugs onto and the 1×7 socket that carries the dial, buttons, audio, 5 V and ground to the board; on the Pi side, the 2×20 socket that plugs onto the Pi">
 </picture>
 
-**With jumper wires.** Bend, cut or desolder pins 13, 19, 23, 35 and 37 on the Pi so they don't reach the display, then wire the board's "Pi GPIO" header to the Pi:
+**With wires.** Cut or desolder pins 13, 19, 23, 35 and 37 on the Pi's header so they don't reach the display. Then solder a wire to the back of the Pi at each pin in the table below, and plug the female ends onto the board's "Pi GPIO" header:
 
 | Board pin | Pi pin | What it carries |
 | --- | --- | --- |
@@ -130,7 +131,7 @@ The fit should be snug, not tight. If the panel has to be forced in, sand the be
    scp ROM yourdisk.hda <user>@<pi_ip>:~/
    ```
 
-   Raw hard-disk images work: `.hda`, `.img`, `.dsk`, `.hfv`, `.vhd`, and Apple `.sparsebundle`. `.dmg`, `.image`, `.smi`, `.toast` and zipped or StuffIt files do not.
+   Disk images named `.hda`, `.dsk`, `.img`, `.hfv` or `.sparsebundle` work. `.dmg`, `.image`, `.smi`, `.toast` and zipped or StuffIt files do not.
 
 4. Connect to the Pi over SSH and run the installer:
 
@@ -142,9 +143,9 @@ The fit should be snug, not tight. If the panel has to be forced in, sand the be
 
 **Which emulator.** The installer offers two. **Basilisk II** (the default) emulates a 68k Mac running System 7.0 to 8.5 and is the fastest choice on a Pi Zero 2 W. **SheepShaver** emulates a PowerPC Mac running Mac OS 8.1 or later. It needs a 4 MB PowerPC ROM and is very slow on a Pi Zero, so choose it only for PowerPC-only software.
 
-**Updating.** Run the installer again at any time. It keeps your disk image and settings. To switch emulator, pick the other one; each keeps its own settings.
+**Updating.** Run the installer again at any time. It keeps your disk image and settings. To switch emulator, add `--sheepshaver` or `--basilisk` to the end of the command (`curl … | bash -s -- --sheepshaver`). Each emulator keeps its own settings and needs its own ROM.
 
-**Installing by hand.** The [manual install](maclock-build/README.md) walks through every step the installer runs.
+**Installing by hand.** The [manual install](maclock-build/README.md) walks through what the installer does, step by step.
 
 ## Using it
 

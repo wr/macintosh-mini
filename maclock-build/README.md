@@ -36,9 +36,10 @@ for o in waveshare-28dpi-3b-4b-notouch audremap-pin19; do
 done
 ```
 
-Add this to the end of `/boot/firmware/config.txt`:
+Add this to the end of `/boot/firmware/config.txt`. Keep the first and last lines: the installer looks for them, so a later update replaces this block instead of adding a second copy.
 
 ```ini
+# >>> macintosh-mini >>>
 # Display — custom overlay (no touch, no kernel backlight)
 dtoverlay=waveshare-28dpi-3b-4b-notouch
 dtoverlay=waveshare-28dpi-3b
@@ -60,6 +61,7 @@ dtoverlay=pwm-gpio,gpio=18
 initial_turbo=30
 boot_delay=0
 disable_splash=1
+# <<< macintosh-mini <<<
 ```
 
 Then reboot:
@@ -68,7 +70,7 @@ Then reboot:
 sudo reboot
 ```
 
-Once you reboot your Pi, the screen should start working.
+Once you reboot your Pi, the display is set up, but the backlight stays off until the dial service is running (step 3).
 
 ---
 
@@ -180,8 +182,9 @@ Turn it off in three places, so it holds whether NetworkManager is driving the l
 printf '[connection]\nwifi.powersave = 2\n' \
   | sudo tee /etc/NetworkManager/conf.d/99-wifi-powersave-off.conf
 
-# 2. the Wi-Fi profile you are already on
-sudo nmcli connection modify "<your-ssid>" 802-11-wireless.powersave 2
+# 2. every saved Wi-Fi profile (Raspberry Pi Imager names yours "preconfigured")
+nmcli -t -f UUID,TYPE connection show | awk -F: '$2 == "802-11-wireless" { print $1 }' |
+  while read -r uuid; do sudo nmcli connection modify "$uuid" 802-11-wireless.powersave 2; done
 
 # 3. a boot-time unit, for anything NetworkManager does not manage
 sudo tee /etc/systemd/system/wifi-powersave-off.service <<'UNIT'
@@ -259,9 +262,12 @@ Editing `hostname:` in `/boot/firmware/user-data` does not help either. cloud-in
 printf 'preserve_hostname: true\n' \
   | sudo tee /etc/cloud/cloud.cfg.d/99-preserve-hostname.cfg
 sudo hostnamectl set-hostname <your-name>
+sudo sed -i 's/^127\.0\.1\.1[[:space:]].*/127.0.1.1\t<your-name>/' /etc/hosts
 ```
 
-If `/etc/hosts` still shows the old name as an alias on the `127.0.1.1` line, that is cloud-init's `manage_etc_hosts`, which comes from the image's user-data and outranks anything in `cloud.cfg.d`. Comment the module out of the list in `/etc/cloud/cloud.cfg`:
+The last line puts the new name in `/etc/hosts` too. Without it, `sudo` can complain that it can't resolve the host.
+
+If the old name comes back in `/etc/hosts` after a reboot, that is cloud-init's `manage_etc_hosts`, which comes from the image's user-data and outranks anything in `cloud.cfg.d`. Comment the module out of the list in `/etc/cloud/cloud.cfg`:
 
 ```
 # - update_etc_hosts

@@ -124,14 +124,14 @@ EOF
 sudo chmod 755 /usr/local/bin/mac-session
 ```
 
-Then the launcher. This is the Basilisk II version; for SheepShaver, change the `EMU` line as the comment says and save it as `/usr/local/bin/sheepshaver.sh` instead.
+Then the launcher. Set `EMU` and `BIN` for your emulator on the first line; the rest is the same for both, and saves the launcher as `/usr/local/bin/basilisk.sh` or `sheepshaver.sh`.
 
 ```bash
-sudo tee /usr/local/bin/basilisk.sh >/dev/null <<'EOF'
-#!/bin/bash
+EMU=basilisk BIN=BasiliskII   # SheepShaver: EMU=sheepshaver BIN=SheepShaver
+
+{ printf '#!/bin/bash\nEMU=%s; BIN=%s\n' "$EMU" "$BIN"; cat <<'EOF'
 # Launches the emulator fullscreen via labwc on the current TTY.
 # Exit 0 (Mac Shut Down) or 143 (double press) -> Pi prompt; crash -> relaunch.
-EMU=basilisk; BIN=BasiliskII   # SheepShaver: EMU=sheepshaver; BIN=SheepShaver
 ulimit -c 0   # no core dumps when the reset button stops labwc mid-render
 clear 2>/dev/null
 printf '\033[?25l' 2>/dev/null
@@ -159,7 +159,8 @@ fi
 
 [ -f /usr/local/bin/crash.wav ] && aplay -q /usr/local/bin/crash.wav 2>/dev/null
 EOF
-sudo chmod 755 /usr/local/bin/basilisk.sh
+} | sudo tee /usr/local/bin/$EMU.sh >/dev/null
+sudo chmod 755 /usr/local/bin/$EMU.sh
 ```
 
 Install a startup chime and a crash sound. Any of the files in [`chimes/`](./chimes/) work:
@@ -177,7 +178,11 @@ printf '#!/bin/bash\nexec sudo systemctl restart getty@tty1\n' | sudo tee /usr/l
 sudo chmod 755 /usr/local/bin/macintosh
 ```
 
-The installer also does two things this guide skips. It installs an invisible cursor theme for labwc, so its pointer doesn't flash on screen before the emulator starts. And it checks for a ROM and disk image before every boot, explaining on screen if one is missing. Both are in [`setup.sh`](../setup.sh) (`write_labwc_kiosk` and `write_preflight`).
+The installer also does a few things this guide skips. All are in [`setup.sh`](../setup.sh):
+
+- It installs an invisible cursor theme for labwc, so its pointer doesn't flash on screen before the emulator starts (`write_labwc_kiosk`).
+- It checks for a ROM and disk image before every boot, and explains on screen if one is missing (`write_preflight`).
+- Its performance option, on by default, adds `fsck.mode=skip noswap` to `cmdline.txt` and masks services the Mac doesn't need, such as apt's daily timers and printing (`mask_services`).
 
 ## 5. Preferences
 
@@ -189,7 +194,7 @@ rom ROM
 screen win/640/480
 displaycolordepth 8
 ramsize 134217728
-modelid 5
+modelid 14
 cpu 4
 fpu true
 nogui true
@@ -204,7 +209,7 @@ ether slirp
 
 - `displaycolordepth` is the bit depth: `1` for black and white, `8` for 256 colors or grayscale, `16` for thousands of colors.
 - `ramsize 134217728` is 128 MB, what the installer uses with its performance option on. Without it, the installer uses 64 MB (`67108864`).
-- **`modelid` must match the Mac OS version you boot.** `5` is a Mac IIci, right for System 7.0 and 7.1. `14` is a Quadra, required for System 7.5 and later, including Mac OS 8, which don't support the IIci's 68030; pair it with a 1 MB ROM such as `064DC91D`. The wrong one gives a sad Mac at boot: change the value and try again.
+- **`modelid` must match the Mac OS version you boot.** `14` is a Quadra, required for System 7.5 and later, including Mac OS 8, which don't support the IIci's 68030; pair it with a 1 MB ROM such as `064DC91D`. `5` is a Mac IIci, right for System 7.0 and 7.1. The wrong one gives a sad Mac at boot: change the value and try again.
 
 **SheepShaver.** Save this as `~/.sheepshaver_prefs`:
 
@@ -242,17 +247,19 @@ EOF
 sudo systemctl daemon-reload
 ```
 
-Start the launcher when that login happens. For SheepShaver, use `sheepshaver.sh` and `sheepshaver-autostart` instead:
+Start the launcher when that login happens, with the same `EMU` and `BIN` as step 4:
 
 ```bash
-cat >> ~/.profile <<'EOF'
+EMU=basilisk BIN=BasiliskII   # SheepShaver: EMU=sheepshaver BIN=SheepShaver
 
-# >>> basilisk-autostart >>>
-# Auto-start BasiliskII on tty1 (after autologin)
-if [ "$(tty)" = "/dev/tty1" ] && [ -z "$WAYLAND_DISPLAY" ] && [ -z "$DISPLAY" ]; then
-    exec /usr/local/bin/basilisk.sh
+cat >> ~/.profile <<EOF
+
+# >>> $EMU-autostart >>>
+# Auto-start $BIN on tty1 (after autologin)
+if [ "\$(tty)" = "/dev/tty1" ] && [ -z "\$WAYLAND_DISPLAY" ] && [ -z "\$DISPLAY" ]; then
+    exec /usr/local/bin/$EMU.sh
 fi
-# <<< basilisk-autostart <<<
+# <<< $EMU-autostart <<<
 EOF
 ```
 
