@@ -72,6 +72,13 @@ sudo reboot
 
 Once you reboot your Pi, the display is set up, but the backlight stays off until the dial service is running (step 3).
 
+Then turn the Pi's audio output down 4 dB. At full scale the amp on the breakout runs out of swing and the loudest notes of the startup chime crackle:
+
+```bash
+amixer -c Headphones sset PCM -- -4dB
+sudo alsactl store
+```
+
 ---
 
 ## 2. Buttons and brightness dial
@@ -276,3 +283,9 @@ If the old name comes back in `/etc/hosts` after a reboot, that is cloud-init's 
 The setup script does all of this for you when you give it a hostname.
 
 **Audio buzz at low brightness.** The onboard analogue audio is PWM on a digital pin next to the display's, so it picks up interference. Nothing on the software side fixes it — a USB DAC does.
+
+**Audio burbles on battery.** On rev 2026.10 boards, running from the internal 18650 puts a constant burble in the speaker. It gets louder as the brightness goes up, and changes when the charge cable is plugged in.
+
+The Maclock's charging board does not boost the cell to 5 V. Its output is the cell itself: about 4.15 V with no load and about 4.00 V with the Pi running, and the same with the charge cable plugged in. The Pi runs from that and makes its own 3.3 V from it with far less margin than it has on 5 V. The PWM audio pin switches between that 3.3 V and ground, so noise on the Pi's 3.3 V rides straight into the amp. Holding GPIO 19 low with the emulator still running (`pinctrl set 19 op dl`; `pinctrl set 19 a5` restores it) drops the burble to the noise floor, so the amp's own supply and ground are clean. The Pi does not flag the low supply either: `vcgencmd get_throttled` reported `0x0` while it ran at 4.00 V.
+
+The next board revision rebuilds the audio signal on the board from its own low-noise 3.0 V regulator, which takes the Pi's supply out of the path. It hasn't been built and tested yet. Until then, turn the brightness down.

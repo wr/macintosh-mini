@@ -37,7 +37,7 @@ set -euo pipefail
 
 REPO_BRANCH="main"   # --branch: test an unmerged branch on a real Pi
 REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/$REPO_BRANCH"
-VERSION="1.6.0"
+VERSION="1.6.1"
 
 # SheepShaver paths (DISK_IMAGE is auto-discovered or set via --disk)
 DISK_IMAGE=""
@@ -849,7 +849,7 @@ TOTAL_STEPS=4   # apt update, apt install, patch_cmdline, record_install
 [[ $WIFI_POWERSAVE -eq 0 ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
 [[ -n $NEW_HOSTNAME && $NEW_HOSTNAME != "$CUR_HOSTNAME" ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
 [[ -n $TIMEZONE ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
-[[ $INSTALL_MACLOCK -eq 1 ]] && TOTAL_STEPS=$((TOTAL_STEPS+6))
+[[ $INSTALL_MACLOCK -eq 1 ]] && TOTAL_STEPS=$((TOTAL_STEPS+7))
 if [[ $INSTALL_SHEEPSHAVER -eq 1 ]]; then
   if needs_build /usr/local/bin/SheepShaver; then
     TOTAL_STEPS=$((TOTAL_STEPS+12))
@@ -1281,6 +1281,20 @@ QUIT
     sudo chmod 755 /usr/local/bin/sheepshaver-restart.sh /usr/local/bin/macintosh-quit.sh
   }
   run "[maclock] Installing reset-button wrappers" install_restart_wrapper
+
+  # Full-scale PWM audio (~3.3 Vpp) through the breakout amp's 2.6x gain asks
+  # for more swing than the amp can put across 8 ohms from the clock's ~4 V
+  # battery supply, and every chime peaks at 0 dBFS, so the loudest notes
+  # crackle. 4 dB of headroom keeps them clean; alsa-restore brings the stored
+  # level back on every boot.
+  set_audio_level() {
+    if ! amixer -q -c Headphones sset PCM -- -4dB; then
+      echo "No Headphones card yet; audio level left at its default"
+      return 0
+    fi
+    sudo alsactl store
+  }
+  run "[maclock] Setting audio level to -4 dB" set_audio_level
 fi
 
 # =========================================================================

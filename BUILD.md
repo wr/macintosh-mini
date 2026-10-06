@@ -81,7 +81,7 @@ The Macintosh Mini board talks to the Pi over five GPIO pins: the dial (two pins
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/drawings/interposer-dark.svg">
-  <img src="docs/drawings/interposer.svg" width="800" alt="Both sides of the GPIO interposer: on the screen side, the 2×20 header the display plugs onto and the 1×7 socket that carries the dial, buttons, audio, 5 V and ground to the board; on the Pi side, the 2×20 socket that plugs onto the Pi">
+  <img src="docs/drawings/interposer.svg" width="800" alt="Both sides of the GPIO interposer: on the screen side, the 2×20 header the display plugs onto and the 1×7 socket that carries the dial, buttons, audio, power and ground to the board; on the Pi side, the 2×20 socket that plugs onto the Pi">
 </picture>
 
 **With wires.** Cut or desolder pins 13, 19, 23, 35 and 37 on the Pi's header so they don't reach the display. Then solder a wire to the back of the Pi at each pin in the table below, and plug the female ends onto the board's "Pi GPIO" header:
@@ -100,11 +100,11 @@ The Macintosh Mini board talks to the Pi over five GPIO pins: the dial (two pins
 
 The Macintosh Mini board is a drop-in replacement for the clock board: it fits where the old board was, and the same screws hold it in. It has three small connectors, labelled on the board:
 
-- **Power:** the clock's 4-wire plug. The board takes 5 V and ground from it and passes them to the Pi.
+- **Power:** the clock's 4-wire plug. The board takes the battery's power and ground from it and passes them to the Pi.
 - **Switch:** the clock's 2-wire power-switch plug.
 - **Speaker:** the speaker's 2-wire plug. Either way round works.
 
-The board has no voltage regulator: the Pi runs straight from the clock's 5 V supply.
+Nothing on the board regulates the Pi's power: the Pi runs straight from the clock's battery, at about 4 V rather than the 5 V a Pi is rated for, even with the charge cable plugged in. The Pi runs on that, but see [Known issues](maclock-build/README.md#known-issues) for what it does to the audio.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/drawings/board-dark.svg">
@@ -167,6 +167,8 @@ The fit should be snug, not tight. If the panel has to be forced in, sand the be
 **The Pi drops off Wi-Fi or SSH is slow to answer.** The Pi Zero's Wi-Fi power saving is on. The installer turns it off; if you set the Pi up by hand, see [Keep the Wi-Fi awake](maclock-build/README.md#4-keep-the-wi-fi-awake).
 
 **The speaker buzzes at low brightness.** The Pi's analogue audio picks up noise from the display's backlight signal. A USB audio adapter removes it.
+
+**The speaker burbles on battery.** On rev 2026.10 boards, noise from the Pi's supply reaches the audio. The clock's charging board puts out about 4 V, not 5 V, even with the charge cable plugged in. Turn the brightness down. The next board revision is designed to remove it; see [Known issues](maclock-build/README.md#known-issues).
 
 **The hostname changes back after a restart.** Raspberry Pi OS resets it on every boot. Give the installer a hostname and it fixes this, or see [Known issues](maclock-build/README.md#known-issues).
 
