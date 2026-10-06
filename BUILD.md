@@ -77,7 +77,7 @@ Take out the clock's screen, but leave its clear plastic lens in the front shell
 
 The Macintosh Mini board talks to the Pi over five GPIO pins: the dial (two pins), the two buttons and the audio. The Waveshare display plugs onto the Pi's 40-pin header and uses some of the same pins, and when it does, the buttons and dial behave erratically. There are two ways around this.
 
-**With the GPIO interposer (recommended).** Press the interposer onto the Pi's header, then press the display onto the interposer. The interposer keeps the five pins away from the display and brings them out on one 7-pin socket on the screen side, in the same order as the board's header, so a single straight 7-wire cable joins the two. Nothing on the Pi is cut or bent. It adds about 12.5 mm between the Pi and the display.
+**With the GPIO interposer (recommended).** Press the interposer onto the Pi's header, then press the display onto the interposer. The interposer keeps the five pins away from the display and brings them out on one 7-pin socket on the screen side, in the same order as the board's header, so a single straight 7-wire cable joins the two. Nothing on the Pi is cut, bent or soldered. It adds about 12.5 mm between the Pi and the display.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/drawings/interposer-dark.svg">
