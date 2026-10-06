@@ -47,7 +47,7 @@ You can [buy a DIY kit or a finished build](https://shop.wells.ee/products/macin
    scp ROM yourdisk.hda <user>@<pi_ip>:~/
    ```
 
-3. The install script is automatic, and guides you through customizations like choosing a boot chime. SSH into the Pi and run:
+3. SSH into the Pi and run the install script. It asks a few questions, like which startup chime to play, then does the rest:
 
    ```bash
    curl -fsSL https://raw.githubusercontent.com/wr/macintosh-mini/main/setup.sh | bash
