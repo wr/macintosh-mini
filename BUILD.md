@@ -77,11 +77,11 @@ Take out the clock's screen, but leave its clear plastic lens in the front shell
 
 The Macintosh Mini board talks to the Pi over five GPIO pins: the dial (two pins), the two buttons and the audio. The Waveshare display plugs onto the Pi's 40-pin header and uses some of the same pins, and when it does, the buttons and dial behave erratically. There are two ways around this.
 
-**With the GPIO interposer (recommended).** Press the interposer onto the Pi's header, then press the display onto the interposer. The interposer keeps the five pins away from the display and brings them out on one 7-pin socket on the screen side, in the same order as the board's header, so a single straight 7-wire cable joins the two. Nothing on the Pi is cut, bent or soldered. It adds about 12.5 mm between the Pi and the display.
+**With the GPIO interposer (recommended).** Press the interposer onto the Pi's header, then press the display onto the interposer. The interposer keeps the five pins away from the display and brings them out on a 7-pin female socket on the screen side, in the same order as the board's header, and that socket plugs straight onto the board's header: no cable. Nothing on the Pi is cut, bent or soldered. It adds about 12.5 mm between the Pi and the display.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/drawings/interposer-dark.svg">
-  <img src="docs/drawings/interposer.svg" width="800" alt="Both sides of the GPIO interposer: on the screen side, the 2×20 header the display plugs onto and the 1×7 socket that carries the dial, buttons, audio, power and ground to the board; on the Pi side, the 2×20 socket that plugs onto the Pi">
+  <img src="docs/drawings/interposer.svg" width="800" alt="Both sides of the GPIO interposer: on the screen side, the 2×20 header the display plugs onto and the 1×7 female socket that plugs straight onto the board's header, carrying the dial, buttons, audio, power and ground; on the Pi side, the 2×20 socket that plugs onto the Pi">
 </picture>
 
 **With wires.** Cut or desolder pins 13, 19, 23, 35 and 37 on the Pi's header so they don't reach the display. Then solder a wire to the back of the Pi at each pin in the table below, and plug the female ends onto the board's "Pi GPIO" header:
@@ -108,7 +108,7 @@ Nothing on the board regulates the Pi's power: the Pi runs straight from the clo
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/drawings/board-dark.svg">
-  <img src="docs/drawings/board.svg" width="800" alt="The back of the Macintosh Mini board: the 1×7 Pi GPIO header, the audio amplifier, the speaker, power and switch connectors, and along the front edge the brightness dial and the two buttons">
+  <img src="docs/drawings/board.svg" width="800" alt="The back of the Macintosh Mini board: the 1×7 Pi GPIO header with the GPIO interposer’s socket plugged onto it, the audio amplifier, the speaker, power and switch connectors, and along the front edge the brightness dial and the two buttons">
 </picture>
 
 ## 4. Fit the screen
