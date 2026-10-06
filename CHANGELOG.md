@@ -3,6 +3,9 @@
 Notable changes to the macintosh-mini installer (`setup.sh`). Re-running on an
 existing Pi shows the entries added since the installed version.
 
+## [1.6.1] - 2026-10-05
+- Turns the Pi's audio output down 4 dB, so the loudest notes of the startup chime no longer crackle through the board's amp.
+
 ## [1.6.0] - 2026-10-05
 - Finds disk images named `.img`, `.hfv` or `.sparsebundle`, as well as `.hda` and `.dsk`, for either emulator.
 
@@ -34,6 +37,7 @@ existing Pi shows the entries added since the installed version.
 ## [1.0.0] - 2026-05-28
 - First versioned installer; BasiliskII (68k) added as the default core (#8, #9, #10).
 
+[1.6.1]: https://github.com/wr/macintosh-mini/compare/v1.6.0...v1.6.1
 [1.6.0]: https://github.com/wr/macintosh-mini/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/wr/macintosh-mini/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/wr/macintosh-mini/compare/v1.3.0...v1.4.0
