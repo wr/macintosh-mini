@@ -1,6 +1,12 @@
 # Turn a Maclock into a working Mac
 
-The Maclock is a novelty alarm clock shaped like the 1984 Macintosh, sold on AliExpress and Amazon for about $20. Its shell is accurate enough that it can hold a real computer. This guide replaces its insides with a Raspberry Pi Zero 2 W and a 2.8-inch screen, so the clock boots classic Mac OS, plays the startup chime and runs vintage software. The front dial sets the screen brightness, the two buttons restart and shut down, and Wi-Fi, Bluetooth, USB and the internal battery all work.
+<!-- github-only -->
+<p align="center">
+  <img width="360" alt="The finished Macintosh Mini, with a banana for scale" src="docs/macintosh-mini-banana.webp" />
+</p>
+<!-- /github-only -->
+
+The Maclock is a novelty alarm clock shaped like the 1984 Macintosh, sold online for about $20. Its shell is accurate enough that it can hold a real computer. This guide replaces its insides with a Raspberry Pi Zero 2 W and a 2.8-inch screen, so the clock boots classic Mac OS, plays the startup chime and runs vintage software. The front dial sets the screen brightness, the two buttons restart and shut down, and Wi-Fi, Bluetooth, USB and the internal battery all work.
 
 The full build is also on video: [Turning a $20 AliExpress clock into a real vintage Macintosh](https://www.youtube.com/watch?v=zAbAf5-H5Yo) (21 minutes).
 
@@ -11,7 +17,7 @@ The full build is also on video: [Turning a $20 AliExpress clock into a real vin
 <!-- shop:builds -->
 
 <!-- github-only -->
-Kits and a finished Mac are at the [Wells Workshop shop](https://shop.wells.ee/products/macintosh-mini/?ref=gh-macintosh-mini):
+Kits and a finished Mac are available from [Wells Workshop](https://shop.wells.ee/products/macintosh-mini/?ref=gh-macintosh-mini):
 
 - [**Fully assembled**](https://shop.wells.ee/products/macintosh-mini/?ref=gh-macintosh-mini): nothing to build. Copy over your ROM and disk image.
 - [**DIY kit, pre-soldered**](https://shop.wells.ee/products/macintosh-mini/diy-kit-soldered/?ref=gh-macintosh-mini): wire it up, flash the card, close the case. No soldering.
@@ -30,15 +36,20 @@ The design is open source, so you can also order the bare board from [PCBWay](ht
 - The Macintosh Mini board, which connects the clock's dial, buttons, power switch, battery and speaker to the Pi, and carries the audio amplifier
 - A small speaker: 8 Ω, 1 W, 28–40 mm, with a 1.25 mm PicoBlade plug (often sold as "JST 1.25")
 - A 3D-printed screen bezel ([STL file](maclock-screen-bezel/))
-- A way to connect the board to the Pi: the GPIO interposer (recommended) or 7 female jumper wires
+- A way to connect the board to the Pi: the GPIO interposer (recommended), or 7 jumper wires with a female end on one side
 - A microSD card, 32 GB (16 GB also works)
 - Optional: a micro-USB to USB-A cable, to add a USB port on the back for a keyboard or mouse
+
+<!-- github-only -->
+**Where to buy:** [Maclock](https://amzn.to/4e7FKrw) · [Raspberry Pi Zero 2 W](https://amzn.to/4ac7FVR) · [Waveshare 2.8-inch LCD](https://amzn.to/4ue5GaP) · [speaker](https://www.adafruit.com/product/3923) · [Macintosh Mini board](https://www.pcbway.com/project/shareproject/W654223ASS41_Untitled_kicad_pcb_95cca7e3.html) from PCBWay ([$5 off with my referral code](https://pcbway.com/g/AsfKU9)) · [micro-USB to USB-A cable](https://www.aliexpress.us/item/3256807845070147.html?gatewayAdapt=glo2usa#nav-specification) (choose `Color: OTGV8DO-AFH`) · the GPIO interposer, from [Wells Workshop](https://shop.wells.ee/products/macintosh-mini/?ref=gh-macintosh-mini)
+<!-- /github-only -->
 
 **Tools**
 
 - A thin opening pick or metal pry tool (the kind used to open iPods)
 - A small screwdriver
 - Flush cutters, if you remove the touch pad's wires
+- A soldering iron, if you use wires instead of the interposer
 - A rotary tool such as a Dremel, if you add a USB port
 - A computer to flash the SD card and copy files to the Pi
 
@@ -66,14 +77,14 @@ Take out the clock's screen, but leave its clear plastic lens in the front shell
 
 The Macintosh Mini board talks to the Pi over five GPIO pins: the dial (two pins), the two buttons and the audio. The Waveshare display plugs onto the Pi's 40-pin header and uses some of the same pins, and when it does, the buttons and dial behave erratically. There are two ways around this.
 
-**With the GPIO interposer (recommended).** Press the interposer onto the Pi's header, then press the display onto the interposer. The interposer keeps the five pins away from the display and brings them out on one 7-pin socket on the screen side, in the same order as the board's header, so a single straight 7-wire cable joins the two. Nothing on the Pi is cut or bent. It adds about 12.5 mm between the Pi and the display.
+**With the GPIO interposer (recommended).** Press the interposer onto the Pi's header, then press the display onto the interposer. The interposer keeps the five pins away from the display and brings them out on one 7-pin socket on the screen side, in the same order as the board's header, so a single straight 7-wire cable joins the two. Nothing on the Pi is cut, bent or soldered. It adds about 12.5 mm between the Pi and the display.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/drawings/interposer-dark.svg">
   <img src="docs/drawings/interposer.svg" width="800" alt="Both sides of the GPIO interposer: on the screen side, the 2×20 header the display plugs onto and the 1×7 socket that carries the dial, buttons, audio, 5 V and ground to the board; on the Pi side, the 2×20 socket that plugs onto the Pi">
 </picture>
 
-**With jumper wires.** Bend, cut or desolder pins 13, 19, 23, 35 and 37 on the Pi so they don't reach the display, then wire the board's "Pi GPIO" header to the Pi:
+**With wires.** Cut or desolder pins 13, 19, 23, 35 and 37 on the Pi's header so they don't reach the display. Then solder a wire to the back of the Pi at each pin in the table below, and plug the female ends onto the board's "Pi GPIO" header:
 
 | Board pin | Pi pin | What it carries |
 | --- | --- | --- |
@@ -120,7 +131,7 @@ The fit should be snug, not tight. If the panel has to be forced in, sand the be
    scp ROM yourdisk.hda <user>@<pi_ip>:~/
    ```
 
-   Raw hard-disk images work: `.hda`, `.img`, `.dsk`, `.hfv`, `.vhd`, and Apple `.sparsebundle`. `.dmg`, `.image`, `.smi`, `.toast` and zipped or StuffIt files do not.
+   Disk images named `.hda`, `.dsk`, `.img`, `.hfv` or `.sparsebundle` work. `.dmg`, `.image`, `.smi`, `.toast` and zipped or StuffIt files do not.
 
 4. Connect to the Pi over SSH and run the installer:
 
@@ -132,7 +143,9 @@ The fit should be snug, not tight. If the panel has to be forced in, sand the be
 
 **Which emulator.** The installer offers two. **Basilisk II** (the default) emulates a 68k Mac running System 7.0 to 8.5 and is the fastest choice on a Pi Zero 2 W. **SheepShaver** emulates a PowerPC Mac running Mac OS 8.1 or later. It needs a 4 MB PowerPC ROM and is very slow on a Pi Zero, so choose it only for PowerPC-only software.
 
-**Updating.** Run the installer again at any time. It keeps your disk image and settings, and it switches emulator if you pick the other one.
+**Updating.** Run the installer again at any time. It keeps your disk image and settings. To switch emulator, add `--sheepshaver` or `--basilisk` to the end of the command (`curl … | bash -s -- --sheepshaver`). Each emulator keeps its own settings and needs its own ROM.
+
+**Installing by hand.** The [manual install](maclock-build/README.md) walks through what the installer does, step by step.
 
 ## Using it
 

@@ -1,6 +1,6 @@
 # Mac sounds
 
-Classic Macintosh startup chimes and matching system-error ("crash") sounds. The setup script picks a startup chime, installs it as `/usr/local/bin/chime.wav` (played at boot), and installs the era-matched crash sound as `/usr/local/bin/crash.wav` (played when the user hits the reset button).
+Classic Macintosh startup chimes and matching system-error ("crash") sounds. The setup script picks a startup chime, installs it as `/usr/local/bin/chime.wav` (played at boot), and installs the era-matched crash sound as `/usr/local/bin/crash.wav` (played when you restart the Mac with the left button, or when the emulator crashes).
 
 ## Startup chimes
 

@@ -4,7 +4,7 @@
 
 KiCad 10 project for the breakout that connects the Mac-shaped clock's front-panel parts (rotary encoder, two pushbuttons, PAM8302 audio amp, speaker) to the Pi Zero 2 W's GPIO header.
 
-Build guide with pin assignments lives in the [maclock guide](../maclock-build/README.md#1-wiring). For the case-side parts you'll print, see the [3D-printed screen bezel](../maclock-screen-bezel/).
+Wiring it to the Pi, with pin assignments, is [step 2 of the build guide](../BUILD.md#2-connect-the-pi-to-the-screen-and-the-board). For the case-side parts you'll print, see the [3D-printed screen bezel](../maclock-screen-bezel/).
 
 Order from [PCBway](https://www.pcbway.com/project/shareproject/W654223ASS41_Untitled_kicad_pcb_95cca7e3.html). You can [use my referral code](https://pcbway.com/g/AsfKU9) to get $5 off your order, if you want.
 

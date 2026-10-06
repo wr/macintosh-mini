@@ -4,8 +4,9 @@
 # Run on the Pi (or `curl … | bash`). Idempotent. Reboots at the end.
 #
 # Place a ROM and a disk image in $HOME before running:
-#   BasiliskII  (68k, Mac OS 7):     512 KB or 1 MB 68k ROM + *.hda/*.dsk
-#   SheepShaver (PowerPC, OS 8.1+):  4 MB PPC ROM + *.hda
+#   BasiliskII  (68k, Mac OS 7):     512 KB or 1 MB 68k ROM
+#   SheepShaver (PowerPC, OS 8.1+):  4 MB PPC ROM
+# and a disk image: *.hda, *.dsk, *.img, *.hfv or *.sparsebundle
 #
 # Flags (skip prompts):
 #   --all | --all-basilisk | --maclock | --sheepshaver | --basilisk
@@ -36,7 +37,7 @@ set -euo pipefail
 
 REPO_BRANCH="main"   # --branch: test an unmerged branch on a real Pi
 REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/$REPO_BRANCH"
-VERSION="1.5.0"
+VERSION="1.6.0"
 
 # SheepShaver paths (DISK_IMAGE is auto-discovered or set via --disk)
 DISK_IMAGE=""
@@ -229,6 +230,16 @@ wt_input() {
 }
 
 # --- Asset sanity check ----------------------------------------------------
+# Disk images either emulator opens: a raw image under any of these names, or
+# an Apple .sparsebundle (a directory). Not .vhd: the emulators read it only
+# when built with libvhd, which these builds aren't. Sets DISKS.
+DISK_TYPES=".hda, .dsk, .img, .hfv or .sparsebundle"
+find_disks() {
+  shopt -s nullglob
+  DISKS=("$HOME"/*.{hda,dsk,img,hfv,sparsebundle})
+  shopt -u nullglob
+}
+
 # Verify ROM and at least one disk image exist in $HOME. Idempotent —
 # safe to call multiple times.
 check_sheepshaver_assets() {
@@ -239,12 +250,10 @@ check_sheepshaver_assets() {
     die "ROM is $rom_size bytes (a 68k ROM) — SheepShaver needs the 4 MB PowerPC ROM"
   fi
   if [[ -n $DISK_IMAGE ]]; then
-    [[ -f "$HOME/$DISK_IMAGE" ]] || die "Missing $HOME/$DISK_IMAGE (passed via --disk)"
+    [[ -e "$HOME/$DISK_IMAGE" ]] || die "Missing $HOME/$DISK_IMAGE (passed via --disk)"
   else
-    shopt -s nullglob
-    local hdas=("$HOME"/*.hda)
-    shopt -u nullglob
-    [[ ${#hdas[@]} -gt 0 ]] || die "No .hda disk image found in $HOME — copy one over before running"
+    find_disks
+    [[ ${#DISKS[@]} -gt 0 ]] || die "No disk image ($DISK_TYPES) found in $HOME — copy one over before running"
   fi
 }
 
@@ -259,12 +268,10 @@ check_basilisk_assets() {
     die "ROM is $rom_size bytes — BasiliskII needs a 512 KB or 1 MB 68k ROM, not the 4 MB PowerPC ROM"
   fi
   if [[ -n $DISK_IMAGE ]]; then
-    [[ -f "$HOME/$DISK_IMAGE" ]] || die "Missing $HOME/$DISK_IMAGE (passed via --disk)"
+    [[ -e "$HOME/$DISK_IMAGE" ]] || die "Missing $HOME/$DISK_IMAGE (passed via --disk)"
   else
-    shopt -s nullglob
-    local disks=("$HOME"/*.hda "$HOME"/*.dsk)
-    shopt -u nullglob
-    [[ ${#disks[@]} -gt 0 ]] || die "No .hda or .dsk disk image found in $HOME — copy one over before running"
+    find_disks
+    [[ ${#DISKS[@]} -gt 0 ]] || die "No disk image ($DISK_TYPES) found in $HOME — copy one over before running"
   fi
 }
 
@@ -292,13 +299,10 @@ esac
 get() { sed -n "s/^$1 //p" "$prefs" 2>/dev/null | head -1; }
 abs() { case $1 in /*) printf '%s' "$1" ;; ?*) printf '%s/%s' "$HOME" "$1" ;; esac; }
 rom=$(abs "$(get rom)"); disk=$(abs "$(get disk)")
-[ -f "$rom" ] && [ -f "$disk" ] && exit 0
+[ -f "$rom" ] && [ -e "$disk" ] && exit 0
 roms=(); for f in "$HOME"/*; do [ -f "$f" ] && for s in $sizes; do [ "$(stat -c%s "$f")" = "$s" ] && roms+=("$f"); done; done
 shopt -s nullglob
-case $1 in
-  basilisk)    disks=( "$HOME"/*.hda "$HOME"/*.dsk "$HOME"/*.img ) ;;
-  sheepshaver) disks=( "$HOME"/*.hda "$HOME"/*.img ) ;;
-esac
+disks=( "$HOME"/*.{hda,dsk,img,hfv,sparsebundle} )
 shopt -u nullglob
 set_pref() { grep -q "^$1 " "$prefs" 2>/dev/null && sed -i "s#^$1 .*#$1 $2#" "$prefs" || printf '%s %s\n' "$1" "$2" >> "$prefs"; }
 if [ ${#roms[@]} -eq 1 ] && [ ${#disks[@]} -eq 1 ]; then
@@ -309,7 +313,7 @@ echo
 echo "  The Macintosh can't start yet."
 [ ${#roms[@]} -eq 0 ]  && echo "  - No ROM found in $HOME."
 [ ${#roms[@]} -gt 1 ]  && echo "  - ${#roms[@]} ROMs in $HOME - set one in $prefs (rom <file>)."
-[ ${#disks[@]} -eq 0 ] && echo "  - No disk image found in $HOME (.hda/.dsk/.img)."
+[ ${#disks[@]} -eq 0 ] && echo "  - No disk image found in $HOME (.hda/.dsk/.img/.hfv/.sparsebundle)."
 [ ${#disks[@]} -gt 1 ] && echo "  - ${#disks[@]} disk images in $HOME - set one in $prefs (disk <file>)."
 echo
 echo "  Fix that, then run:  macintosh"
@@ -488,24 +492,19 @@ NEED_PREFS=0
 [[ $INSTALL_BASILISK    -eq 1 && ! -f $HOME/.basilisk_ii_prefs ]] && NEED_PREFS=1
 [[ $INSTALL_SHEEPSHAVER -eq 1 && ! -f $HOME/.sheepshaver_prefs ]] && NEED_PREFS=1
 
-# Disk image — auto-discover in $HOME, prompt if multiple, use as-is.
-# SheepShaver reads *.hda; BasiliskII also reads *.dsk.
+# Disk image — auto-discover in $HOME (see find_disks), prompt if multiple,
+# use as-is.
 if [[ ($INSTALL_SHEEPSHAVER -eq 1 || $INSTALL_BASILISK -eq 1) && -z $DISK_IMAGE && $NEED_PREFS -eq 1 ]]; then
-  shopt -s nullglob
-  if [[ $INSTALL_BASILISK -eq 1 ]]; then
-    HDA_PATHS=("$HOME"/*.hda "$HOME"/*.dsk)
-  else
-    HDA_PATHS=("$HOME"/*.hda)
-  fi
-  shopt -u nullglob
+  find_disks
+  HDA_PATHS=("${DISKS[@]}")
   if [[ ${#HDA_PATHS[@]} -eq 0 ]]; then
-    die "No disk image found in $HOME — copy one over before running"
+    die "No disk image ($DISK_TYPES) found in $HOME — copy one over before running"
   elif [[ ${#HDA_PATHS[@]} -eq 1 ]]; then
     DISK_IMAGE=$(basename "${HDA_PATHS[0]}")
   else
     WT_ARGS=()
     for p in "${HDA_PATHS[@]}"; do
-      WT_ARGS+=("$(basename "$p")" "$(du -h "$p" | cut -f1)")
+      WT_ARGS+=("$(basename "$p")" "$(du -sh "$p" | cut -f1)")
     done
     DISK_IMAGE=$(wt_menu "Disk image" "Multiple disk images in \$HOME — pick one:" \
       "$(basename "${HDA_PATHS[0]}")" "${#HDA_PATHS[@]}" "${WT_ARGS[@]}") \
@@ -594,14 +593,13 @@ pref_set() {
 
 reconf_disk() {   # $1=prefs  $2=is_basilisk
   local img p; local args=() paths=()
-  shopt -s nullglob
-  if [[ $2 -eq 1 ]]; then paths=("$HOME"/*.hda "$HOME"/*.dsk); else paths=("$HOME"/*.hda); fi
-  shopt -u nullglob
+  find_disks
+  paths=("${DISKS[@]}")
   if [[ ${#paths[@]} -eq 0 ]]; then
     whiptail --backtitle "macintosh-mini" --msgbox "No disk image in $HOME — copy one over first." 8 64 </dev/tty
     return 0
   fi
-  for p in "${paths[@]}"; do args+=("$(basename "$p")" "$(du -h "$p" | cut -f1)"); done
+  for p in "${paths[@]}"; do args+=("$(basename "$p")" "$(du -sh "$p" | cut -f1)"); done
   img=$(wt_menu "Disk image" "Pick the disk to boot:" "$(basename "${paths[0]}")" "${#paths[@]}" "${args[@]}") || return 0
   if [[ $2 -eq 1 ]]; then pref_set "$1" disk "$HOME/$img"; else pref_set "$1" disk "$img"; fi
 }
