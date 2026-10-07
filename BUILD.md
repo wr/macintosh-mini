@@ -41,7 +41,7 @@ The design is open source, so you can also order the bare board from [PCBWay](ht
 - Optional: a micro-USB to USB-A cable, to add a USB port on the back for a keyboard or mouse
 
 <!-- github-only -->
-**Where to buy:** [Maclock](https://amzn.to/4e7FKrw) · [Raspberry Pi Zero 2 W](https://amzn.to/4ac7FVR) · [Waveshare 2.8-inch LCD](https://amzn.to/4ue5GaP) · [Macintosh Mini board](https://www.pcbway.com/project/shareproject/W654223ASS41_Untitled_kicad_pcb_95cca7e3.html) from PCBWay ([$5 off with my referral code](https://pcbway.com/g/AsfKU9)) · [micro-USB to USB-A cable](https://www.aliexpress.us/item/3256807845070147.html?gatewayAdapt=glo2usa#nav-specification) (choose `Color: OTGV8DO-AFH`) · the GPIO interposer, from [Wells Workshop](https://shop.wells.ee/products/macintosh-mini/?ref=gh-macintosh-mini)
+**Where to buy:** [Maclock](https://amzn.to/4e7FKrw) · [Raspberry Pi Zero 2 W](https://amzn.to/4ac7FVR) · [Waveshare 2.8-inch LCD](https://amzn.to/4ue5GaP) · [Macintosh Mini board](https://www.pcbway.com/project/shareproject/W654223ASS41_Untitled_kicad_pcb_95cca7e3.html) from PCBWay ([$5 off with my referral code](https://pcbway.com/g/AsfKU9)) · [micro-USB to USB-A cable](https://www.aliexpress.us/item/3256807845070147.html?gatewayAdapt=glo2usa#nav-specification) (choose `Color: OTGV8DO-AFH`) · the speaker and the GPIO interposer, from [Wells Workshop](https://shop.wells.ee/products/macintosh-mini/?ref=gh-macintosh-mini)
 <!-- /github-only -->
 
 **Tools**
@@ -103,6 +103,8 @@ The Macintosh Mini board is a drop-in replacement for the clock board: it fits w
 - **Power:** the clock's 4-wire plug. The board takes the battery's power and ground from it and passes them to the Pi.
 - **Switch:** the clock's 2-wire power-switch plug.
 - **Speaker:** the speaker's 2-wire plug. Either way round works.
+
+The clock's power and switch plugs are 1.25 mm, and the board's Power and Switch sockets are 1.0 mm, so boards from Wells Workshop come with two short adapter cables to go between them. A board you order yourself from PCBWay is the earlier rev 2026.05, which has solder pads instead of sockets.
 
 Nothing on the board regulates the Pi's power: the Pi runs straight from the clock's battery, at about 4 V rather than the 5 V a Pi is rated for, even with the charge cable plugged in. The Pi runs on that, but see [Known issues](maclock-build/README.md#known-issues) for what it does to the audio.
 
