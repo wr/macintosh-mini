@@ -34,14 +34,14 @@ The design is open source, so you can also order the bare board from [PCBWay](ht
 - A Raspberry Pi Zero 2 W (or a Pi 3 Model A+)
 - A Waveshare 2.8-inch IPS LCD (the DPI version)
 - The Macintosh Mini board, which connects the clock's dial, buttons, power switch, battery and speaker to the Pi, and carries the audio amplifier
-- A small speaker: 8 Ω, 1 W, 28–40 mm, with a 1.25 mm PicoBlade plug (often sold as "JST 1.25")
+- A small speaker: 8 Ω, 1 W, 28–40 mm, with a JST PH 2.0 mm plug
 - A 3D-printed screen bezel ([STL file](maclock-screen-bezel/))
 - A way to connect the board to the Pi: the GPIO interposer (recommended), or 7 jumper wires with a female end on one side
 - A microSD card, 32 GB (16 GB also works)
 - Optional: a micro-USB to USB-A cable, to add a USB port on the back for a keyboard or mouse
 
 <!-- github-only -->
-**Where to buy:** [Maclock](https://amzn.to/4e7FKrw) · [Raspberry Pi Zero 2 W](https://amzn.to/4ac7FVR) · [Waveshare 2.8-inch LCD](https://amzn.to/4ue5GaP) · [speaker](https://www.adafruit.com/product/3923) · [Macintosh Mini board](https://www.pcbway.com/project/shareproject/W654223ASS41_Untitled_kicad_pcb_95cca7e3.html) from PCBWay ([$5 off with my referral code](https://pcbway.com/g/AsfKU9)) · [micro-USB to USB-A cable](https://www.aliexpress.us/item/3256807845070147.html?gatewayAdapt=glo2usa#nav-specification) (choose `Color: OTGV8DO-AFH`) · the GPIO interposer, from [Wells Workshop](https://shop.wells.ee/products/macintosh-mini/?ref=gh-macintosh-mini)
+**Where to buy:** [Maclock](https://amzn.to/4e7FKrw) · [Raspberry Pi Zero 2 W](https://amzn.to/4ac7FVR) · [Waveshare 2.8-inch LCD](https://amzn.to/4ue5GaP) · [Macintosh Mini board](https://www.pcbway.com/project/shareproject/W654223ASS41_Untitled_kicad_pcb_95cca7e3.html) from PCBWay ([$5 off with my referral code](https://pcbway.com/g/AsfKU9)) · [micro-USB to USB-A cable](https://www.aliexpress.us/item/3256807845070147.html?gatewayAdapt=glo2usa#nav-specification) (choose `Color: OTGV8DO-AFH`) · the speaker and the GPIO interposer, from [Wells Workshop](https://shop.wells.ee/products/macintosh-mini/?ref=gh-macintosh-mini)
 <!-- /github-only -->
 
 **Tools**
@@ -103,6 +103,8 @@ The Macintosh Mini board is a drop-in replacement for the clock board: it fits w
 - **Power:** the clock's 4-wire plug. The board takes the battery's power and ground from it and passes them to the Pi.
 - **Switch:** the clock's 2-wire power-switch plug.
 - **Speaker:** the speaker's 2-wire plug. Either way round works.
+
+The clock's power and switch plugs are 1.25 mm, and the board's Power and Switch sockets are 1.0 mm, so boards from Wells Workshop come with two short adapter cables to go between them. A board you order yourself from PCBWay is the earlier rev 2026.05, which has solder pads instead of sockets.
 
 Nothing on the board regulates the Pi's power: the Pi runs straight from the clock's battery, at about 4 V rather than the 5 V a Pi is rated for, even with the charge cable plugged in. The Pi runs on that, but see [Known issues](maclock-build/README.md#known-issues) for what it does to the audio.
 
@@ -168,7 +170,7 @@ The fit should be snug, not tight. If the panel has to be forced in, sand the be
 
 **The speaker buzzes at low brightness.** The Pi's analogue audio picks up noise from the display's backlight signal. A USB audio adapter removes it.
 
-**The speaker burbles on battery.** On rev 2026.10 boards, noise from the Pi's supply reaches the audio. The clock's charging board puts out about 4 V, not 5 V, even with the charge cable plugged in. Turn the brightness down. The next board revision is designed to remove it; see [Known issues](maclock-build/README.md#known-issues).
+**The speaker burbles on battery.** On rev 2026.09 boards, noise from the Pi's supply reaches the audio. The clock's charging board puts out about 4 V, not 5 V, even with the charge cable plugged in. Turn the brightness down. The next board revision is designed to remove it; see [Known issues](maclock-build/README.md#known-issues).
 
 **The hostname changes back after a restart.** Raspberry Pi OS resets it on every boot. Give the installer a hostname and it fixes this, or see [Known issues](maclock-build/README.md#known-issues).
 
