@@ -8150,7 +8150,7 @@
 				)
 			)
 		)
-		(property "Value" "E8E8-3.2C60-9B34"
+		(property "Value" "EC05E1220401"
 			(at 140.97 107.95 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8161,7 +8161,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "maclock:RotaryEncoder_E8E8-3.2C60-9B34_SMD"
+		(property "Footprint" "maclock:RotaryEncoder_Alps_EC05E1220401_SMD"
 			(at 134.62 101.6 0)
 			(hide yes)
 			(show_name no)
@@ -8172,7 +8172,7 @@
 				)
 			)
 		)
-		(property "Datasheet" "https://www.dicomon.com/index.php?ctl=Product&met=detail&item_id=1037"
+		(property "Datasheet" "https://tech.alpsalpine.com/assets/catalog/product-catalog-ec-all.en.pdf"
 			(at 134.62 101.6 0)
 			(hide yes)
 			(show_name no)
@@ -8183,7 +8183,7 @@
 				)
 			)
 		)
-		(property "Description" "F-Switch E8E8-3.2C60-9B34 SMD mouse-wheel encoder, 9 pulse / 18 detent, 1.74 mm hex bore; MP = the cover's solder tabs"
+		(property "Description" "Alps Alpine EC05E1220401 5 mm hollow-shaft encoder, vertical SMD, 12 pulse / 12 detent, 1.72 mm hex hole; MP = the frame's solder tabs"
 			(at 134.62 101.6 0)
 			(hide yes)
 			(show_name no)
@@ -8194,7 +8194,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "F-Switch"
+		(property "Manufacturer" "Alps Alpine"
 			(at 134.62 101.6 0)
 			(hide yes)
 			(show_name no)
@@ -8205,7 +8205,7 @@
 				)
 			)
 		)
-		(property "MPN" "E8E8-3.2C60-9B34"
+		(property "MPN" "EC05E1220401"
 			(at 134.62 101.6 0)
 			(hide yes)
 			(show_name no)
@@ -8216,7 +8216,7 @@
 				)
 			)
 		)
-		(property "LCSC" ""
+		(property "LCSC" "C116648"
 			(at 134.62 101.6 0)
 			(hide yes)
 			(show_name no)
@@ -8227,7 +8227,7 @@
 				)
 			)
 		)
-		(property "Supplier" "dicomon"
+		(property "Supplier" ""
 			(at 134.62 101.6 0)
 			(hide yes)
 			(show_name no)
@@ -8238,7 +8238,7 @@
 				)
 			)
 		)
-		(property "Supplier Link" "https://www.dicomon.com/index.php?ctl=Product&met=detail&item_id=1037"
+		(property "Supplier Link" ""
 			(at 134.62 101.6 0)
 			(hide yes)
 			(show_name no)
