@@ -155,7 +155,7 @@ The fit should be snug, not tight. If the panel has to be forced in, sand the be
 
 **The speaker buzzes at low brightness.** The Pi's analogue audio picks up noise from the display's backlight signal. A USB audio adapter removes it.
 
-**The speaker burbles on battery.** On rev 2026.10 boards, noise from the Pi's supply reaches the audio. The clock's charging board puts out about 4 V, not 5 V, even with the charge cable plugged in. Turn the brightness down. Rev 2026.11 is designed to remove it; see [Known issues](maclock-build/README.md#known-issues).
+**The speaker burbles on battery.** On rev 2026.09 boards, noise from the Pi's supply reaches the audio. The clock's charging board puts out about 4 V, not 5 V, even with the charge cable plugged in. Turn the brightness down. Rev 2026.11 is designed to remove it; see [Known issues](maclock-build/README.md#known-issues).
 
 **The hostname changes back after a restart.** Raspberry Pi OS resets it on every boot. Give the installer a hostname and it fixes this, or see [Known issues](maclock-build/README.md#known-issues).
 
