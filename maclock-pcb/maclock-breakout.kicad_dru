@@ -2,7 +2,3 @@
 (rule "Pour 0.3 mm from board edge"
 	(condition "A.Type == 'Zone'")
 	(constraint edge_clearance (min 0.3mm)))
-(rule "PicoBlade row: solder tabs 0.48 mm apart, stock courtyards overlap"
-	(condition "A.Reference == 'J1' && (B.Reference == 'J2' || B.Reference == 'J3')")
-	(constraint courtyard_clearance (min 0mm))
-	(severity ignore))
