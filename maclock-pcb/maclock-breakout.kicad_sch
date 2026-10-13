@@ -2147,7 +2147,7 @@
 			)
 			(embedded_fonts no)
 		)
-		(symbol "maclock:RotaryEncoder_EN10HT1212N5HH3"
+		(symbol "maclock:RotaryEncoder_E8E8-3.2C60-9B34"
 			(pin_names
 				(offset 0.254)
 				(hide yes)
@@ -2167,7 +2167,7 @@
 					)
 				)
 			)
-			(property "Value" "EN10HT1212N5HH3"
+			(property "Value" "E8E8-3.2C60-9B34"
 				(at 0 -10.16 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -2177,7 +2177,7 @@
 					)
 				)
 			)
-			(property "Footprint" "maclock:RotaryEncoder_EN10HT1212N5HH3_THT"
+			(property "Footprint" "maclock:RotaryEncoder_E8E8-3.2C60-9B34_SMD"
 				(at -3.81 4.064 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -2188,7 +2188,7 @@
 					)
 				)
 			)
-			(property "Datasheet" "https://www.ttelectronics.com/TTElectronics/media/ProductFiles/Datasheet/EN10.pdf"
+			(property "Datasheet" "https://www.dicomon.com/index.php?ctl=Product&met=detail&item_id=1037"
 				(at 0 6.604 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -2199,7 +2199,7 @@
 					)
 				)
 			)
-			(property "Description" "TT Electronics EN10HT1212N5HH3 top-adjust 10 mm encoder, lies flat with the hex bore up, 12 pulse / 12 detent, 1.75 mm hex bore; MP = the bracket tab"
+			(property "Description" "F-Switch E8E8-3.2C60-9B34 SMD mouse-wheel encoder, 9 pulse / 18 detent, 1.74 mm hex bore; MP = the cover's solder tabs"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -2210,7 +2210,7 @@
 					)
 				)
 			)
-			(property "Manufacturer" "TT Electronics"
+			(property "Manufacturer" "F-Switch"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -2221,7 +2221,7 @@
 					)
 				)
 			)
-			(property "MPN" "EN10HT1212N5HH3"
+			(property "MPN" "E8E8-3.2C60-9B34"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -2232,7 +2232,7 @@
 					)
 				)
 			)
-			(property "Supplier" "DigiKey"
+			(property "Supplier" "dicomon"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -2243,7 +2243,7 @@
 					)
 				)
 			)
-			(property "Supplier Link" "https://www.digikey.com/en/products/detail/tt-electronics-bi/EN10HT1212N5HH3/16360755"
+			(property "Supplier Link" "https://www.dicomon.com/index.php?ctl=Product&met=detail&item_id=1037"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -2254,7 +2254,7 @@
 					)
 				)
 			)
-			(property "ki_keywords" "rotary encoder mouse wheel TT EN10 EN10HT"
+			(property "ki_keywords" "rotary encoder mouse wheel F-Switch E8E8"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -2265,7 +2265,7 @@
 					)
 				)
 			)
-			(property "ki_fp_filters" "RotaryEncoder_EN10HT*"
+			(property "ki_fp_filters" "RotaryEncoder_E8E8*"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -2276,7 +2276,7 @@
 					)
 				)
 			)
-			(symbol "RotaryEncoder_EN10HT1212N5HH3_0_1"
+			(symbol "RotaryEncoder_E8E8-3.2C60-9B34_0_1"
 				(rectangle
 					(start -5.08 5.08)
 					(end 5.08 -5.08)
@@ -2431,7 +2431,7 @@
 					)
 				)
 			)
-			(symbol "RotaryEncoder_EN10HT1212N5HH3_1_1"
+			(symbol "RotaryEncoder_E8E8-3.2C60-9B34_1_1"
 				(pin passive line
 					(at -7.62 2.54 0)
 					(length 2.54)
@@ -3258,7 +3258,7 @@
 		)
 		(uuid "a8ba8f2f-d60c-4c5e-81f4-ff7f0b878ed0")
 	)
-	(text "TT Electronics EN10HT1212N5HH3 from DigiKey\n(lies flat, bore up; not stocked at LCSC).\nC is the common pin. The Pi enables internal\npull-ups on GPIO 11 (A) and GPIO 10 (B)."
+	(text "F-Switch E8E8-3.2C60-9B34 from dicomon\n(item 1037; not stocked at LCSC).\nC is the common pin. The Pi enables internal\npull-ups on GPIO 11 (A) and GPIO 10 (B)."
 		(exclude_from_sim no)
 		(at 101.6 121.92 0)
 		(effects
@@ -8130,7 +8130,7 @@
 		)
 	)
 	(symbol
-		(lib_id "maclock:RotaryEncoder_EN10HT1212N5HH3")
+		(lib_id "maclock:RotaryEncoder_E8E8-3.2C60-9B34")
 		(at 134.62 101.6 0)
 		(unit 1)
 		(body_style 1)
@@ -8150,7 +8150,7 @@
 				)
 			)
 		)
-		(property "Value" "EN10HT1212N5HH3"
+		(property "Value" "E8E8-3.2C60-9B34"
 			(at 140.97 107.95 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8161,7 +8161,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "maclock:RotaryEncoder_EN10HT1212N5HH3_THT"
+		(property "Footprint" "maclock:RotaryEncoder_E8E8-3.2C60-9B34_SMD"
 			(at 134.62 101.6 0)
 			(hide yes)
 			(show_name no)
@@ -8172,7 +8172,7 @@
 				)
 			)
 		)
-		(property "Datasheet" "https://www.ttelectronics.com/TTElectronics/media/ProductFiles/Datasheet/EN10.pdf"
+		(property "Datasheet" "https://www.dicomon.com/index.php?ctl=Product&met=detail&item_id=1037"
 			(at 134.62 101.6 0)
 			(hide yes)
 			(show_name no)
@@ -8183,7 +8183,7 @@
 				)
 			)
 		)
-		(property "Description" "TT Electronics EN10HT1212N5HH3 top-adjust 10 mm encoder, lies flat with the hex bore up, 12 pulse / 12 detent, 1.75 mm hex bore; MP = the bracket tab"
+		(property "Description" "F-Switch E8E8-3.2C60-9B34 SMD mouse-wheel encoder, 9 pulse / 18 detent, 1.74 mm hex bore; MP = the cover's solder tabs"
 			(at 134.62 101.6 0)
 			(hide yes)
 			(show_name no)
@@ -8194,7 +8194,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "TT Electronics"
+		(property "Manufacturer" "F-Switch"
 			(at 134.62 101.6 0)
 			(hide yes)
 			(show_name no)
@@ -8205,7 +8205,7 @@
 				)
 			)
 		)
-		(property "MPN" "EN10HT1212N5HH3"
+		(property "MPN" "E8E8-3.2C60-9B34"
 			(at 134.62 101.6 0)
 			(hide yes)
 			(show_name no)
@@ -8227,7 +8227,7 @@
 				)
 			)
 		)
-		(property "Supplier" "DigiKey"
+		(property "Supplier" "dicomon"
 			(at 134.62 101.6 0)
 			(hide yes)
 			(show_name no)
@@ -8238,7 +8238,7 @@
 				)
 			)
 		)
-		(property "Supplier Link" "https://www.digikey.com/en/products/detail/tt-electronics-bi/EN10HT1212N5HH3/16360755"
+		(property "Supplier Link" "https://www.dicomon.com/index.php?ctl=Product&met=detail&item_id=1037"
 			(at 134.62 101.6 0)
 			(hide yes)
 			(show_name no)
