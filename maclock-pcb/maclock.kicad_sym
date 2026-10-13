@@ -2,7 +2,7 @@
 	(version 20251024)
 	(generator "kicad_symbol_editor")
 	(generator_version "10.0")
-	(symbol "RotaryEncoder_E8E8-3.2C60-9B34"
+	(symbol "RotaryEncoder_EN10HT1212N5HH3"
 		(pin_names
 			(offset 0.254)
 			(hide yes)
@@ -22,7 +22,7 @@
 				)
 			)
 		)
-		(property "Value" "E8E8-3.2C60-9B34"
+		(property "Value" "EN10HT1212N5HH3"
 			(at 0 -10.16 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -32,7 +32,7 @@
 				)
 			)
 		)
-		(property "Footprint" "maclock:RotaryEncoder_E8E8-3.2C60-9B34_SMD"
+		(property "Footprint" "maclock:RotaryEncoder_EN10HT1212N5HH3_THT"
 			(at -3.81 4.064 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -43,7 +43,7 @@
 				)
 			)
 		)
-		(property "Datasheet" "https://www.dicomon.com/index.php?ctl=Product&met=detail&item_id=1037"
+		(property "Datasheet" "https://www.ttelectronics.com/TTElectronics/media/ProductFiles/Datasheet/EN10.pdf"
 			(at 0 6.604 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -54,7 +54,7 @@
 				)
 			)
 		)
-		(property "Description" "F-Switch E8E8-3.2C60-9B34 SMD mouse-wheel encoder, 9 pulse / 18 detent, 1.74 mm hex bore; MP = the cover's solder tabs"
+		(property "Description" "TT Electronics EN10HT1212N5HH3 top-adjust 10 mm encoder, lies flat with the hex bore up, 12 pulse / 12 detent, 1.75 mm hex bore; MP = the bracket tab"
 			(at 0 0 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -65,7 +65,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "F-Switch"
+		(property "Manufacturer" "TT Electronics"
 			(at 0 0 0)
 			(hide yes)
 			(effects
@@ -74,7 +74,7 @@
 				)
 			)
 		)
-		(property "MPN" "E8E8-3.2C60-9B34"
+		(property "MPN" "EN10HT1212N5HH3"
 			(at 0 0 0)
 			(hide yes)
 			(effects
@@ -83,7 +83,7 @@
 				)
 			)
 		)
-		(property "Supplier" "dicomon"
+		(property "Supplier" "DigiKey"
 			(at 0 0 0)
 			(hide yes)
 			(effects
@@ -92,7 +92,7 @@
 				)
 			)
 		)
-		(property "Supplier Link" "https://www.dicomon.com/index.php?ctl=Product&met=detail&item_id=1037"
+		(property "Supplier Link" "https://www.digikey.com/en/products/detail/tt-electronics-bi/EN10HT1212N5HH3/16360755"
 			(at 0 0 0)
 			(hide yes)
 			(effects
@@ -101,18 +101,7 @@
 				)
 			)
 		)
-		(property "ki_keywords" "rotary encoder mouse wheel F-Switch E8E8"
-			(at 0 0 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "ki_fp_filters" "RotaryEncoder_E8E8*"
+		(property "ki_keywords" "rotary encoder mouse wheel TT EN10 EN10HT"
 			(at 0 0 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -123,7 +112,18 @@
 				)
 			)
 		)
-		(symbol "RotaryEncoder_E8E8-3.2C60-9B34_0_1"
+		(property "ki_fp_filters" "RotaryEncoder_EN10HT*"
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(symbol "RotaryEncoder_EN10HT1212N5HH3_0_1"
 			(rectangle
 				(start -5.08 5.08)
 				(end 5.08 -5.08)
@@ -278,7 +278,7 @@
 				)
 			)
 		)
-		(symbol "RotaryEncoder_E8E8-3.2C60-9B34_1_1"
+		(symbol "RotaryEncoder_EN10HT1212N5HH3_1_1"
 			(pin passive line
 				(at -7.62 2.54 0)
 				(length 2.54)

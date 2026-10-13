@@ -10,7 +10,7 @@ Order from [PCBway](https://www.pcbway.com/project/shareproject/W654223ASS41_Unt
 
 ## Bill of materials
 
-To populate one board. Every part except ENC1 is stocked at LCSC, so PCBway can assemble the board with ENC1 left off; fit ENC1 yourself afterwards. Only the Pi header is through-hole. The DigiKey column is for hand assembly: where DigiKey does not carry the LCSC part, a drop-in equivalent is named.
+To populate one board. Every part except ENC1 is stocked at LCSC; ENC1 comes from DigiKey, and PCBway buys from both, so it can assemble the whole board. ENC1 and the Pi header are the only through-hole parts. The DigiKey column is for hand assembly: where DigiKey does not carry the LCSC part, a drop-in equivalent is named.
 
 | Ref | Qty | Part | DigiKey (hand assembly) | Notes |
 | --- | --- | --- | --- | --- |
@@ -19,7 +19,7 @@ To populate one board. Every part except ENC1 is stocked at LCSC, so PCBway can 
 | C4, C8, C10 | 3 | 1 µF X5R 0603 — Samsung `CL10A105KB8NNNC` (LCSC [`C15849`](https://www.lcsc.com/product-detail/C15849.html)) | [`1276-1860-1-ND`](https://www.digikey.com/en/products/result?keywords=1276-1860-1-ND) | Amp supply decoupling (C4); U3 input (C8); U3 output and U2 supply (C10) |
 | C5 | 1 | 10 µF X5R 0805 — Samsung `CL21A106KAYNNNE` (LCSC [`C15850`](https://www.lcsc.com/product-detail/C15850.html)) | [`1276-2891-1-ND`](https://www.digikey.com/en/products/result?keywords=1276-2891-1-ND), or [`587-4334-1-ND`](https://www.digikey.com/en/products/result?keywords=587-4334-1-ND) Taiyo Yuden `TMK212BBJ106KGHT` when the Samsung is out of stock | Amp bulk decoupling |
 | C6 | 0 | 470 pF C0G 0402 — Samsung `CL05C471JB5NNNC` (LCSC [`C307449`](https://www.lcsc.com/product-detail/C307449.html)) | [`CL05C471JB5NNNC`](https://www.digikey.com/en/products/result?keywords=CL05C471JB5NNNC) | **Not fitted**, left off the BOM and placement file. Optional second filter pole across the amp inputs, between R4 and R5 (see [Design notes](#design-notes)) |
-| ENC1 | 1 | Rotary encoder, SMD mouse-wheel, 7.8 × 6.95 × 3.2 mm — F-Switch `E8E8-3.2C60-9B34` from [dicomon](https://www.dicomon.com/index.php?ctl=Product&met=detail&item_id=1037) (item 1037; not stocked at LCSC) | — (nothing at DigiKey fits this land) | The dial. 1.74 mm hex bore, 9 pulse / 18 detent. dicomon is a Shenzhen distributor that ships within China, and PCBway buys only from LCSC, DigiKey and Mouser, so order it yourself (or from F-Switch) and hand-solder it. C (middle pin) is common |
+| ENC1 | 1 | Rotary encoder, 10 mm mouse-wheel type, top adjust: it lies on its back with the hex bore up — TT Electronics `EN10HT1212N5HH3` (DigiKey [`987-EN10HT1212N5HH3-ND`](https://www.digikey.com/en/products/detail/tt-electronics-bi/EN10HT1212N5HH3/16360755); not stocked at LCSC) | [`987-EN10HT1212N5HH3-ND`](https://www.digikey.com/en/products/detail/tt-electronics-bi/EN10HT1212N5HH3/16360755) | The dial. 1.75 ±0.03 mm hex bore, 12 pulse / 12 detent, 5.2 mm tall. Through-hole, pins pointing west; the north bracket tab goes in the slot and the south one hangs past the board edge. C (north pad) is common. The pads run 2.6 mm east of the holes, so a 1.74 mm-bore mouse-wheel encoder laid on its back (Huano 4.5 mm, from Amazon or AliExpress) can be soldered on top instead, legs bent down |
 | J1 | 1 | Molex PicoBlade 1×2, 1.25 mm, SMD top entry — `53398-0271` (LCSC [`C122410`](https://www.lcsc.com/product-detail/C122410.html)) | [`53398-0271`](https://www.digikey.com/en/products/result?keywords=53398-0271) | **Power switch**, in series with the battery supply; silkscreened "Switch". Takes the Maclock's 2-wire switch plug |
 | J2 | 1 | Molex PicoBlade 1×4, 1.25 mm, SMD top entry — `53398-0471` (LCSC [`C17617036`](https://www.lcsc.com/product-detail/C17617036.html)) | [`53398-0471`](https://www.digikey.com/en/products/result?keywords=53398-0471) | **Power input**, silkscreened "Power". Takes the Maclock's 4-wire plug: pin 4 (silk `+`) = battery supply, about 4 V (the clock's charging board passes the cell through, it does not boost it), pin 3 (silk `-`) = GND, pins 1–2 unused |
 | J3 | 1 | Molex PicoBlade 1×2, 1.25 mm, SMD top entry — `53398-0271` (LCSC [`C122410`](https://www.lcsc.com/product-detail/C122410.html)) | [`53398-0271`](https://www.digikey.com/en/products/result?keywords=53398-0271) | **Speaker**, silkscreened "Speaker". Same part as J1; polarity does not matter |
@@ -34,7 +34,7 @@ To populate one board. Every part except ENC1 is stocked at LCSC, so PCBway can 
 | U3 | 1 | 3.0 V low-noise LDO, SOT-23-5 — TI `TPS7A2030PDBVR` (LCSC [`C963429`](https://www.lcsc.com/product-detail/C963429.html)) | [`TPS7A2030PDBVR`](https://www.digikey.com/en/products/result?keywords=TPS7A2030PDBVR) | Quiet 3.0 V for U2 and the shutdown pull-up |
 | — | 1 | Small speaker, 8 Ω, 1 W, 28–40 mm, PicoBlade 1.25 mm 2-pin plug (often sold as "JST 1.25"), e.g. [Adafruit 3923](https://www.adafruit.com/product/3923) | — | Whatever fits behind the Maclock grille |
 
-The schematic carries the same data in each symbol's `Manufacturer`, `MPN`, `LCSC` and (for ENC1) `Supplier` / `Supplier Link` fields, so any BOM exported from it, or from the PCBway plugin, includes the dicomon source.
+The schematic carries the same data in each symbol's `Manufacturer`, `MPN`, `LCSC` and (for ENC1) `Supplier` / `Supplier Link` fields, so any BOM exported from it, or from the PCBway plugin, includes ENC1's DigiKey source.
 
 ## Design notes
 
@@ -46,11 +46,11 @@ C6 is a spare pad, not fitted. R3/C1 is a single pole, which takes only about 24
 
 **Grounds.** The Pi, its display and its backlight draw up to about 1 A, and the return current comes back on its own trace (net `GND_PI`) from J4 pin 2 to J2, where the net tie NT1 joins it to the board ground. On earlier revisions that current flowed through the amp's ground and the amp shared the Pi's supply copper, which put a faint whine in the speaker of the rev 2026.09 boards: a 1 kHz comb from the backlight PWM, plus drifting tones from the emulator's load. NT1 is copper only, so it is not in the BOM. The amp now takes its supply straight from J1, so it no longer shares the Pi's supply trace, and its 1 µF decoupling capacitor sits right against its supply and ground pins.
 
-**Dial and buttons.** ENC1's A and B go straight to GPIO 11 and GPIO 10, and the buttons through R1/R2 to GPIO 27 and GPIO 26; the Pi's internal pull-ups do the rest (see [`brightness_control.py`](../maclock-build/brightness_control.py)). ENC1's footprint origin is the shaft centre; its outline, pad positions and 3D model were measured from a real part.
+**Dial and buttons.** ENC1's A and B go straight to GPIO 11 and GPIO 10, and the buttons through R1/R2 to GPIO 27 and GPIO 26; the Pi's internal pull-ups do the rest (see [`brightness_control.py`](../maclock-build/brightness_control.py)). ENC1 lies on its back with its hex bore over the dial's shaft and its pins pointing west, and its footprint origin is the bore. The land follows TT's EN10 datasheet, placed on the bore with TT's 3D model: TT dimensions the pin holes 5.5 mm from the tab line, which sits 1.3 mm off the bore, so they are 6.8 mm from it. U3 and C8 sit west of the north tab's slot.
 
 **Libraries.** Two project libraries ship with the board, next to the KiCad 10 standard libraries:
 
-- `maclock` — ENC1's symbol, footprint and 3D model (`maclock.3dshapes/`), drawn for this project because the part has no published land pattern.
+- `maclock` — ENC1's symbol and footprint, drawn for this project because the encoder lies on its back, and TT Electronics' 3D model of it (`maclock.3dshapes/`).
 - `lcsc` — LCSC's own symbol, footprint and 3D model for SW1/SW2 (C2888448), imported with `easyeda2kicad --full --lcsc_id=C2888448`. easyeda2kicad's conversion artefacts were fixed, nothing else: the plastic-peg holes are NPTH, the bracket pads have no outline stroke (so the copper is LCSC's 1.5 mm), the pins are passive, and the courtyard is one closed outline.
 
 ## Fabrication files
