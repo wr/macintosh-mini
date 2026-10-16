@@ -18,3 +18,7 @@ sym-lib-table
 
 # Python
 __pycache__/
+
+# build123d venv for the bezel (maclock-screen-bezel/build.sh)
+maclock-screen-bezel/.venv/
+__pycache__/
