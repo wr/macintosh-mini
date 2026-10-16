@@ -7936,6 +7936,17 @@
 		(layer "Edge.Cuts")
 		(uuid "ee7638e1-e752-42cb-b35a-e6de2f5b22e2")
 	)
+	(gr_text "github.com/wr/macintosh-mini   CERN-OHL-S-2.0"
+		(at 167 97.48 0)
+		(layer "F.SilkS")
+		(uuid "450aaf20-12a4-47da-b3d8-791fff29216a")
+		(effects
+			(font
+				(size 0.8 0.8)
+				(thickness 0.15)
+			)
+		)
+	)
 	(gr_text "eep!"
 		(at 171.5 83 0)
 		(layer "F.SilkS")
