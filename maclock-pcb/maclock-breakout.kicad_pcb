@@ -2475,7 +2475,7 @@
 	(footprint "Symbol:OSHW-Logo_5.7x6mm_SilkScreen"
 		(layer "B.Cu")
 		(uuid "8c52f009-6674-4883-bc93-19d518ff2994")
-		(at 144 92.1 180)
+		(at 141.2 91.45 180)
 		(descr "Open Source Hardware Logo")
 		(tags "Logo OSHW")
 		(property "Reference" "LOGO1"
