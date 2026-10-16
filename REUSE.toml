@@ -29,6 +29,12 @@ path = "emulators/chimes/*.wav"
 SPDX-FileCopyrightText = "Apple Computer, Inc."
 SPDX-License-Identifier = "LicenseRef-Third-Party"
 
+# 3D models from LCSC's EasyEDA library, used only for renders.
+[[annotations]]
+path = "maclock-pcb/lcsc.3dshapes/**"
+SPDX-FileCopyrightText = "LCSC Electronics"
+SPDX-License-Identifier = "LicenseRef-Third-Party"
+
 # Waveshare's waveshare-28dpi-3b-4b overlay with the touch and backlight
 # fragments removed.
 [[annotations]]
