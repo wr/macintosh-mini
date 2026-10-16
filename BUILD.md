@@ -190,7 +190,7 @@ Anything else: open an issue on [GitHub](https://github.com/wr/macintosh-mini/is
 
 ---
 
-The Macintosh Mini board's design is licensed under [CC BY-NC-SA 4.0](maclock-pcb/LICENSE).
+The Macintosh Mini is open source. The board and bezel are licensed under [CERN-OHL-S-2.0](maclock-pcb/LICENSE), the software under [GPL-3.0-or-later](LICENSES/GPL-3.0-or-later.txt), and this guide under [CC BY-SA 4.0](LICENSES/CC-BY-SA-4.0.txt).
 
 <!-- github-only -->
 This guide is also on the shop, at [shop.wells.ee/guides/macintosh-mini](https://shop.wells.ee/guides/macintosh-mini/?ref=gh-macintosh-mini), which copies it from here: edit this file, not that page.

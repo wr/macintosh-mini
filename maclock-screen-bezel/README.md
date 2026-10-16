@@ -15,4 +15,4 @@ I recommend using black PLA or PETG for a seamless look.
 
 ## License
 
-Same terms as the [breakout PCB](../maclock-pcb/LICENSE) — CC BY-NC-SA 4.0. Non-commercial only.
+CERN-OHL-S-2.0, same as the [breakout PCB](../maclock-pcb/README.md#license) — see [`LICENSE`](./LICENSE).

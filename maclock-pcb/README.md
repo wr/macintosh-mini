@@ -29,4 +29,4 @@ To populate one board:
 
 ## License
 
-CC BY-NC-SA 4.0 — see [`LICENSE`](./LICENSE). Free for non-commercial use; derivatives must also be non-commercial.
+CERN-OHL-S-2.0 — see [`LICENSE`](./LICENSE). You can make, modify and sell the board. Boards you make must point to their source, and a modified design must be published under the same licence.

@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 Wells Riley
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
 # macintosh-mini setup for a fresh Raspberry Pi Zero 2 W.
 #
 # Run on the Pi (or `curl … | bash`). Idempotent. Reboots at the end.

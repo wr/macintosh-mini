@@ -1,0 +1,37 @@
+version = 1
+SPDX-PackageName = "macintosh-mini"
+SPDX-PackageSupplier = "Wells Riley"
+SPDX-PackageDownloadLocation = "https://github.com/wr/macintosh-mini"
+
+# When several annotations match a file, the last one wins.
+
+# Docs, drawings, photos and everything else.
+[[annotations]]
+path = "**"
+SPDX-FileCopyrightText = "2026 Wells Riley"
+SPDX-License-Identifier = "CC-BY-SA-4.0"
+
+# Software.
+[[annotations]]
+path = ["setup.sh", "maclock-build/**"]
+SPDX-FileCopyrightText = "2026 Wells Riley"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+# Hardware: the boards and the bezel.
+[[annotations]]
+path = ["maclock-pcb/**", "maclock-interposer/**", "maclock-screen-bezel/**"]
+SPDX-FileCopyrightText = "2026 Wells Riley"
+SPDX-License-Identifier = "CERN-OHL-S-2.0"
+
+# Third-party files, not covered by this repository's licenses.
+[[annotations]]
+path = "emulators/chimes/*.wav"
+SPDX-FileCopyrightText = "Apple Computer, Inc."
+SPDX-License-Identifier = "LicenseRef-Third-Party"
+
+# Waveshare's waveshare-28dpi-3b-4b overlay with the touch and backlight
+# fragments removed.
+[[annotations]]
+path = "maclock-build/waveshare-28dpi-3b-4b-notouch.dts"
+SPDX-FileCopyrightText = "Waveshare"
+SPDX-License-Identifier = "LicenseRef-Third-Party"

@@ -27,4 +27,4 @@ Classic Macintosh startup chimes and matching system-error ("crash") sounds. The
 
 ## Credit
 
-The startup chimes and crash sounds in this directory are mirrored from **D. Schaub's Apple Sounds collection** at <https://froods.ca/~dschaub/sound.html>. All sounds are © Apple Computer, Inc.
+The startup chimes and crash sounds in this directory are mirrored from **D. Schaub's Apple Sounds collection** at <https://froods.ca/~dschaub/sound.html>. All sounds are © Apple Computer, Inc., and are not covered by this repository's licenses.
