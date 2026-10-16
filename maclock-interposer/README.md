@@ -36,4 +36,4 @@ The interposer adds about 12.5 mm between the Pi and the display (8.5 mm socket 
 
 ## License
 
-CC BY-NC-SA 4.0, same as the [breakout PCB](../maclock-pcb/LICENSE).
+CERN-OHL-S-2.0, same as the [breakout PCB](../maclock-pcb/README.md#license) — see [`LICENSE`](./LICENSE).

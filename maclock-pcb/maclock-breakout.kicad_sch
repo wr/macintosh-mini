@@ -10,7 +10,7 @@
 		(rev "2026.11")
 		(company "Wells Workshop")
 		(comment 1 "github.com/wr/macintosh-mini")
-		(comment 2 "Licensed CC BY-NC-SA 4.0")
+		(comment 2 "Licensed CERN-OHL-S-2.0")
 	)
 	(lib_symbols
 		(symbol "74xGxx:74LVC1G17"
