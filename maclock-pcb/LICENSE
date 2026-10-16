@@ -2,22 +2,18 @@ maclock-breakout PCB
 
 Copyright (c) 2026 Wells Riley
 
-Licensed under Creative Commons Attribution-NonCommercial-ShareAlike 4.0
-International (CC BY-NC-SA 4.0).
+This source describes Open Hardware and is licensed under the CERN-OHL-S v2.
 
-You are free to:
-  - Share — copy and redistribute in any medium or format
-  - Adapt — remix, transform, and build upon the material
+You may redistribute and modify this source and make products using it
+under the terms of the CERN-OHL-S v2 (https://ohwr.org/cern_ohl_s_v2.txt),
+also in ../LICENSES/CERN-OHL-S-2.0.txt.
 
-Under the following terms:
-  - NonCommercial — You may not use the material for commercial purposes.
-  - ShareAlike — If you remix, transform, or build upon the material, you
-    must distribute your contributions under the same license as the
-    original.
+This source is distributed WITHOUT ANY EXPRESS OR IMPLIED WARRANTY,
+INCLUDING OF MERCHANTABILITY, SATISFACTORY QUALITY AND FITNESS FOR A
+PARTICULAR PURPOSE. Please see the CERN-OHL-S v2 for applicable conditions.
 
-Full license:        https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
-Human-readable:      https://creativecommons.org/licenses/by-nc-sa/4.0/
+Source location: https://github.com/wr/macintosh-mini
 
-This license covers the PCB design files in this directory. The rest of
-the macintosh-mini repository is published as-is for personal,
-non-commercial use.
+As per CERN-OHL-S v2 section 4, should You produce hardware based on this
+source, You must, where practicable, display the Source Location on the
+board's silkscreen, or otherwise on its packaging or documentation.

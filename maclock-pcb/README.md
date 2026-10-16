@@ -4,7 +4,7 @@
 
 KiCad 10 project for the breakout that connects the Mac-shaped clock's front-panel parts (rotary encoder, two pushbuttons, speaker, power switch and battery harness) to the Pi Zero 2 W. The PAM8302A audio amplifier is on the board itself. Current revision: 2026.11, which rebuilds the Pi's audio signal on the board and gives the Pi's supply current its own ground return (see [Design notes](#design-notes)); rev 2026.09 boards, the ones that shipped, work but whine faintly with the Pi running.
 
-Build guide with pin assignments lives in the [maclock guide](../maclock-build/README.md#1-wiring). For the case-side parts you'll print, see the [3D-printed screen bezel](../maclock-screen-bezel/).
+Wiring it to the Pi, with pin assignments, is [step 2 of the build guide](../BUILD.md#2-connect-the-pi-to-the-screen-and-the-board). For the case-side parts you'll print, see the [3D-printed screen bezel](../maclock-screen-bezel/).
 
 Order from [PCBway](https://www.pcbway.com/project/shareproject/W654223ASS41_Untitled_kicad_pcb_95cca7e3.html). You can [use my referral code](https://pcbway.com/g/AsfKU9) to get $5 off your order, if you want.
 
@@ -70,4 +70,4 @@ $K sch export bom --fields 'Reference,${QUANTITY},Value,Footprint,Manufacturer,M
 
 ## License
 
-CC BY-NC-SA 4.0 — see [`LICENSE`](./LICENSE). Free for non-commercial use; derivatives must also be non-commercial.
+CERN-OHL-S-2.0 — see [`LICENSE`](./LICENSE). You can make, modify and sell the board. Boards you make must point to their source, and a modified design must be published under the same licence.
