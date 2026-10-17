@@ -90,5 +90,13 @@ class CommandFor(unittest.TestCase):
                          ['/usr/local/bin/mac-setup', 'request'])
 
 
+class Run(unittest.TestCase):
+
+    def test_missing_command_does_not_raise(self):
+        # A Maclock-only install has no mac-setup; holding the button mustn't
+        # take the button handler down with it.
+        bh.run(['/nonexistent/mac-setup', 'request'])
+
+
 if __name__ == '__main__':
     unittest.main()

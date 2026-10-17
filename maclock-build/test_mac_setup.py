@@ -285,7 +285,7 @@ class Rom(Base):
         c.tick()
         c.submit_rom(make_rom(1024 * 1024))
         self.clock.now = 20
-        self.rom_path.rename(self.home / 'ROM.rejected')   # what the launcher does
+        self.rom_path.rename(self.home / '.ROM.rejected')   # what the launcher does
         c.tick()
         self.assertEqual(c.state()['phase'], 'rom')
         self.assertEqual(c.state()['error'], "That ROM didn't start the Mac. Try another.")

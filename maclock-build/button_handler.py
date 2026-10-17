@@ -150,7 +150,10 @@ lock = threading.Lock()
 
 def run(cmd):
     print(f'-> {cmd}', flush=True)
-    subprocess.Popen(cmd)
+    try:
+        subprocess.Popen(cmd)
+    except OSError as e:   # e.g. no mac-setup on a Maclock-only install
+        print(f'   failed: {e}', flush=True)
 
 
 def dispatch(actions):

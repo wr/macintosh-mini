@@ -13,6 +13,8 @@
 #
 #   mac-setup serve     the service (root, mac-setup.service)
 #   mac-setup needed    exit 0 if the launcher should show the setup screen
+#                       (answered by the /usr/local/bin/mac-setup wrapper in
+#                       shell, so the launcher never waits for Python)
 #   mac-setup request   start setup now (the left button's 10-second hold)
 #   mac-setup cancel    stop a setup started by the button
 #   mac-setup screen    draw the setup screen on tty1
@@ -531,15 +533,6 @@ def serve():
         time.sleep(1)
 
 
-def needed():
-    if (RUN_DIR / 'requested').exists():
-        return 0
-    try:
-        return 0 if not NM().saved_wifi() else 1
-    except OSError:
-        return 1   # no nmcli: never keep Mac OS from starting
-
-
 def request():
     RUN_DIR.mkdir(parents=True, exist_ok=True)
     (RUN_DIR / 'requested').touch()
@@ -559,8 +552,6 @@ def main(argv):
     cmd = argv[1] if len(argv) > 1 else ''
     if cmd == 'serve':
         return serve()
-    if cmd == 'needed':
-        return needed()
     if cmd == 'request':
         return request()
     if cmd == 'cancel':
@@ -568,7 +559,7 @@ def main(argv):
     if cmd == 'screen':
         import mac_setup_screen
         return mac_setup_screen.main(RUN_DIR / 'status.json', RUN_DIR / 'requested')
-    print('usage: mac-setup serve|needed|request|cancel|screen', file=sys.stderr)
+    print('usage: mac-setup serve|request|cancel|screen', file=sys.stderr)
     return 2
 
 
