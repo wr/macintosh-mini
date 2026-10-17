@@ -3,6 +3,12 @@
 Notable changes to the macintosh-mini installer (`setup.sh`). Re-running on an
 existing Pi shows the entries added since the installed version.
 
+## [1.7.0] - 2026-10-17
+- Change Wi-Fi without opening the case: hold the left button for 10 seconds, join the "Macintosh Mini XXXX" network from your phone, and pick your network on the page that opens. A Mac with no saved Wi-Fi offers it by itself.
+- A Mac with no ROM says on screen how to add one from a phone or computer on the same Wi-Fi.
+- `--hotspot-setup` prepares a Mac for someone else: their Wi-Fi, a password and a ROM are set up from their phone when it first starts.
+- `.local` names work with the performance option on.
+
 ## [1.6.1] - 2026-10-05
 - Turns the Pi's audio output down 4 dB, so the loudest notes of the startup chime no longer crackle through the board's amp.
 

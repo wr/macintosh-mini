@@ -86,7 +86,7 @@ sudo alsactl store
 Two helpers drive the brightness dial and the two buttons on the front:
 
 - [`brightness_control.py`](./brightness_control.py) samples the dial every 1 ms, decodes the gray code, and sets the backlight through the kernel `pwm-gpio` driver on GPIO 18 (`/sys/class/pwm`).
-- [`button_handler.py`](./button_handler.py) handles the buttons. By default the right button (SW1, GPIO 27) shuts the Pi down, and the left button (SW2, GPIO 26) restarts the emulator, or quits to a prompt when pressed twice. Edit the `COMMANDS` and `DOUBLE_COMMANDS` dicts to change them.
+- [`button_handler.py`](./button_handler.py) handles the buttons. By default the right button (SW1, GPIO 27) shuts the Pi down, and the left button (SW2, GPIO 26) restarts the emulator, quits to a prompt when pressed twice, or starts Wi-Fi setup from a phone when held for 10 seconds (the installer sets that up; see [`mac_setup.py`](./mac_setup.py)). Edit the `COMMANDS`, `DOUBLE_COMMANDS` and `HOLD_COMMANDS` dicts to change them.
 
 Install both to `/usr/local/bin/`:
 

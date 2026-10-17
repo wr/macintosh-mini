@@ -154,7 +154,8 @@ The fit should be snug, not tight. If the panel has to be forced in, sand the be
 - **The dial** sets the screen brightness. It can also dim the screen after sunset and turn it off overnight ([night dimming](maclock-build/README.md#night-dimming-optional)).
 - **The right button** shuts the Pi down safely.
 - **The left button** restarts Mac OS, with the crash sound. Pressed twice quickly, it quits to the Pi's command line instead.
-- To change what either button does, edit `COMMANDS` and `DOUBLE_COMMANDS` in [`button_handler.py`](maclock-build/button_handler.py).
+- **To change Wi-Fi networks**, hold the left button for 10 seconds. The Mac beeps, shows a QR code and offers its own Wi-Fi network, *Macintosh Mini* and four characters. Join it from your phone, and a page opens where you pick your network. Press the left button again to cancel. A Mac with no saved Wi-Fi does this by itself when it starts.
+- To change what either button does, edit `COMMANDS`, `DOUBLE_COMMANDS` and `HOLD_COMMANDS` in [`button_handler.py`](maclock-build/button_handler.py).
 - **Shut Down** in Mac OS (Special → Shut Down) quits to the Pi's command line, and **Restart** restarts the Mac. A crash restarts it on its own. Type `macintosh` at the command line to start the Mac again.
 - **Networking** works out of the box. In Mac OS, set TCP/IP to DHCP.
 
@@ -165,6 +166,8 @@ The fit should be snug, not tight. If the panel has to be forced in, sand the be
 **The dial jumps or turns the wrong way.** The encoder is worn. A good one clicks firmly; a mushy one can't be fixed in software. Clean its contacts or replace it.
 
 **The disk image won't boot.** Check its format: `.dmg`, `.image`, `.smi` and `.toast` files and anything still zipped don't work. Convert it to a raw image, or use one from the BlueSCSI library.
+
+**The Mac has moved, or the Wi-Fi password changed.** Hold the left button for 10 seconds and set up the new network from your phone (see [Using it](#using-it)).
 
 **The Pi drops off Wi-Fi or SSH is slow to answer.** The Pi Zero's Wi-Fi power saving is on. The installer turns it off; if you set the Pi up by hand, see [Keep the Wi-Fi awake](maclock-build/README.md#4-keep-the-wi-fi-awake).
 
