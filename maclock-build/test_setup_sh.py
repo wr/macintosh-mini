@@ -107,7 +107,11 @@ class Handoff(unittest.TestCase):
                        'journalctl --rotate',
                        'pkill -KILL -u "$user"',
                        "s/^LAT=.*/LAT=/",
-                       '-size 1048576c'):
+                       '-size 1048576c',
+                       # Imager / cloud-init seed files, and any backup copies
+                       # of them (user-data.bak holds the login).
+                       '/boot/firmware/user-data*',
+                       '/boot/firmware/network-config*'):
             self.assertIn(needle, self.HANDOFF)
 
     def test_history_removed_after_sessions_killed(self):

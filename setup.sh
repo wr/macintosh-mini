@@ -1858,7 +1858,8 @@ touch /var/lib/mac-setup/needs-password
 # cloud-init carried the preparer's Wi-Fi and login: turn it off and clear it.
 touch /etc/cloud/cloud-init.disabled
 rm -rf /var/lib/cloud
-rm -f /boot/firmware/user-data /boot/firmware/network-config /var/log/cloud-init*.log
+# Backup copies too: a user-data.bak holds the login as much as user-data does.
+rm -f /boot/firmware/user-data* /boot/firmware/network-config* /var/log/cloud-init*.log
 # Forget every Wi-Fi network. If this session is over Wi-Fi, it ends here.
 nmcli -t -f UUID,TYPE connection show | awk -F: '$2 == "802-11-wireless" { print $1 }' |
   while read -r uuid; do nmcli connection delete uuid "$uuid"; done
