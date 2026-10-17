@@ -338,7 +338,8 @@ class Screens(Base):
             screen = c.screen_for(dict(s, phase=phase, network='Home',
                                        url='http://macintosh-mini-4e2a.local/', ip='192.168.1.23'))
             self.assertTrue(screen['title'].startswith(title), screen['title'])
-            self.assertIsNone(screen['qr'])
+            if phase != 'rom':
+                self.assertIsNone(screen['qr'])
 
     def test_rom_screen_shows_name_and_ip(self):
         c = self.make(saved=['Home'], ip='192.168.1.23', rom=False)
@@ -346,6 +347,13 @@ class Screens(Base):
         lines = c.screen_for(c.state())['lines']
         self.assertIn('macintosh-mini-4e2a.local', lines)
         self.assertIn('or http://192.168.1.23', lines)
+
+    def test_rom_screen_has_qr_to_the_page(self):
+        c = self.make(saved=['Home'], ip='192.168.1.23', rom=False)
+        c.tick()
+        screen = c.screen_for(c.state())
+        self.assertEqual(screen['qr'], 'http://192.168.1.23/')
+        self.assertIn('or scan the code.', screen['lines'])
 
     def test_button_hotspot_says_how_to_cancel(self):
         c = self.make(saved=['Home'], rom=True)
@@ -467,6 +475,95 @@ class Review(Base):
         self.clock.now = 31
         c.tick()
         self.assertEqual(c.state()['phase'], 'hotspot')
+
+
+class FakeServer:
+    def __init__(self, controller, port):
+        import threading
+        self.port = port
+        self.stopped = threading.Event()
+        self.closed = False
+
+    def serve_forever(self, poll_interval=0.5):
+        self.stopped.wait()
+
+    def shutdown(self):
+        self.stopped.set()
+
+    def server_close(self):
+        self.closed = True
+
+
+class WebServerLifetime(Base):
+    """Nothing listens on the network unless setup is under way."""
+
+    def make_web(self):
+        self.made = []
+
+        def factory(controller, port):
+            server = FakeServer(controller, port)
+            self.made.append(server)
+            return server
+        return ms.WebServer(self.c, factory)
+
+    def running(self, web):
+        return web.server is not None
+
+    def test_no_server_when_nothing_to_set_up(self):
+        self.make(saved=['Home'], rom=True)
+        web = self.make_web()
+        self.c.tick()
+        web.sync()
+        self.assertFalse(self.running(web))
+        self.assertEqual(self.made, [])
+
+    def test_server_up_for_button_setup_and_down_after_cancel(self):
+        self.make(saved=['Home'], rom=True)
+        web = self.make_web()
+        self.c.tick()
+        (self.run_dir / 'requested').touch()
+        self.c.tick()
+        web.sync()
+        self.assertTrue(self.running(web))
+        self.assertEqual(self.made[0].port, 80)
+        (self.run_dir / 'cancel').touch()
+        self.c.tick()
+        web.sync()
+        self.assertFalse(self.running(web))
+        self.assertTrue(self.made[0].stopped.is_set())
+        self.assertTrue(self.made[0].closed)
+
+    def test_server_kept_through_rom_trial_then_stopped(self):
+        self.make(saved=['Home'], ip='192.168.1.23', rom=False)
+        web = self.make_web()
+        self.c.tick()
+        web.sync()
+        self.assertTrue(self.running(web))
+        self.c.submit_rom(make_rom(1024 * 1024))
+        web.sync()
+        self.assertTrue(self.running(web))      # still answering "All set"
+        self.sys.emulator = True
+        self.clock.now = 61
+        self.c.tick()
+        web.sync()
+        self.assertFalse(self.running(web))
+        self.assertEqual(len(self.made), 1)
+
+    def test_bind_failure_retried(self):
+        self.make(saved=())
+        calls = []
+
+        def factory(controller, port):
+            calls.append(port)
+            if len(calls) == 1:
+                raise OSError('Address already in use')
+            return FakeServer(controller, port)
+        web = ms.WebServer(self.c, factory)
+        self.c.tick()
+        web.sync()
+        self.assertIsNone(web.server)
+        web.sync()
+        self.assertIsNotNone(web.server)
 
 
 class NMJoin(unittest.TestCase):

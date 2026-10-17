@@ -27,7 +27,7 @@ PORTAL_URL = f'http://{HOTSPOT_IP}/'
 MAX_ROM_BYTES = 16 * 1024 * 1024
 GUIDE_URL = 'https://www.redundantrobot.com/sheepshaver'
 GUIDE = ('Need a ROM? <a href="https://www.redundantrobot.com/sheepshaver">Redundant Robot\'s '
-         'emulator guide</a> explains which one to use and where to find it. The Performa ROM works best.')
+         'emulator guide</a> explains which one to use and where to find it. The <b>Performa ROM</b> works best.')
 
 
 class FormError(Exception):
@@ -40,9 +40,12 @@ def parse_connect_form(body, needs_password):
     def get(name):
         return f.get(name, [''])[0]
 
-    other = get('other').strip()
-    ssid = other or get('network')
-    hidden = bool(other)
+    # A network picked from the list wins; "Other…" (empty) means the typed name.
+    ssid = get('network')
+    hidden = False
+    if not ssid:
+        ssid = get('other').strip()
+        hidden = True
     if not ssid:
         raise FormError('Pick your Wi-Fi network, or type its name.')
     if len(ssid.encode()) > 32:
@@ -85,6 +88,7 @@ def fetch_url(url, limit=MAX_ROM_BYTES):
 
 # --- pages -----------------------------------------------------------------
 STYLE = """
+:root{color-scheme:light}
 *{box-sizing:border-box}
 html{background:#a8a8a8;background-image:radial-gradient(#8c8c8c 1px,transparent 1px);background-size:4px 4px}
 body{margin:0;padding:16px;font:17px/1.4 "Chicago","ChicagoFLF",-apple-system,system-ui,sans-serif;color:#000}
@@ -96,9 +100,9 @@ body{margin:0;padding:16px;font:17px/1.4 "Chicago","ChicagoFLF",-apple-system,sy
 .body{padding:18px}
 p{margin:0 0 14px}
 label{display:block;margin:14px 0 6px;font-weight:600}
-input,select{width:100%;font:inherit;padding:10px;border:2px solid #000;border-radius:0;background:#fff;min-height:46px}
-button{display:block;width:100%;margin-top:22px;font:inherit;font-weight:600;min-height:50px;background:#fff;
- border:2px solid #000;border-radius:12px;box-shadow:0 0 0 3px #fff,0 0 0 5px #000}
+input,select{width:100%;font:inherit;padding:10px;border:2px solid #000;border-radius:0;background:#fff;color:#000;min-height:46px}
+button{display:block;width:100%;margin-top:22px;font:inherit;font-weight:600;min-height:50px;background:#fff;color:#000;
+ -webkit-appearance:none;appearance:none;border:2px solid #000;border-radius:12px;box-shadow:0 0 0 3px #fff,0 0 0 5px #000}
 button:active{background:#000;color:#fff}
 .err{border:2px solid #000;padding:10px;margin-bottom:14px;background:#fff6c8}
 .small{font-size:14px;color:#333}
@@ -110,6 +114,7 @@ a{color:#000}
 def page(title, body):
     return ('<!doctype html><html lang="en"><head><meta charset="utf-8">'
             '<meta name="viewport" content="width=device-width,initial-scale=1">'
+            '<meta name="color-scheme" content="light">'
             f'<title>{html.escape(title)}</title><style>{STYLE}</style></head><body>'
             f'<div class="win"><div class="bar"><h1>{html.escape(title)}</h1></div>'
             f'<div class="body">{body}</div></div></body></html>')
@@ -133,21 +138,27 @@ def portal_page(state, error=None):
             + '<form method="post" action="/connect">'
             '<label for="n">Your Wi-Fi network</label>'
             f'<select id="n" name="network">{options}<option value="">Other…</option></select>'
-            '<label for="o">Not listed? Type its name</label>'
+            # Shown once "Other…" is picked (straight away if nothing was found).
+            f'<div id="otherbox"{" hidden" if state["networks"] else ""}>'
+            '<label for="o">Network name</label>'
             '<input id="o" name="other" autocapitalize="off" autocorrect="off" spellcheck="false">'
+            '</div>'
             '<label for="p">Wi-Fi password</label>'
             '<input id="p" name="password" type="password" autocomplete="off">'
             + mac
             + '<input type="hidden" name="tz" id="tz">'
             '<button type="submit">Connect</button></form>'
             '<script>try{document.getElementById("tz").value='
-            'Intl.DateTimeFormat().resolvedOptions().timeZone||""}catch(e){}</script>')
+            'Intl.DateTimeFormat().resolvedOptions().timeZone||""}catch(e){}'
+            'var n=document.getElementById("n"),b=document.getElementById("otherbox");'
+            'function other(){b.hidden=n.value!=="";if(!b.hidden)document.getElementById("o").focus()}'
+            'n.onchange=other;b.hidden=n.value!=="";</script>')
     return page('Set up Wi-Fi', body)
 
 
 def connecting_page(network):
-    return page('Connecting…', f'<p>Connecting to <b>{html.escape(network)}</b>… look at your '
-                'Mac\'s screen to see how it went.</p><p>You can close this page.</p>')
+    return page('Connecting…', f'<p>Joining <b>{html.escape(network)}</b>…</p>'
+                '<p>This setup network goes away once your Mac is connected.</p>')
 
 
 def rom_page(state, error=None):

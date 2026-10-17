@@ -50,6 +50,8 @@ NM_POLL_S = 5          # how often to ask NetworkManager while waiting
 JOIN_DELAY_S = 3       # let the phone get the "Connecting…" page first
 WIRED_GRACE_S = 30     # with a USB Ethernet adapter, wait this long for a wired address
 SCAN_TRIES = 3         # Wi-Fi may not be ready at boot: scan again if nothing turns up
+# The phases with a page to serve. Outside them nothing listens on port 80.
+SERVE_PHASES = ('hotspot', 'connecting', 'rom', 'starting')
 
 
 @dataclass
@@ -396,9 +398,13 @@ class Controller:
             if s['error']:
                 lines = ["That ROM didn't start the Mac.", 'Try another.', '']
             lines += ['On a phone or computer on', 'your Wi-Fi, open:', host]
+            qr = None
             if s['ip']:
-                lines.append(f"or http://{s['ip']}")
-            return {'title': 'Almost done', 'lines': lines, 'qr': None}
+                # The code opens the page by address: .local names don't
+                # resolve on every network.
+                qr = f"http://{s['ip']}/"
+                lines += [f"or http://{s['ip']}", '', 'or scan the code.']
+            return {'title': 'Almost done', 'lines': lines, 'qr': qr}
         if phase == 'starting':
             return {'title': 'Starting up…', 'lines': [], 'qr': None}
         if phase == 'preparing':
@@ -587,19 +593,45 @@ class Controller:
             return None
 
 
+class WebServer:
+    """The setup pages' web server, listening only while setup has a page to
+    show (SERVE_PHASES). sync() starts or stops it to match; it runs after
+    every tick."""
+
+    def __init__(self, controller, factory, port=80):
+        self.controller = controller
+        self.factory = factory      # (controller, port) -> a server with serve_forever()
+        self.port = port
+        self.server = None
+
+    def sync(self):
+        wanted = self.controller.state()['phase'] in SERVE_PHASES
+        if wanted and self.server is None:
+            try:
+                self.server = self.factory(self.controller, self.port)
+            except OSError as e:    # port busy: try again on the next tick
+                print(f'mac-setup: web server: {e}', file=sys.stderr, flush=True)
+                return
+            threading.Thread(target=self.server.serve_forever, daemon=True).start()
+        elif not wanted and self.server is not None:
+            server, self.server = self.server, None
+            server.shutdown()
+            server.server_close()
+
+
 # --- command line ------------------------------------------------------------
 def serve():
     import mac_setup_web
     RUN_DIR.mkdir(parents=True, exist_ok=True)
     STATE_DIR.mkdir(parents=True, exist_ok=True)
     controller = Controller(load_config(), NM(), System())
-    server = mac_setup_web.make_server(controller, 80)
-    threading.Thread(target=server.serve_forever, daemon=True).start()
+    web = WebServer(controller, mac_setup_web.make_server)
     print(f'mac-setup running, hotspot name "{controller.ssid}"', flush=True)
     while True:
         try:
             controller.tick()
-        except Exception as e:  # keep serving; the next tick tries again
+            web.sync()
+        except Exception as e:  # keep going; the next tick tries again
             print(f'mac-setup: {_describe(e)}', file=sys.stderr, flush=True)
         time.sleep(1)
 

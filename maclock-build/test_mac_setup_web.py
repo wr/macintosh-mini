@@ -16,7 +16,7 @@ import mac_setup_web as web
 from test_mac_setup_rom import make_rom
 
 GUIDE = ('Need a ROM? <a href="https://www.redundantrobot.com/sheepshaver">Redundant Robot\'s '
-         'emulator guide</a> explains which one to use and where to find it. The Performa ROM works best.')
+         'emulator guide</a> explains which one to use and where to find it. The <b>Performa ROM</b> works best.')
 
 
 class FakeController:
@@ -114,7 +114,7 @@ class Portal(Server):
         _, page = self.post_form('/connect', {'network': 'Home', 'password': 'hunter222',
                                               'mac_password': 'applepie', 'mac_password2': 'applepie',
                                               'tz': 'Europe/Berlin'})
-        self.assertIn("look at your Mac", page)
+        self.assertIn('Joining <b>Home</b>', page)
         req = self.ctl.wifi[0]
         self.assertEqual((req.ssid, req.wifi_password, req.hidden, req.mac_password, req.timezone),
                          ('Home', 'hunter222', False, 'applepie', 'Europe/Berlin'))
@@ -123,6 +123,37 @@ class Portal(Server):
         self.start(needs_password=False)
         self.post_form('/connect', {'network': '', 'other': 'Attic', 'password': ''})
         self.assertEqual((self.ctl.wifi[0].ssid, self.ctl.wifi[0].hidden), ('Attic', True))
+
+
+class Polish(Server):
+    """Fixes from trying the pages on an iPhone."""
+
+    def test_buttons_have_visible_text(self):
+        self.start()
+        _, page = self.request('GET', '/')
+        self.assertRegex(page, r'button\{[^}]*color:#000')
+        self.assertIn('color-scheme" content="light"', page)
+
+    def test_other_name_box_hidden_until_other_chosen(self):
+        self.start()
+        _, page = self.request('GET', '/')
+        self.assertIn('id="otherbox" hidden', page)
+        self.assertIn('otherbox', page.split('<script>')[1])
+
+    def test_other_name_box_shown_when_no_networks_found(self):
+        self.start()
+        self.ctl.s['networks'] = []
+        _, page = self.request('GET', '/')
+        self.assertIn('id="otherbox"', page)
+        self.assertNotIn('id="otherbox" hidden', page)
+
+    def test_connecting_page_says_the_network_goes_away(self):
+        self.start()
+        _, page = self.post_form('/connect', {'network': 'Home', 'password': 'hunter222',
+                                              'mac_password': 'applepie', 'mac_password2': 'applepie'})
+        self.assertNotIn('how it went', page)
+        self.assertIn('Joining <b>Home</b>', page)
+        self.assertIn('goes away', page)
 
 
 class ParseForm(unittest.TestCase):
@@ -137,6 +168,10 @@ class ParseForm(unittest.TestCase):
     def test_long_ssid(self):
         with self.assertRaises(web.FormError):
             self.parse({'network': 'x' * 33})
+
+    def test_picked_network_wins_over_leftover_typed_name(self):
+        r = self.parse({'network': 'Home', 'other': 'Attic'})
+        self.assertEqual((r.ssid, r.hidden), ('Home', False))
 
     def test_hex_psk_allowed(self):
         self.assertEqual(self.parse({'network': 'Home', 'password': 'a' * 64}).wifi_password, 'a' * 64)
