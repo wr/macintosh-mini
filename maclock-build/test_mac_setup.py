@@ -105,6 +105,9 @@ class FakeSystem:
     def beep(self):
         self.calls.append('beep')
 
+    def sound(self, name):
+        self.calls.append(('sound', name))
+
 
 class Clock:
     def __init__(self):
@@ -325,41 +328,105 @@ class Rom(Base):
 
 class Screens(Base):
 
-    def test_screen_for_each_phase(self):
+    def test_join_screen_is_step_1_with_network_qr(self):
         c = self.make(saved=())
         c.tick()
-        s = c.state()
-        hot = c.screen_for(s)
-        self.assertEqual(hot['title'], 'Set up Wi-Fi')
-        self.assertIn('Macintosh Mini 4E2A', hot['lines'])
-        self.assertEqual(hot['qr'], 'WIFI:T:nopass;S:Macintosh Mini 4E2A;;')
-        for phase, title in (('waiting', 'Looking for Wi-Fi'), ('connecting', 'Connecting'),
-                             ('rom', 'Almost done'), ('starting', 'Starting up')):
-            screen = c.screen_for(dict(s, phase=phase, network='Home',
-                                       url='http://macintosh-mini-4e2a.local/', ip='192.168.1.23'))
-            self.assertTrue(screen['title'].startswith(title), screen['title'])
-            if phase != 'rom':
-                self.assertIsNone(screen['qr'])
+        sc = c.screen_for(c.state())
+        self.assertEqual((sc['title'], sc['step']), ('Set up Wi-Fi', 1))
+        self.assertEqual(sc['qr'], 'WIFI:T:nopass;S:Macintosh Mini 4E2A;;')
+        self.assertIn('**Macintosh Mini 4E2A', sc['lines'])
+        self.assertIsNone(sc['note'])
 
-    def test_rom_screen_shows_name_and_ip(self):
-        c = self.make(saved=['Home'], ip='192.168.1.23', rom=False)
-        c.tick()
-        lines = c.screen_for(c.state())['lines']
-        self.assertIn('macintosh-mini-4e2a.local', lines)
-        self.assertIn('or http://192.168.1.23', lines)
-
-    def test_rom_screen_has_qr_to_the_page(self):
-        c = self.make(saved=['Home'], ip='192.168.1.23', rom=False)
-        c.tick()
-        screen = c.screen_for(c.state())
-        self.assertEqual(screen['qr'], 'http://192.168.1.23/')
-        self.assertIn('or scan the code.', screen['lines'])
-
-    def test_button_hotspot_says_how_to_cancel(self):
+    def test_button_hotspot_note_says_how_to_cancel(self):
         c = self.make(saved=['Home'], rom=True)
         (self.run_dir / 'requested').touch()
         c.tick()
-        self.assertIn('Press the left button to cancel.', ' '.join(c.screen_for(c.state())['lines']))
+        self.assertEqual(c.screen_for(c.state())['note'], 'Press left button to cancel')
+
+    def test_failed_join_screen(self):
+        c = self.make(saved=(), rom=True, join_ok=False)
+        c.tick()
+        c.submit_wifi(req())
+        sc = c.screen_for(c.state())
+        self.assertEqual((sc['title'], sc['step']), ("Couldn't join", 1))
+        self.assertIn("Couldn't join Home.", sc['lines'])
+        self.assertIsNotNone(sc['qr'])
+
+    def test_rom_screen_is_step_2_and_says_connected(self):
+        c = self.make(saved=['Home'], ip='192.168.1.23', rom=False)
+        c.tick()
+        sc = c.screen_for(c.state())
+        self.assertEqual((sc['title'], sc['step']), ('Add a ROM', 2))
+        self.assertEqual(sc['lines'][0], '++Wi-Fi connected.')
+        self.assertIn('**http://192.168.1.23', sc['lines'])
+        self.assertEqual(sc['qr'], 'http://192.168.1.23/')
+
+    def test_rom_error_screen(self):
+        c = self.make(saved=['Home'], ip='192.168.1.23', rom=False)
+        c.tick()
+        c.submit_rom(make_rom(1024 * 1024))
+        self.rom_path.unlink()
+        self.clock.now = 10
+        c.tick()
+        lines = c.screen_for(c.state())['lines']
+        self.assertIn("That ROM didn't start", lines)
+
+    def test_screens_without_a_qr_have_an_icon(self):
+        c = self.make(saved=())
+        c.tick()
+        s = c.state()
+        for phase, icon in (('connecting', 'wifi'), ('waiting', 'wifi'), ('preparing', 'wifi'),
+                            ('starting', 'check')):
+            sc = c.screen_for(dict(s, phase=phase, network='Home'))
+            self.assertIsNone(sc['qr'], phase)
+            self.assertEqual(sc['icon'], icon, phase)
+
+    def test_lines_fit_beside_a_qr(self):
+        c = self.make(saved=())
+        c.tick()
+        s = c.state()
+        for phase in ('hotspot', 'rom'):
+            for line in c.screen_for(dict(s, phase=phase, network='Home', ip='192.168.100.200'))['lines']:
+                self.assertLessEqual(len(line.lstrip('*+')), 24, line)
+
+
+class Sounds(Base):
+    """Setup says out loud when something happened: the screen can look the same."""
+
+    def sounds(self):
+        return [c[1] for c in self.sys.calls if isinstance(c, tuple) and c[0] == 'sound']
+
+    def test_ready_sound_when_hotspot_up(self):
+        c = self.make(saved=())
+        c.tick()
+        self.assertEqual(self.sounds(), ['ready'])
+
+    def test_connected_sound_with_rom(self):
+        c = self.make(saved=(), rom=True)
+        c.tick()
+        c.submit_wifi(req())
+        self.assertEqual(self.sounds(), ['ready', 'connected'])
+
+    def test_connected_and_next_sounds_without_rom(self):
+        c = self.make(saved=(), rom=False)
+        c.tick()
+        c.submit_wifi(req())
+        self.assertEqual(self.sounds(), ['ready', 'connected', 'next'])
+
+    def test_failed_sound_on_wrong_password(self):
+        c = self.make(saved=(), rom=True, join_ok=False)
+        c.tick()
+        c.submit_wifi(req())
+        self.assertEqual(self.sounds(), ['ready', 'failed', 'ready'])
+
+    def test_failed_sound_when_rom_does_not_start(self):
+        c = self.make(saved=['Home'], ip='192.168.1.23', rom=False)
+        c.tick()
+        c.submit_rom(make_rom(1024 * 1024))
+        self.rom_path.unlink()
+        self.clock.now = 10
+        c.tick()
+        self.assertEqual(self.sounds(), ['failed'])
 
 
 class Review(Base):

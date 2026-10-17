@@ -267,21 +267,50 @@ class System:
                    for name in ('BasiliskII', 'SheepShaver'))
 
     def beep(self):
-        import math
-        import wave
-        path = RUN_DIR / 'beep.wav'
+        self.sound('beep')
+
+    def sound(self, name):
+        # Short tones made here (no Apple sounds), so setup can be heard as
+        # well as seen: the screen alone can look as if nothing happened.
+        path = RUN_DIR / f'{name}.wav'
         if not path.exists():
-            rate = 22050
-            frames = bytearray()
-            for i in range(int(rate * 0.18)):
-                v = int(9000 * math.sin(2 * math.pi * 880 * i / rate))
-                frames += v.to_bytes(2, 'little', signed=True)
-            with wave.open(str(path), 'wb') as w:
-                w.setnchannels(1)
-                w.setsampwidth(2)
-                w.setframerate(rate)
-                w.writeframes(bytes(frames))
-        _run(['aplay', '-q', str(path)])
+            write_tones(path, SOUNDS[name])
+        # One at a time and to the end: the Pi's audio plays one sound at once,
+        # and "connected" is followed straight away by "next".
+        try:
+            subprocess.run(['aplay', '-q', str(path)], timeout=5,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except (subprocess.SubprocessError, OSError):
+            pass
+
+
+# (frequency in Hz, seconds); 0 Hz is a rest.
+SOUNDS = {
+    'beep': ((880, .15),),                                         # button hold registered
+    'ready': ((659, .12), (988, .22)),                             # setup network is up
+    'connected': ((523, .1), (659, .1), (784, .1), (1047, .3)),    # joined the Wi-Fi
+    'next': ((0, .3), (1319, .12), (0, .06), (1319, .2)),          # ...and there's a step 2
+    'failed': ((392, .2), (262, .4)),                              # didn't work
+}
+
+
+def write_tones(path, notes, rate=22050):
+    import math
+    import wave
+    frames = bytearray()
+    for freq, secs in notes:
+        n = int(rate * secs)
+        for i in range(n):
+            env = min(1.0, i / (rate * .005)) * (1 - i / n) ** 1.5 if freq else 0
+            v = int(9000 * env * math.sin(2 * math.pi * freq * i / rate))
+            frames += v.to_bytes(2, 'little', signed=True)
+    tmp = Path(str(path) + '.tmp')
+    with wave.open(str(tmp), 'wb') as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(rate)
+        w.writeframes(bytes(frames))
+    tmp.replace(path)
 
 
 class Controller:
@@ -374,42 +403,45 @@ class Controller:
 
     def screen_for(self, s):
         phase = s['phase']
-        host = f"{s['hostname']}.local"
+        ssid = s['ssid']
+        blank = {'title': '', 'step': None, 'icon': None, 'lines': [], 'qr': None, 'note': None}
+
+        def screen(**kw):
+            return dict(blank, **kw)
+        note = 'Press left button to cancel' if s['reason'] == 'button' else None
         if phase == 'hotspot':
             if s['error']:
-                title = "Couldn't join"
-                lines = [f"Couldn't join {s['network']}.", 'Join the Wi-Fi network',
-                         s['ssid'], 'again to try once more.']
-            else:
-                title = 'Set up Wi-Fi'
-                lines = ['On your phone, join the', 'Wi-Fi network', s['ssid'], '',
-                         'or scan the code.']
-            if s['reason'] == 'button':
-                lines += ['', 'Press the left button to cancel.']
-            return {'title': title, 'lines': lines, 'qr': wifi_qr(s['ssid'])}
+                return screen(title="Couldn't join", step=1, qr=wifi_qr(ssid), note=note,
+                              lines=[f"Couldn't join {s['network']}.", 'Check the password and',
+                                     'join this network again:', '**' + ssid])
+            return screen(title='Set up Wi-Fi', step=1, qr=wifi_qr(ssid), note=note,
+                          lines=['Join this Wi-Fi network', 'on your phone:', '**' + ssid, '',
+                                 'or scan the code.'])
         if phase == 'connecting':
-            return {'title': 'Connecting…', 'lines': [f"Joining {s['network']}."], 'qr': None}
+            return screen(title='Connecting…', step=1, icon='wifi',
+                          lines=['Joining', '**' + (s['network'] or ''), '', 'One moment…'])
         if phase == 'waiting':
-            return {'title': 'Looking for Wi-Fi…',
-                    'lines': ['To use a different network,', 'hold the left button for',
-                              '10 seconds.'], 'qr': None}
+            return screen(title='Looking for Wi-Fi…', icon='wifi',
+                          lines=['To use a different', 'network, hold the left', 'button for 10 seconds.'])
         if phase == 'rom':
-            lines = []
             if s['error']:
-                lines = ["That ROM didn't start the Mac.", 'Try another.', '']
-            lines += ['On a phone or computer on', 'your Wi-Fi, open:', host]
-            qr = None
+                lines = ["That ROM didn't start", 'the Mac. Try another.', '']
+            else:
+                lines = ['++Wi-Fi connected.', '']
             if s['ip']:
                 # The code opens the page by address: .local names don't
                 # resolve on every network.
-                qr = f"http://{s['ip']}/"
-                lines += [f"or http://{s['ip']}", '', 'or scan the code.']
-            return {'title': 'Almost done', 'lines': lines, 'qr': qr}
+                return screen(title='Add a ROM', step=2, qr=f"http://{s['ip']}/",
+                              lines=lines + ['Scan the code, or open', f"**http://{s['ip']}",
+                                             'on a computer.'])
+            return screen(title='Add a ROM', step=2, icon='wifi',
+                          lines=lines + ['On a computer, open', f"**{s['hostname']}.local"])
         if phase == 'starting':
-            return {'title': 'Starting up…', 'lines': [], 'qr': None}
+            return screen(title='Starting up…', icon='check',
+                          lines=['Got the ROM.', 'Listen for the chime!'])
         if phase == 'preparing':
-            return {'title': 'Wi-Fi setup', 'lines': ['One moment…'], 'qr': None}
-        return {'title': '', 'lines': [], 'qr': None}
+            return screen(title='Wi-Fi setup', icon='wifi', lines=['One moment…'])
+        return blank
 
     def _write_status(self):
         s = self.state()
@@ -501,6 +533,7 @@ class Controller:
             return
         self.phase = 'hotspot'
         self.hotspot_since = self.last_client = self.clock()
+        self.system.sound('ready')
 
     def _end_button_setup(self):
         self.nm.stop_hotspot()
@@ -516,6 +549,7 @@ class Controller:
             self._clear('rom-trial')
             self.phase = 'rom'
             self.error = "That ROM didn't start the Mac. Try another."
+            self.system.sound('failed')
             self.ip = self.nm.ip()
         elif now - self.trial_started >= TRIAL_S and self.system.emulator_running():
             self._clear('rom-trial')
@@ -561,12 +595,15 @@ class Controller:
             if ok:
                 self._clear('requested')
                 self.reason = None
+                self.system.sound('connected')
                 if self.has_rom():
                     self.phase = 'off'
                 else:
                     self.ip = self.nm.ip()
                     self.phase = 'rom'
+                    self.system.sound('next')    # there's a second step
             else:
+                self.system.sound('failed')
                 self._start_setup(self.reason or 'first-run',
                                   error=f"Couldn't join {req.ssid}. Check the password and try again.")
             self._write_status()

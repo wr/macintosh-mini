@@ -25,13 +25,61 @@ from pathlib import Path
 FONT_DIR = '/usr/share/consolefonts'
 FONTS = ('Uni2-TerminusBold24x12.psf.gz', 'Lat15-TerminusBold24x12.psf.gz',
          'Uni2-Terminus24x12.psf.gz', 'Lat15-Terminus24x12.psf.gz')
+HEAD_FONTS = ('Uni2-TerminusBold32x16.psf.gz', 'Lat15-TerminusBold32x16.psf.gz',
+              'Uni2-Terminus32x16.psf.gz', 'Lat15-Terminus32x16.psf.gz')
 FB_DIR = '/sys/class/graphics/fb0'
 FB_DEV = '/dev/fb0'
 FBCON_ROTATE = '/sys/class/graphics/fbcon/rotate'
-MARGIN = 24
-QR_MAX = 260         # largest the QR code is drawn, in pixels
 DONE_S = 2           # setup must read as over this long before the screen exits
-STARTING = {'title': 'Wi-Fi setup', 'lines': ['Starting setup…'], 'qr': None}
+STARTING = {'title': 'Wi-Fi setup', 'step': None, 'icon': 'wifi', 'lines': ['Starting setup…'],
+            'qr': None, 'note': None}
+
+# Layout of the 640x480 screen: a classic-Mac window on a dotted desktop.
+WINDOW = (28, 22, 612, 458)   # x0, y0, x1, y1 (x1, y1 exclusive)
+TITLE_BAR = 26                # height of the striped title bar
+BAR_TITLE = 'Macintosh Mini Setup'
+LEFT_COL = 250                # QR code or icon, from the window's left edge
+PAD = 18                      # inside the window
+QR_MAX = 220                  # largest the QR code is drawn, in pixels
+ICON_SCALE = 6                # 16-pixel icons drawn 96 pixels wide
+
+# Icons, 16x16, drawn for this project.
+ICONS = {
+    'wifi': (
+        '................',
+        '................',
+        '.....######.....',
+        '...##......##...',
+        '.##..........##.',
+        '#..............#',
+        '......####......',
+        '....##....##....',
+        '..##........##..',
+        '................',
+        '......####......',
+        '.....#....#.....',
+        '................',
+        '.......##.......',
+        '.......##.......',
+        '................'),
+    'check': (
+        '.....######.....',
+        '...##......##...',
+        '..#..........#..',
+        '.#...........##.',
+        '.#..........#.#.',
+        '#..........#...#',
+        '#.........#....#',
+        '#..#.....#.....#',
+        '#...#...#......#',
+        '#....#.#.......#',
+        '.#....#.......#.',
+        '.#............#.',
+        '..#..........#..',
+        '...##......##...',
+        '.....######.....',
+        '................'),
+}
 
 
 # --- QR code -------------------------------------------------------------------
@@ -109,8 +157,8 @@ def _psf2_table(data, count):
     return table
 
 
-def find_font(font_dir=FONT_DIR):
-    for name in FONTS:
+def find_font(font_dir=FONT_DIR, names=FONTS):
+    for name in names:
         p = os.path.join(font_dir, name)
         if os.path.exists(p):
             return p
@@ -137,25 +185,40 @@ class Canvas:
     def get(self, x, y):
         return self.data[y * self.width + x] == 1
 
-    def fill(self, x, y, w, h):
+    def fill(self, x, y, w, h, ink=1):
         x0, y0 = max(0, x), max(0, y)
         x1, y1 = min(self.width, x + w), min(self.height, y + h)
         if x1 <= x0:
             return
-        run = b'\x01' * (x1 - x0)
+        run = bytes([ink]) * (x1 - x0)
         for yy in range(y0, y1):
             self.data[yy * self.width + x0: yy * self.width + x1] = run
 
 
-def draw_text(canvas, font, x, y, text, scale=1):
+def draw_text(canvas, font, x, y, text, scale=1, ink=1):
     for ch in text:
         for r, row in enumerate(font.glyph(ch)):
             if not row:
                 continue
             for b in range(font.width):
                 if row & (1 << (font.width - 1 - b)):
-                    canvas.fill(x + b * scale, y + r * scale, scale, scale)
+                    canvas.fill(x + b * scale, y + r * scale, scale, scale, ink)
         x += font.width * scale
+
+
+def fit_note(text, chars):
+    """Shorten to at most `chars`, never cutting a word."""
+    if len(text) <= chars:
+        return text
+    cut = text[:chars + 1].rsplit(' ', 1)[0]
+    return cut if len(cut) <= chars else text[:chars]
+
+
+def draw_icon(canvas, name, x, y, scale):
+    for row_y, row in enumerate(ICONS[name]):
+        for col_x, px in enumerate(row):
+            if px == '#':
+                canvas.fill(x + col_x * scale, y + row_y * scale, scale, scale)
 
 
 def wrap(text, chars):
@@ -180,9 +243,41 @@ def wrap(text, chars):
     return out
 
 
-def render(screen, font, width=640, height=480, qr_matrix=qr_matrix):
+def render(screen, font, width=640, height=480, qr_matrix=qr_matrix, head=None):
+    """Draw a setup screen. screen: title, step (1, 2 or None), icon, lines
+    (a line starting ** is drawn white on black), qr (text to encode) and note."""
+    head = head or font
     c = Canvas(width, height)
-    tx0 = MARGIN
+    # Dotted desktop: every other pixel, offset on alternate rows.
+    even, odd = bytes([1, 0]) * (width // 2), bytes([0, 1]) * (width // 2)
+    for y in range(height):
+        c.data[y * width:(y + 1) * width] = even if y % 2 == 0 else odd
+
+    x0, y0, x1, y1 = WINDOW
+    c.fill(x0 + 4, y0 + 4, x1 - x0, y1 - y0)            # drop shadow
+    c.fill(x0, y0, x1 - x0, y1 - y0, 0)                  # window
+    for x, y, w, h in ((x0, y0, x1 - x0, 2), (x0, y1 - 2, x1 - x0, 2),
+                       (x0, y0, 2, y1 - y0), (x1 - 2, y0, 2, y1 - y0)):
+        c.fill(x, y, w, h)
+
+    # Title bar: stripes, a close box, and the title on a white gap.
+    for y in range(y0 + 6, y0 + TITLE_BAR - 4, 2):
+        c.fill(x0 + 6, y, x1 - x0 - 12, 1)
+    c.fill(x0 + 18, y0 + 6, 15, 15, 0)
+    for x, y, w, h in ((x0 + 20, y0 + 7, 11, 1), (x0 + 20, y0 + 19, 11, 1),
+                       (x0 + 20, y0 + 7, 1, 13), (x0 + 30, y0 + 7, 1, 13)):
+        c.fill(x, y, w, h)
+    tw = len(BAR_TITLE) * font.width
+    tx = (x0 + x1 - tw) // 2
+    c.fill(tx - 10, y0 + 2, tw + 20, TITLE_BAR - 2, 0)
+    draw_text(c, font, tx, y0 + 2 + (TITLE_BAR - 2 - font.height) // 2, BAR_TITLE)
+    c.fill(x0, y0 + TITLE_BAR, x1 - x0, 2)
+
+    body_top, body_bottom = y0 + TITLE_BAR + 2 + PAD, y1 - PAD - font.height - 8
+    col_x = x0 + PAD
+    col_w = LEFT_COL - PAD
+
+    # Left column: the QR code, or else an icon.
     if screen.get('qr'):
         try:
             m = qr_matrix(screen['qr'])
@@ -190,31 +285,66 @@ def render(screen, font, width=640, height=480, qr_matrix=qr_matrix):
             m = None
         if m:
             total = len(m) + 4                       # 2-module quiet zone each side
-            module = max(1, min(QR_MAX, height - 2 * MARGIN) // total)
+            module = max(1, min(QR_MAX, col_w, body_bottom - body_top) // total)
             size = module * total
-            x0, y0 = MARGIN, (height - size) // 2
+            qx = col_x + (col_w - size) // 2
+            qy = body_top + (body_bottom - body_top - size) // 2
             for y, row in enumerate(m):
                 for x, dark in enumerate(row):
                     if dark:
-                        c.fill(x0 + (x + 2) * module, y0 + (y + 2) * module, module, module)
-            tx0 = x0 + size + MARGIN
-    centred = tx0 == MARGIN
-    avail = width - MARGIN - tx0
+                        c.fill(qx + (x + 2) * module, qy + (y + 2) * module, module, module)
+    elif screen.get('icon') in ICONS:
+        size = 16 * ICON_SCALE
+        draw_icon(c, screen['icon'], col_x + (col_w - size) // 2,
+                  body_top + (body_bottom - body_top - size) // 2, ICON_SCALE)
 
-    title_scale = 2 if len(screen.get('title') or '') * font.width * 2 <= avail else 1
-    blocks = [(line, title_scale) for line in wrap(screen.get('title') or '', avail // (font.width * title_scale))]
-    blocks.append(('', 1))
+    # Right column: the headline, then the lines.
+    tx0 = x0 + LEFT_COL + 10
+    avail = x1 - PAD - 6 - tx0
+    # A line starting ** is white on black; one starting ++ gets a tick.
+    tick = 32 + 8                                   # check icon at 2x, and a gap
+    blocks = [(t, head, '') for t in wrap(screen.get('title') or '', avail // head.width)]
+    blocks.append(('', font, ''))
     for line in screen.get('lines') or []:
-        blocks += [(part, 1) for part in wrap(line, avail // font.width)]
-
+        kind = line[:2] if line[:2] in ('**', '++') else ''
+        text = line[len(kind):]
+        width = avail - (12 if kind == '**' else tick if kind == '++' else 0)
+        parts = wrap(text, width // font.width)
+        blocks += [(t, font, 'indent' if kind == '++' and i else kind) for i, t in enumerate(parts)]
     gap = font.height // 4
-    total_h = sum(font.height * s + gap for _, s in blocks)
-    y = max(MARGIN, (height - total_h) // 2)
-    for text, scale in blocks:
-        w = len(text) * font.width * scale
-        x = tx0 + (avail - w) // 2 if centred else tx0
-        draw_text(c, font, x, y, text, scale)
-        y += font.height * scale + gap
+    extra = {'**': 6, '++': 32 - font.height}
+    total_h = sum(f.height + gap + max(0, extra.get(kind, 0)) for _, f, kind in blocks)
+    y = max(body_top, body_top + (body_bottom - body_top - total_h) // 2)
+    for text, f, kind in blocks:
+        if kind == '**':
+            c.fill(tx0, y, len(text) * f.width + 12, f.height + 6)
+            draw_text(c, f, tx0 + 6, y + 3, text, ink=0)
+            y += 6
+        elif kind == '++':
+            draw_icon(c, 'check', tx0, y, 2)
+            draw_text(c, f, tx0 + tick, y + (32 - f.height) // 2, text)
+            y += max(0, 32 - f.height)
+        elif kind == 'indent':
+            draw_text(c, f, tx0 + tick, y, text)
+        else:
+            draw_text(c, f, tx0, y, text)
+        y += f.height + gap
+
+    # Bottom row: a note on the left, the step on the right.
+    by = y1 - PAD - font.height
+    step = screen.get('step')
+    label = f'Step {step} of 2' if step else ''
+    dots_x = x1 - PAD - 6 - 2 * 14
+    if screen.get('note'):
+        right = dots_x - 10 - len(label) * font.width - 16 if step else x1 - PAD - 6
+        draw_text(c, font, x0 + PAD, by, fit_note(screen['note'], (right - x0 - PAD) // font.width))
+    if step:
+        for i in range(2):
+            dx, dy = dots_x + i * 16, by + font.height // 2 - 5
+            c.fill(dx, dy, 10, 10)
+            if i + 1 != step:
+                c.fill(dx + 2, dy + 2, 6, 6, 0)
+        draw_text(c, font, dots_x - 10 - len(label) * font.width, by, label)
     return c
 
 
@@ -279,6 +409,8 @@ def main(status_path, requested_path, poll=0.5):
     sys.stdout.flush()
     try:
         font = load_psf(find_font())
+        head_path = find_font(names=HEAD_FONTS)
+        head = load_psf(head_path) if head_path and os.path.exists(head_path) else font
         fw, fh, rot = fb_geometry()
         width, height = (fh, fw) if rot in (1, 3) else (fw, fh)
     except (OSError, ValueError, TypeError, AttributeError):
@@ -306,7 +438,7 @@ def main(status_path, requested_path, poll=0.5):
                 try:
                     if font is None:
                         raise OSError('no font')
-                    blit(render(screen, font, width, height))
+                    blit(render(screen, font, width, height, head=head))
                 except (OSError, ValueError):
                     show_text(screen)
                 last, last_draw = screen, now

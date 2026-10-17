@@ -42,7 +42,7 @@ def psf2(width=10, height=4, glyphs=None, unicode=None):
     return bytes(data)
 
 
-def full_font(width=8, height=16):
+def full_font(width=8, height=16):  # noqa: E302
     # Every printable ASCII glyph is a solid block, so text shows up as ink.
     return scr.Font(width, height, {chr(c): [(1 << width) - 1] * height for c in range(32, 127)})
 
@@ -84,31 +84,72 @@ class Fonts(unittest.TestCase):
 
 
 class Render(unittest.TestCase):
+    """The setup screen: a classic-Mac window on a dotted desktop."""
 
     def qr(self, text):
         return [[(x + y) % 2 == 0 for x in range(25)] for y in range(25)]
 
-    def test_render_size_and_qr_left(self):
-        screen = {'title': 'Set up Wi-Fi', 'lines': ['Join', 'Macintosh Mini 4E2A'], 'qr': 'WIFI:...'}
-        c = scr.render(screen, full_font(), qr_matrix=self.qr)
+    def draw(self, **screen):
+        base = {'title': 'Set up Wi-Fi', 'step': None, 'icon': None, 'lines': [], 'qr': None, 'note': None}
+        base.update(screen)
+        return scr.render(base, full_font(12, 24), head=full_font(16, 32), qr_matrix=self.qr)
+
+    def test_desktop_is_dotted_and_window_is_framed(self):
+        c = self.draw()
+        x0, y0, x1, y1 = scr.WINDOW
         self.assertEqual((c.width, c.height), (640, 480))
-        left = any(c.get(x, y) for x in range(24, 320) for y in range(100, 380))
-        self.assertTrue(left)
-        margin = any(c.get(x, y) for x in range(630, 640) for y in range(480))
-        self.assertFalse(margin)
+        corner = [c.get(x, y) for x in range(4) for y in range(4)]
+        self.assertTrue(any(corner) and not all(corner))          # 50% dither
+        self.assertTrue(all(c.get(x, y0) for x in range(x0, x1)))  # top edge
+        self.assertTrue(all(c.get(x0, y) for y in range(y0, y1)))  # left edge
+        self.assertFalse(c.get(x0 + 20, y1 - 20))                  # white inside
 
-    def test_render_without_qr_centres_text(self):
-        screen = {'title': 'Connecting', 'lines': ['Joining Home.'], 'qr': None}
-        c = scr.render(screen, full_font(), qr_matrix=self.qr)
-        xs = [x for y in range(c.height) for x in range(c.width) if c.get(x, y)]
-        left, right = min(xs), c.width - 1 - max(xs)
-        self.assertLessEqual(abs(left - right), 16)
+    def test_qr_sits_in_the_left_column(self):
+        c = self.draw(qr='x')
+        x0, y0, x1, y1 = scr.WINDOW
+        dark = sum(c.get(x, y) for x in range(x0 + 10, x0 + scr.LEFT_COL) for y in range(y0 + 40, y1 - 40))
+        self.assertGreater(dark, 1000)
 
-    def test_long_line_wraps_inside_canvas(self):
-        screen = {'title': 'T', 'lines': ['word ' * 60], 'qr': 'x'}
-        c = scr.render(screen, full_font(), qr_matrix=self.qr)
-        margin = any(c.get(x, y) for x in range(630, 640) for y in range(480))
-        self.assertFalse(margin)
+    def test_icon_drawn_when_there_is_no_qr(self):
+        with_icon = self.draw(icon='wifi')
+        without = self.draw()
+        self.assertNotEqual(with_icon.data, without.data)
+
+    def test_step_indicator_only_on_steps(self):
+        self.assertNotEqual(self.draw(step=1).data, self.draw().data)
+        self.assertNotEqual(self.draw(step=1).data, self.draw(step=2).data)
+
+    def test_emphasis_line_is_inverted(self):
+        # A thin font, so the black box behind the words outweighs the words.
+        thin = scr.Font(12, 24, {chr(c): [0] * 11 + [0xFFF] + [0] * 12 for c in range(32, 127)})
+        base = {'title': 'T', 'step': None, 'icon': None, 'qr': None, 'note': None}
+        plain = scr.render(dict(base, lines=['Macintosh Mini 4E2A']), thin, head=thin)
+        boxed = scr.render(dict(base, lines=['**Macintosh Mini 4E2A']), thin, head=thin)
+        self.assertGreater(sum(boxed.data), sum(plain.data) + 2000)
+
+    def test_tick_line_draws_an_icon(self):
+        # Thin font: text only ever darkens one row per line, the tick many.
+        thin = scr.Font(12, 24, {chr(c): [0] * 11 + [0xFFF] + [0] * 12 for c in range(32, 127)})
+        base = {'title': '', 'step': None, 'icon': None, 'qr': None, 'note': None}
+        x0, y0, x1, y1 = scr.WINDOW
+
+        def tallest_column(lines):
+            c = scr.render(dict(base, lines=lines), thin, head=thin)
+            return max(sum(c.get(x, y) for y in range(y0 + 30, y1 - 40))
+                       for x in range(x0 + scr.LEFT_COL, x1 - 20))
+        self.assertLessEqual(tallest_column(['Wi-Fi connected.']), 2)
+        self.assertGreaterEqual(tallest_column(['++Wi-Fi connected.']), 8)
+
+    def test_note_is_never_cut_mid_word(self):
+        c = self.draw(step=1, note='Press left button to cancel')
+        self.assertEqual(scr.fit_note('Press the left button to cancel this setup now', 20),
+                         'Press the left')
+
+    def test_text_stays_inside_the_window(self):
+        c = self.draw(qr='x', lines=['word ' * 60], note='Press the left button to cancel.')
+        x0, y0, x1, y1 = scr.WINDOW
+        strip = [c.get(x, y) for x in range(x1 - 10, x1 - 3) for y in range(y0 + 30, y1 - 4)]
+        self.assertFalse(any(strip))
 
 
 class Blit(unittest.TestCase):
