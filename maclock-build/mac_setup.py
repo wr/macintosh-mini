@@ -47,6 +47,8 @@ TRIAL_S = 60           # a new ROM counts once the emulator has run this long
 TRIAL_ABANDON_S = 180  # ...or is forgotten if the emulator never started
 NM_POLL_S = 5          # how often to ask NetworkManager while waiting
 JOIN_DELAY_S = 3       # let the phone get the "Connecting…" page first
+WIRED_GRACE_S = 30     # with a USB Ethernet adapter, wait this long for a wired address
+SCAN_TRIES = 3         # Wi-Fi may not be ready at boot: scan again if nothing turns up
 
 
 @dataclass
@@ -154,15 +156,34 @@ def _run(cmd, **kw):
     return subprocess.run(cmd, capture_output=True, text=True, **kw)
 
 
+def _describe(e):
+    # Never log a command line: joining a network puts its password on one.
+    if isinstance(e, subprocess.SubprocessError) and getattr(e, 'cmd', None):
+        return f'{type(e).__name__} running {e.cmd[0]}'
+    return type(e).__name__ if isinstance(e, subprocess.SubprocessError) else repr(e)
+
+
 class NM:
     """NetworkManager, through nmcli. Never restarts NetworkManager."""
 
     def saved_wifi(self):
-        return parse_saved(_run(['nmcli', '-t', '-f', 'NAME,TYPE', 'connection', 'show']).stdout)
+        r = _run(['nmcli', '-t', '-f', 'NAME,TYPE', 'connection', 'show'])
+        if r.returncode:
+            # Not "no networks": NetworkManager may just be restarting.
+            raise RuntimeError('nmcli could not list connections')
+        return parse_saved(r.stdout)
+
+    def has_wired(self):
+        out = _run(['nmcli', '-t', '-f', 'TYPE,STATE', 'device']).stdout
+        return any(f[0] == 'ethernet' and f[1] not in ('unavailable', 'unmanaged')
+                   for f in (_split_terse(line) for line in out.splitlines()) if len(f) >= 2)
 
     def scan(self):
-        out = _run(['nmcli', '-t', '-f', 'SSID,SIGNAL', 'device', 'wifi', 'list',
-                    '--rescan', 'yes'], timeout=30).stdout
+        try:
+            out = _run(['nmcli', '-t', '-f', 'SSID,SIGNAL', 'device', 'wifi', 'list',
+                        '--rescan', 'yes'], timeout=30).stdout
+        except (subprocess.SubprocessError, OSError):
+            return []
         return parse_scan(out)
 
     def start_hotspot(self, ssid):
@@ -192,7 +213,10 @@ class NM:
             cmd += ['password', password]
         if hidden:
             cmd += ['hidden', 'yes']
-        ok = _run(cmd, timeout=timeout + 15).returncode == 0
+        try:
+            ok = _run(cmd, timeout=timeout + 15).returncode == 0
+        except (subprocess.SubprocessError, OSError):
+            ok = False
         if not ok:
             _run(['nmcli', 'connection', 'delete', 'id', ssid])
         return ok
@@ -212,8 +236,10 @@ class NM:
 class System:
 
     def set_password(self, user, password):
-        _run(['chpasswd'], input=f'{user}:{password}\n')
+        if _run(['chpasswd'], input=f'{user}:{password}\n').returncode:
+            return False
         _run(['passwd', '-u', user])
+        return True
 
     def set_timezone(self, tz):
         _run(['timedatectl', 'set-timezone', tz])
@@ -281,6 +307,7 @@ class Controller:
         self.last_client = 0.0
         self.trial_started = 0.0
         self.last_nm_poll = -1e9
+        self.started_at = None
         self._last_status = None
 
     # --- files -------------------------------------------------------------
@@ -388,6 +415,9 @@ class Controller:
     def tick(self):
         with self.lock:
             now = self.clock()
+            if self.started_at is None:
+                self.started_at = now
+                self._clear('rom-trial')   # left over from before a restart
             if self._flag('cancel'):
                 self._clear('cancel')
                 if self.phase == 'hotspot' and self.reason == 'button':
@@ -402,6 +432,10 @@ class Controller:
                         self._end_button_setup()
             elif self.phase == 'starting':
                 self._check_trial(now)
+            elif self.phase == 'off':
+                if not self.has_rom():          # deleted, or moved aside by the launcher
+                    self.last_nm_poll = now
+                    self._settle()
             elif self.phase in (None, 'preparing', 'waiting', 'rom'):
                 if now - self.last_nm_poll >= NM_POLL_S or self.phase is None:
                     self.last_nm_poll = now
@@ -409,7 +443,21 @@ class Controller:
             self._write_status()
 
     def _settle(self):
-        if not self.nm.saved_wifi():
+        try:
+            saved = self.nm.saved_wifi()
+        except Exception as e:  # ask again at the next poll
+            print(f'mac-setup: {_describe(e)}', file=sys.stderr, flush=True)
+            return
+        if not saved:
+            # No Wi-Fi saved, but a wired connection (USB Ethernet) is not a first run.
+            ip = self.nm.ip()
+            if ip:
+                self.ip = ip
+                self.phase = 'off' if self.has_rom() else 'rom'
+                return
+            if self.nm.has_wired() and self.clock() - self.started_at < WIRED_GRACE_S:
+                self.phase = 'preparing'
+                return
             self._start_setup('first-run')
             return
         if self.has_rom():
@@ -421,15 +469,23 @@ class Controller:
     def _start_setup(self, reason, error=None):
         self.reason = reason
         self.error = error
-        if self.phase is None:
-            self.phase = 'preparing'
-            self._write_status()
-        self.networks = self.nm.scan()
+        self._clear('rom-trial')     # a ROM still on trial is abandoned
+        self.phase = 'preparing'
+        self._write_status()         # the screen says "One moment…" during the scan
+        self.networks = []
+        for attempt in range(SCAN_TRIES):
+            try:
+                self.networks = self.nm.scan()
+            except Exception as e:
+                print(f'mac-setup: scan: {_describe(e)}', file=sys.stderr, flush=True)
+            if self.networks:
+                break
+            if attempt < SCAN_TRIES - 1:
+                self.sleep(3)
         try:
             self.nm.start_hotspot(self.ssid)
         except Exception as e:  # tried again on the next tick
-            print(f'mac-setup: {e}', file=sys.stderr, flush=True)
-            self.phase = 'preparing'
+            print(f'mac-setup: {_describe(e)}', file=sys.stderr, flush=True)
             return
         self.phase = 'hotspot'
         self.hotspot_since = self.last_client = self.clock()
@@ -463,23 +519,32 @@ class Controller:
             if self.phase != 'hotspot':
                 return
             if self.needs_password() and req.mac_password:
-                self.system.set_password(self.config.user, req.mac_password)
+                if not self.system.set_password(self.config.user, req.mac_password):
+                    self.error = "Couldn't set the Mac's password. Try again."
+                    self._write_status()
+                    return self.error
                 (self.state_dir / 'needs-password').unlink()
-            if req.timezone:
-                self.system.set_timezone(req.timezone)
-                cc = country_for_timezone(req.timezone, self.zone_tab())
-                if cc:
-                    self.system.set_country(cc)
             self.phase = 'connecting'
             self.network = req.ssid
             self.error = None
             self._write_status()
         self.spawn(lambda: self._join(req))
+        return None
 
     def _join(self, req):
-        self.sleep(JOIN_DELAY_S)
-        self.nm.stop_hotspot()
-        ok = self.nm.join(req.ssid, req.wifi_password, req.hidden)
+        try:
+            self.sleep(JOIN_DELAY_S)
+            self.nm.stop_hotspot()
+            # After the hotspot is down: a new Wi-Fi country can reset the radio.
+            if req.timezone:
+                self.system.set_timezone(req.timezone)
+                cc = country_for_timezone(req.timezone, self.zone_tab())
+                if cc:
+                    self.system.set_country(cc)
+            ok = self.nm.join(req.ssid, req.wifi_password, req.hidden)
+        except Exception as e:
+            print(f'mac-setup: joining failed: {_describe(e)}', file=sys.stderr, flush=True)
+            ok = False
         with self.lock:
             if ok:
                 self._clear('requested')
@@ -529,7 +594,7 @@ def serve():
         try:
             controller.tick()
         except Exception as e:  # keep serving; the next tick tries again
-            print(f'mac-setup: {e!r}', file=sys.stderr, flush=True)
+            print(f'mac-setup: {_describe(e)}', file=sys.stderr, flush=True)
         time.sleep(1)
 
 

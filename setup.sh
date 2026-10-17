@@ -359,6 +359,16 @@ setup_suffix() {
   printf '%s' "${s: -4}"
 }
 
+# The ROM the installed emulator's prefs point at, as an absolute path, or
+# nothing. Safe under `set -e -o pipefail` when a prefs file is missing.
+installed_rom_path() {
+  local prefs=$HOME/.basilisk_ii_prefs rom
+  [[ $INSTALL_SHEEPSHAVER -eq 1 ]] && prefs=$HOME/.sheepshaver_prefs
+  rom=$(sed -n 's/^rom //p' "$prefs" 2>/dev/null | head -1) || true
+  [[ -n $rom && $rom != /* ]] && rom=$HOME/$rom
+  printf '%s' "$rom"
+}
+
 # --- Sudo bootstrap --------------------------------------------------------
 ensure_sudo() {
   if sudo -n true 2>/dev/null; then return; fi
@@ -1771,6 +1781,8 @@ if [ "$1" = needed ]; then
   [ -e /run/mac-setup/requested ] && exit 0
   saved=$(nmcli -t -f NAME,TYPE connection show 2>/dev/null) || exit 1
   printf '%s\n' "$saved" | grep -v '^mac-setup-hotspot:' | grep -q ':802-11-wireless$' && exit 1
+  # No Wi-Fi saved, but on a wired network (USB Ethernet): not a first run.
+  nmcli -t -f TYPE connection show --active 2>/dev/null | grep -q '^802-3-ethernet$' && exit 1
   exit 0
 fi
 exec python3 /usr/local/lib/mac-setup/mac_setup.py "$@"
@@ -1778,11 +1790,10 @@ WRAPPER
     sudo chmod 755 /usr/local/bin/mac-setup
     printf 'USER=%s\nHOME=%s\nEMULATOR=%s\nPREFS=%s\n' "$USER" "$HOME" "$emulator" "$prefs" \
       | sudo tee /etc/mac-setup.conf >/dev/null
-    # On the hotspot every name points at the Mac, and phones are told where
-    # the setup page is (DHCP option 114, RFC 8910).
+    # On the hotspot every name points at the Mac, so phones' "is there
+    # internet?" checks land on the setup page and they pop it up.
     sudo install -d /etc/NetworkManager/dnsmasq-shared.d
     printf '%s\n' '# Wi-Fi setup hotspot (mac-setup)' 'address=/#/10.42.0.1' \
-      'dhcp-option=114,"http://10.42.0.1/"' \
       | sudo tee /etc/NetworkManager/dnsmasq-shared.d/mac-setup.conf >/dev/null
     # The setup screen sends people to <hostname>.local, which avahi answers.
     # Installs before 1.7.0 masked it with the performance options.
@@ -1815,7 +1826,7 @@ stop_gauge
 # --hotspot-setup: erase what belongs to whoever ran this, then shut down. It
 # runs detached, because forgetting the Wi-Fi ends this SSH session.
 if [[ $HOTSPOT_SETUP -eq 1 ]]; then
-  ho_rom=$(sed -n 's/^rom //p' "$HOME/.basilisk_ii_prefs" "$HOME/.sheepshaver_prefs" 2>/dev/null | head -1)
+  ho_rom=$(installed_rom_path)
   sudo tee /run/mac-setup-handoff.sh >/dev/null <<'HANDOFF'
 #!/bin/bash
 # Prepare a Mac for phone setup (setup.sh --hotspot-setup). Args: user home log rom
@@ -1833,21 +1844,37 @@ printf '%s\n' '# Prepared for phone setup: log in with the password chosen there
 rm -f /etc/ssh/sshd_config.d/50-cloud-init.conf
 systemctl enable ssh 2>/dev/null
 passwd -l "$user"
-rm -f "$home/.ssh/authorized_keys" "$home/.bash_history" "$home/.ROM.rejected" "$log"
+rm -rf "$home/.ssh"
+rm -f /root/.ssh/authorized_keys "$home/.bash_history" "$home/.ROM.rejected" "$log"
+# No ROM ships: the one in prefs, and anything mac-preflight would take for one.
 [ -n "$rom" ] && rm -f "$rom"
+find "$home" -maxdepth 1 -type f \( -size 524288c -o -size 1048576c -o -size 4194304c \) \
+  ! -name '*.hda' ! -name '*.dsk' ! -name '*.img' ! -name '*.hfv' -delete
+# A hand-set location for night dimming is a precise address.
+[ -f /etc/default/brightness-control ] &&
+  sed -i 's/^LAT=.*/LAT=/;s/^LON=.*/LON=/' /etc/default/brightness-control
 install -d /var/lib/mac-setup
 touch /var/lib/mac-setup/needs-password
 # cloud-init carried the preparer's Wi-Fi and login: turn it off and clear it.
 touch /etc/cloud/cloud-init.disabled
 rm -rf /var/lib/cloud
-rm -f /boot/firmware/user-data /boot/firmware/network-config
+rm -f /boot/firmware/user-data /boot/firmware/network-config /var/log/cloud-init*.log
 # Forget every Wi-Fi network. If this session is over Wi-Fi, it ends here.
 nmcli -t -f UUID,TYPE connection show | awk -F: '$2 == "802-11-wireless" { print $1 }' |
   while read -r uuid; do nmcli connection delete uuid "$uuid"; done
 grep -ls '^type=wifi' /etc/NetworkManager/system-connections/* 2>/dev/null | xargs -r rm -f
 for f in /etc/netplan/*.yaml; do grep -qs 'wifis:' "$f" && rm -f "$f"; done
-sleep 5
+# What NetworkManager remembers about those networks: access points seen (with
+# the network name, enough to find a home on public Wi-Fi maps) and leases.
+rm -f /var/lib/NetworkManager/seen-bssids /var/lib/NetworkManager/timestamps \
+  /var/lib/NetworkManager/*.lease
+# End the preparer's sessions now: a shell saves its history when it is hung
+# up on at shutdown, after the rm above.
+pkill -KILL -u "$user"
+sleep 2
 rm -f "$home/.bash_history"
+journalctl --rotate >/dev/null 2>&1
+journalctl --vacuum-time=1s >/dev/null 2>&1
 sync
 poweroff
 HANDOFF

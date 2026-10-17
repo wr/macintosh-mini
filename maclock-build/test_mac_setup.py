@@ -28,17 +28,31 @@ class FakeNM:
         self.saved = list(saved)
         self._ip = ip
         self._scan = list(scan)
+        self.scans = None        # optional list of results, one per scan
+        self.on_scan = None      # optional hook run at scan time
         self.join_ok = join_ok
+        self.join_error = None   # exception join() raises
+        self.saved_error = None  # exception saved_wifi() raises
+        self.wired = False
         self.calls = []
         self.hotspot = None
         self.clients = 0
 
     def saved_wifi(self):
         self.calls.append('saved')
+        if self.saved_error:
+            raise self.saved_error
         return list(self.saved)
+
+    def has_wired(self):
+        return self.wired
 
     def scan(self):
         self.calls.append('scan')
+        if self.on_scan:
+            self.on_scan()
+        if self.scans is not None:
+            return list(self.scans.pop(0)) if self.scans else []
         return list(self._scan)
 
     def start_hotspot(self, ssid):
@@ -51,6 +65,8 @@ class FakeNM:
 
     def join(self, ssid, password, hidden, timeout=45):
         self.calls.append(('join', ssid, password, hidden))
+        if self.join_error:
+            raise self.join_error
         if self.join_ok:
             self.saved.append(ssid)
             self._ip = '192.168.1.23'
@@ -68,9 +84,11 @@ class FakeSystem:
     def __init__(self):
         self.calls = []
         self.emulator = False
+        self.password_ok = True
 
     def set_password(self, user, password):
         self.calls.append(('password', user, password))
+        return self.password_ok
 
     def set_timezone(self, tz):
         self.calls.append(('tz', tz))
@@ -334,6 +352,121 @@ class Screens(Base):
         (self.run_dir / 'requested').touch()
         c.tick()
         self.assertIn('Press the left button to cancel.', ' '.join(c.screen_for(c.state())['lines']))
+
+
+class Review(Base):
+    """Cases from the final review."""
+
+    def test_rom_gone_while_off_resettles(self):
+        c = self.make(saved=['Home'], ip='192.168.1.23', rom=True)
+        c.tick()
+        self.assertEqual(c.state()['phase'], 'off')
+        self.rom_path.unlink()
+        self.clock.now = 2
+        c.tick()
+        self.assertEqual(c.state()['phase'], 'rom')
+
+    def test_stale_rom_trial_cleared_on_start(self):
+        c = self.make(saved=['Home'], rom=True)
+        (self.run_dir / 'rom-trial').touch()
+        c.tick()
+        self.assertFalse((self.run_dir / 'rom-trial').exists())
+
+    def test_hold_during_trial_clears_trial(self):
+        c = self.make(saved=['Home'], ip='192.168.1.23', rom=False)
+        c.tick()
+        c.submit_rom(make_rom(1024 * 1024))
+        (self.run_dir / 'requested').touch()
+        self.clock.now = 10
+        c.tick()
+        self.assertEqual(c.state()['phase'], 'hotspot')
+        self.assertFalse((self.run_dir / 'rom-trial').exists())
+
+    def test_join_raising_reopens_hotspot_without_logging_password(self):
+        import io
+        import subprocess
+        from contextlib import redirect_stderr
+        c = self.make(saved=(), rom=True)
+        c.tick()
+        self.nm.join_error = subprocess.TimeoutExpired(
+            ['nmcli', 'device', 'wifi', 'connect', 'Home', 'password', 'sekrit-pw'], 60)
+        err = io.StringIO()
+        with redirect_stderr(err):
+            c.submit_wifi(req(wifi_password='sekrit-pw'))
+        self.assertEqual(c.state()['phase'], 'hotspot')
+        self.assertEqual(c.state()['error'], "Couldn't join Home. Check the password and try again.")
+        self.assertNotIn('sekrit-pw', err.getvalue())
+
+    def test_scan_failure_still_opens_hotspot(self):
+        c = self.make(saved=())
+        def boom():
+            raise OSError('nmcli timed out')
+        self.nm.on_scan = boom
+        c.tick()
+        self.assertEqual(c.state()['phase'], 'hotspot')
+        self.assertEqual(c.state()['networks'], [])
+
+    def test_nmcli_failure_never_starts_hotspot(self):
+        c = self.make(saved=['Home'], rom=True)
+        self.nm.saved_error = RuntimeError('NetworkManager is not running')
+        for t in range(0, 60, 5):
+            self.clock.now = t
+            c.tick()
+        self.assertNotIn('start', self.nm.calls)
+        self.assertNotEqual(c.state()['phase'], 'hotspot')
+
+    def test_country_and_tz_set_after_hotspot_stops(self):
+        c = self.make(saved=(), rom=True)
+        self.sys.calls = self.nm.calls     # one shared log, to see the order
+        c.tick()
+        c.submit_wifi(req(timezone='Europe/Berlin'))
+        calls = self.nm.calls
+        self.assertLess(calls.index('stop'), calls.index(('country', 'DE')))
+        self.assertLess(calls.index('stop'), calls.index(('tz', 'Europe/Berlin')))
+
+    def test_preparing_written_after_hold(self):
+        c = self.make(saved=['Home'], rom=True)
+        c.tick()
+        seen = []
+        self.nm.on_scan = lambda: seen.append(self.status()['phase'])
+        (self.run_dir / 'requested').touch()
+        self.clock.now = 5
+        c.tick()
+        self.assertEqual(seen, ['preparing'])
+
+    def test_empty_scan_retried(self):
+        c = self.make(saved=())
+        self.nm.scans = [[], [], ['Home']]
+        c.tick()
+        self.assertEqual(c.state()['networks'], ['Home'])
+
+    def test_password_failure_keeps_marker_and_does_not_join(self):
+        c = self.make(saved=(), rom=True, needs_password=True)
+        c.tick()
+        self.sys.password_ok = False
+        c.submit_wifi(req(mac_password='applepie'))
+        self.assertTrue((self.state_dir / 'needs-password').exists())
+        self.assertEqual(c.state()['phase'], 'hotspot')
+        self.assertEqual(c.state()['error'], "Couldn't set the Mac's password. Try again.")
+        self.assertFalse(any(isinstance(x, tuple) and x[0] == 'join' for x in self.nm.calls))
+
+    def test_wired_connection_without_wifi_no_hotspot(self):
+        c = self.make(saved=(), ip='192.168.1.5', rom=True)
+        c.tick()
+        self.assertEqual(c.state()['phase'], 'off')
+        self.assertNotIn('start', self.nm.calls)
+
+    def test_wired_device_gets_grace_before_first_run(self):
+        c = self.make(saved=(), ip=None, rom=True)
+        self.nm.wired = True
+        c.tick()
+        self.assertNotIn('start', self.nm.calls)
+        self.clock.now = 10
+        c.tick()
+        self.assertNotIn('start', self.nm.calls)
+        self.clock.now = 31
+        c.tick()
+        self.assertEqual(c.state()['phase'], 'hotspot')
 
 
 class Helpers(unittest.TestCase):

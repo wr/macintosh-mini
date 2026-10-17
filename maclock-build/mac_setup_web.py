@@ -243,7 +243,9 @@ class Handler(BaseHTTPRequestHandler):
                 req = parse_connect_form(body, s['needs_password'])
             except FormError as e:
                 return self._send(200, portal_page(s, str(e)))
-            ctl.submit_wifi(req)
+            error = ctl.submit_wifi(req)
+            if error:
+                return self._send(200, portal_page(ctl.state(), error))
             return self._send(200, connecting_page(req.ssid))
         if s['phase'] == 'rom' and path == '/rom':
             data = self._body(MAX_ROM_BYTES)
