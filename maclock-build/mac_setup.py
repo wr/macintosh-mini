@@ -41,6 +41,7 @@ SERIAL = '/sys/firmware/devicetree/base/serial-number'
 ZONE_TAB = '/usr/share/zoneinfo/zone.tab'
 
 HOTSPOT_CON = 'mac-setup-hotspot'
+NEW_CON = 'mac-setup-new'      # a network being tried, until it connects
 HOTSPOT_IP = '10.42.0.1'
 GIVE_UP_S = 300        # a button-started hotspot with nobody on it gives up
 TRIAL_S = 60           # a new ROM counts once the emulator has run this long
@@ -202,13 +203,15 @@ class NM:
         _run(['nmcli', 'connection', 'delete', HOTSPOT_CON])
 
     def join(self, ssid, password, hidden, timeout=45):
-        # A new profile replaces any saved one of the same name (same network,
-        # new password). NetworkManager works out WPA2/WPA3/open from the scan.
-        _run(['nmcli', 'connection', 'delete', 'id', ssid])
+        # Tried under a temporary name, so a typo doesn't throw away a saved
+        # profile that works. Only once it connects does it replace any saved
+        # one of the same name (same network, new password). NetworkManager
+        # works out WPA2/WPA3/open from the scan.
+        _run(['nmcli', 'connection', 'delete', 'id', NEW_CON])
         _run(['nmcli', 'device', 'wifi', 'rescan'])
         time.sleep(4)
         cmd = ['nmcli', '--wait', str(timeout), 'device', 'wifi', 'connect', ssid,
-               'ifname', 'wlan0', 'name', ssid]
+               'ifname', 'wlan0', 'name', NEW_CON]
         if password:
             cmd += ['password', password]
         if hidden:
@@ -218,8 +221,11 @@ class NM:
         except (subprocess.SubprocessError, OSError):
             ok = False
         if not ok:
-            _run(['nmcli', 'connection', 'delete', 'id', ssid])
-        return ok
+            _run(['nmcli', 'connection', 'delete', 'id', NEW_CON])
+            return False
+        _run(['nmcli', 'connection', 'delete', 'id', ssid])
+        _run(['nmcli', 'connection', 'modify', NEW_CON, 'connection.id', ssid])
+        return True
 
     def client_count(self):
         out = _run(['iw', 'dev', 'wlan0', 'station', 'dump']).stdout

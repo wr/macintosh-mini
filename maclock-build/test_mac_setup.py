@@ -469,6 +469,39 @@ class Review(Base):
         self.assertEqual(c.state()['phase'], 'hotspot')
 
 
+class NMJoin(unittest.TestCase):
+    """NM.join against a fake nmcli: the commands it runs, in order."""
+
+    def run_join(self, connect_ok):
+        calls = []
+
+        def fake_run(cmd, **kw):
+            calls.append(cmd)
+            ok = not (cmd[:2] == ['nmcli', '--wait'] and not connect_ok)
+            return ms.subprocess.CompletedProcess(cmd, 0 if ok else 4, stdout='', stderr='')
+        old_run, old_sleep = ms._run, ms.time.sleep
+        ms._run, ms.time.sleep = fake_run, (lambda s: None)
+        try:
+            result = ms.NM().join('Home', 'hunter222', False)
+        finally:
+            ms._run, ms.time.sleep = old_run, old_sleep
+        return result, calls
+
+    def test_failed_join_keeps_existing_profile(self):
+        ok, calls = self.run_join(connect_ok=False)
+        self.assertFalse(ok)
+        self.assertNotIn(['nmcli', 'connection', 'delete', 'id', 'Home'], calls)
+        self.assertIn(['nmcli', 'connection', 'delete', 'id', ms.NEW_CON], calls)
+
+    def test_successful_join_replaces_old_profile(self):
+        ok, calls = self.run_join(connect_ok=True)
+        self.assertTrue(ok)
+        delete_old = calls.index(['nmcli', 'connection', 'delete', 'id', 'Home'])
+        connect = next(i for i, c in enumerate(calls) if c[:2] == ['nmcli', '--wait'])
+        self.assertLess(connect, delete_old)
+        self.assertIn(['nmcli', 'connection', 'modify', ms.NEW_CON, 'connection.id', 'Home'], calls)
+
+
 class Helpers(unittest.TestCase):
 
     def test_country_for_timezone(self):
