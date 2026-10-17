@@ -1,0 +1,17 @@
+[Unit]
+Description=Wi-Fi setup from a phone (hotspot + setup page)
+Wants=NetworkManager.service
+After=NetworkManager.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/local/lib/mac-setup/mac_setup.py serve
+Restart=on-failure
+RestartSec=2
+RuntimeDirectory=mac-setup
+RuntimeDirectoryMode=0755
+RuntimeDirectoryPreserve=yes
+StateDirectory=mac-setup
+
+[Install]
+WantedBy=multi-user.target
