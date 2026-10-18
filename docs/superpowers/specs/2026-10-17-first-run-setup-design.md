@@ -1,6 +1,6 @@
 # First-run setup: Wi-Fi from a phone, and a ROM without a terminal
 
-Status: design, awaiting approval
+Status: approved and built (PR #41); see "Changes after testing" at the end
 Date: 2026-10-17
 
 ## Why
@@ -178,3 +178,15 @@ Today, at boot, tty1 logs in automatically, `~/.profile` runs the emulator launc
   - Restart the router while the Mac is running. It does not become a hotspot.
   - Run `--hotspot-setup`. Afterwards the card has no saved networks, no `network-config` or `user-data` on the boot partition, no SSH key, a locked password, the new hostname, and the Pi is shut down. Boot it and run through the new-owner flow end to end, including a wrong Wi-Fi password first.
   - Re-run the normal installer on a set-up Mac. Saved networks, password and ROM are untouched.
+
+## Changes after testing (Wells, 2026-10-17)
+
+Tried on a Pi Zero 2 W with an iPhone. These replace the matching parts above:
+
+- **The web server only runs during setup**: while the hotspot is up, while joining, and while the ROM step is open, until the new ROM has run for a minute. Outside setup nothing listens on port 80.
+- **Sounds**: a beep when the button hold registers, a "ready" ping when the setup network is up, a rising "connected" chime, two dings when there's a step 2 (the ROM), and a low "didn't work" tone. All are tones made for this project, not Apple's sounds.
+- **The Mac's setup screen** is a small classic-Mac window on a dotted desktop, titled "Macintosh Mini Setup", with "Step 1 of 2" (Wi-Fi) and "Step 2 of 2" (ROM). The network name and address are shown white on black, and step 2 starts with a ticked "Wi-Fi connected." so it can't be mistaken for step 1.
+- **The ROM step's screen** shows a QR code that opens the ROM page, plus its address. It uses the IP address rather than the `.local` name, which doesn't resolve on every network (Wells's router filters it).
+- **The phone page**: the network-name box only appears after picking "Other…" (straight away if nothing was found). The connecting page just says it's joining and that the setup network goes away once connected. Buttons have explicit black text, and pages ask to stay in light mode.
+- **The ROM page** puts "Performa ROM" in bold.
+- **Power**: on a weak supply, starting the hotspot can reset the Pi (seen twice with a poor charger, none with a good one). That's the board's existing ~4 V supply limit, not something setup can fix.
