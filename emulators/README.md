@@ -182,6 +182,7 @@ The installer also does a few things this guide skips. All are in [`setup.sh`](.
 
 - It installs an invisible cursor theme for labwc, so its pointer doesn't flash on screen before the emulator starts (`write_labwc_kiosk`).
 - It checks for a ROM and disk image before every boot, and explains on screen if one is missing (`write_preflight`).
+- It sets up Wi-Fi from a phone: with no saved Wi-Fi, or with the left button held for 10 seconds, the Mac offers its own "Macintosh Mini" Wi-Fi network and a setup page, and with no ROM it shows how to add one from a phone or computer (`install_mac_setup`, and [`mac_setup.py`](../maclock-build/mac_setup.py)).
 - Its performance option, on by default, adds `fsck.mode=skip noswap` to `cmdline.txt` and masks services the Mac doesn't need, such as apt's daily timers and printing (`mask_services`).
 
 ## 5. Preferences

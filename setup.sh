@@ -34,13 +34,21 @@
 #   --timezone <zone>   Area/City for the sunrise schedule (default: keep, or
 #                       prompt when the Pi is still on UTC)
 #   --branch <name>     fetch the helper files from a branch other than main
+#   --hotspot-setup     prepare this Mac for someone else, who sets up Wi-Fi from
+#                       a phone instead of a network saved on the card. Installs
+#                       without a ROM and names the Mac macintosh-mini-xxxx, then
+#                       erases its saved Wi-Fi, SSH keys, login password and ROM
+#                       and shuts down. On its next start it offers an open
+#                       "Macintosh Mini XXXX" Wi-Fi network; joining it opens a
+#                       page for Wi-Fi, a password and a ROM. Flash the card with
+#                       the username "mac" first: the new owner keeps it.
 #   --debug             show all command output instead of capturing to log
 
 set -euo pipefail
 
 REPO_BRANCH="main"   # --branch: test an unmerged branch on a real Pi
 REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/$REPO_BRANCH"
-VERSION="1.6.1"
+VERSION="1.7.0"
 
 # SheepShaver paths (DISK_IMAGE is auto-discovered or set via --disk)
 DISK_IMAGE=""
@@ -247,10 +255,12 @@ find_disks() {
 # safe to call multiple times.
 check_sheepshaver_assets() {
   [[ -f "$HOME/.sheepshaver_prefs" ]] && return 0   # existing install -> update, keep config
-  [[ -f "$HOME/$ROM_FILE" ]] || die "Missing $HOME/$ROM_FILE — copy it over before running"
-  local rom_size; rom_size=$(wc -c < "$HOME/$ROM_FILE")
-  if [[ $rom_size -eq 524288 || $rom_size -eq 1048576 ]]; then
-    die "ROM is $rom_size bytes (a 68k ROM) — SheepShaver needs the 4 MB PowerPC ROM"
+  if [[ $HOTSPOT_SETUP -ne 1 ]]; then   # --hotspot-setup: the new owner adds the ROM
+    [[ -f "$HOME/$ROM_FILE" ]] || die "Missing $HOME/$ROM_FILE — copy it over before running"
+    local rom_size; rom_size=$(wc -c < "$HOME/$ROM_FILE")
+    if [[ $rom_size -eq 524288 || $rom_size -eq 1048576 ]]; then
+      die "ROM is $rom_size bytes (a 68k ROM) — SheepShaver needs the 4 MB PowerPC ROM"
+    fi
   fi
   if [[ -n $DISK_IMAGE ]]; then
     [[ -e "$HOME/$DISK_IMAGE" ]] || die "Missing $HOME/$DISK_IMAGE (passed via --disk)"
@@ -264,11 +274,13 @@ check_sheepshaver_assets() {
 # 512 KB or 1 MB; reject the 4 MB PPC ROM, which is a common mix-up.
 check_basilisk_assets() {
   [[ -f "$HOME/.basilisk_ii_prefs" ]] && return 0   # existing install -> update, keep config
-  [[ -f "$HOME/$ROM_FILE" ]] || die "Missing $HOME/$ROM_FILE — copy a 68k Mac ROM over before running"
-  local rom_size
-  rom_size=$(wc -c < "$HOME/$ROM_FILE")
-  if [[ $rom_size -ne 524288 && $rom_size -ne 1048576 ]]; then
-    die "ROM is $rom_size bytes — BasiliskII needs a 512 KB or 1 MB 68k ROM, not the 4 MB PowerPC ROM"
+  if [[ $HOTSPOT_SETUP -ne 1 ]]; then   # --hotspot-setup: the new owner adds the ROM
+    [[ -f "$HOME/$ROM_FILE" ]] || die "Missing $HOME/$ROM_FILE — copy a 68k Mac ROM over before running"
+    local rom_size
+    rom_size=$(wc -c < "$HOME/$ROM_FILE")
+    if [[ $rom_size -ne 524288 && $rom_size -ne 1048576 ]]; then
+      die "ROM is $rom_size bytes — BasiliskII needs a 512 KB or 1 MB 68k ROM, not the 4 MB PowerPC ROM"
+    fi
   fi
   if [[ -n $DISK_IMAGE ]]; then
     [[ -e "$HOME/$DISK_IMAGE" ]] || die "Missing $HOME/$DISK_IMAGE (passed via --disk)"
@@ -293,7 +305,8 @@ MAC
 write_preflight() {
   sudo tee /usr/local/bin/mac-preflight >/dev/null <<'PREFLIGHT'
 #!/bin/bash
-# Usage: mac-preflight basilisk|sheepshaver. Exit 0 = ready to boot.
+# Usage: mac-preflight basilisk|sheepshaver. Exit 0 = ready to boot,
+# 2 = only the ROM is missing.
 case $1 in
   basilisk)    prefs=$HOME/.basilisk_ii_prefs; sizes="524288 1048576" ;;
   sheepshaver) prefs=$HOME/.sheepshaver_prefs; sizes="4194304" ;;
@@ -311,6 +324,14 @@ set_pref() { grep -q "^$1 " "$prefs" 2>/dev/null && sed -i "s#^$1 .*#$1 $2#" "$p
 if [ ${#roms[@]} -eq 1 ] && [ ${#disks[@]} -eq 1 ]; then
   set_pref rom "${roms[0]}"; set_pref disk "${disks[0]}"; exit 0
 fi
+# Only the ROM missing: exit 2, and the launcher shows the Wi-Fi setup
+# screen, whose ROM page can add one from a phone or computer.
+if [ ! -f "$rom" ] && [ ${#roms[@]} -eq 0 ] && [ -x /usr/local/bin/mac-setup ]; then
+  if [ -e "$disk" ] || [ ${#disks[@]} -eq 1 ]; then
+    [ -e "$disk" ] || set_pref disk "${disks[0]}"
+    exit 2
+  fi
+fi
 clear 2>/dev/null
 echo
 echo "  The Macintosh can't start yet."
@@ -324,6 +345,28 @@ echo
 exit 1
 PREFLIGHT
   sudo chmod 755 /usr/local/bin/mac-preflight
+}
+
+# Four hex digits from the Pi's serial number: the end of the hostname
+# --hotspot-setup picks and of the setup hotspot's name. mac_setup.py works it
+# out the same way. Not the Wi-Fi MAC: NetworkManager randomises that while
+# scanning.
+setup_suffix() {
+  local s
+  s=$(tr -d '\0' < /sys/firmware/devicetree/base/serial-number 2>/dev/null)
+  [[ ${#s} -ge 4 ]] || s=$(cat /etc/machine-id)
+  s=${s,,}
+  printf '%s' "${s: -4}"
+}
+
+# The ROM the installed emulator's prefs point at, as an absolute path, or
+# nothing. Safe under `set -e -o pipefail` when a prefs file is missing.
+installed_rom_path() {
+  local prefs=$HOME/.basilisk_ii_prefs rom
+  [[ $INSTALL_SHEEPSHAVER -eq 1 ]] && prefs=$HOME/.sheepshaver_prefs
+  rom=$(sed -n 's/^rom //p' "$prefs" 2>/dev/null | head -1) || true
+  [[ -n $rom && $rom != /* ]] && rom=$HOME/$rom
+  printf '%s' "$rom"
 }
 
 # --- Sudo bootstrap --------------------------------------------------------
@@ -354,6 +397,7 @@ NIGHT_DIM=""       # "" = prompt, 1 = dim the screen at night, 0 = don't
 NIGHT_OFF=""       # "" = prompt, "never", or HH:MM to turn the screen off
 TIMEZONE=""        # Area/City to set; the night schedule needs a real one
 NIGHT_CONF=/etc/default/brightness-control
+HOTSPOT_SETUP=0    # 1 = --hotspot-setup: prepare the Mac for phone setup
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -378,11 +422,19 @@ while [[ $# -gt 0 ]]; do
     --no-night-dim)  NIGHT_DIM=0; shift ;;
     --night-off)     NIGHT_OFF=$2; shift 2 ;;
     --timezone)      TIMEZONE=$2; shift 2 ;;
+    --hotspot-setup) HOTSPOT_SETUP=1; shift ;;
     --branch)        REPO_BRANCH=$2; REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/$REPO_BRANCH"; shift 2 ;;
     --debug)         DEBUG=1; shift ;;
     *) die "Unknown option: $1" ;;
   esac
 done
+
+# A Mac prepared for phone setup gets Basilisk II and the Maclock hardware
+# unless the command says otherwise.
+if [[ $HOTSPOT_SETUP -eq 1 && $INSTALL_MACLOCK -eq 0 && $INSTALL_SHEEPSHAVER -eq 0 \
+      && $INSTALL_BASILISK -eq 0 ]]; then
+  INSTALL_MACLOCK=1; INSTALL_BASILISK=1
+fi
 
 # --- Header ---------------------------------------------------------------
 printf '\033[1;35m╔═ macintosh-mini installer v%s ═╗\033[0m\n' "$VERSION"
@@ -397,6 +449,16 @@ printf '  log: %s%s\n' "$LOG_FILE" "$([[ $DEBUG -eq 1 ]] && echo '  [debug mode:
 
 ensure_sudo
 ensure_whiptail
+
+if [[ $HOTSPOT_SETUP -eq 1 ]]; then
+  ho_msg="This prepares the Mac for someone else to set up from their phone."
+  ho_msg+=$'\n\n'"When it's done it erases this Mac's saved Wi-Fi, SSH keys, login password and ROM, then shuts down. You can't log in again until it has been set up from a phone."
+  if [[ $USER != mac ]]; then
+    ho_msg+=$'\n\n'"Your username is \"$USER\", and the new owner will keep it. Flash the card with the username \"mac\" to avoid that."
+  fi
+  whiptail --backtitle "macintosh-mini" --title "Prepare for phone setup" --defaultno \
+    --yes-button "Continue" --no-button "Cancel" --yesno "$ho_msg" 17 72 </dev/tty || die "Cancelled"
+fi
 
 # --- Existing install? -----------------------------------------------------
 # The installer records what it set up so a re-run knows it is an update.
@@ -741,6 +803,7 @@ fi
 
 # Hostname
 CUR_HOSTNAME=$(hostname)
+[[ $HOTSPOT_SETUP -eq 1 && -z $NEW_HOSTNAME ]] && NEW_HOSTNAME="macintosh-mini-$(setup_suffix)"
 if [[ -z $NEW_HOSTNAME ]]; then
   NEW_HOSTNAME=$(wt_input "Hostname" "Pi hostname (leave as-is to skip):" "$CUR_HOSTNAME") \
     || die "Cancelled"
@@ -869,6 +932,7 @@ if [[ $INSTALL_BASILISK -eq 1 ]]; then
 fi
 [[ $PERF -eq 1 ]] && TOTAL_STEPS=$((TOTAL_STEPS+2))
 TOTAL_STEPS=$((TOTAL_STEPS+1))   # bluetooth
+[[ $INSTALL_SHEEPSHAVER -eq 1 || $INSTALL_BASILISK -eq 1 ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))   # Wi-Fi setup
 
 # --- Open the gauge --------------------------------------------------------
 start_gauge
@@ -923,7 +987,7 @@ if [[ -n $TIMEZONE ]]; then
 fi
 
 # --- apt packages ---------------------------------------------------------
-APT_PKGS=(curl git iw)
+APT_PKGS=(curl git iw qrencode dnsmasq-base)
 if [[ $INSTALL_SHEEPSHAVER -eq 1 || $INSTALL_BASILISK -eq 1 ]]; then
   APT_PKGS+=(
     build-essential autoconf automake libtool pkg-config
@@ -1091,8 +1155,6 @@ if [[ $PERF -eq 1 ]]; then
       systemd-networkd-wait-online.service
       triggerhappy.service
       ModemManager.service
-      avahi-daemon.service
-      avahi-daemon.socket
       cups.service
       cups-browsed.service
       apt-daily.service
@@ -1385,7 +1447,18 @@ chmod 700 "$XDG_RUNTIME_DIR"
 
 cd ~
 
-if ! /usr/local/bin/mac-preflight sheepshaver; then
+# Wi-Fi setup asked for (left button held) or no Wi-Fi saved: the setup
+# screen instead of the Mac. It exits when setup is over, and getty starts
+# this launcher again.
+if [ -x /usr/local/bin/mac-setup ] && /usr/local/bin/mac-setup needed; then
+  exec /usr/local/bin/mac-setup screen
+fi
+
+/usr/local/bin/mac-preflight sheepshaver; pre=$?
+if [ $pre -eq 2 ]; then
+  exec /usr/local/bin/mac-setup screen   # only the ROM is missing
+fi
+if [ $pre -ne 0 ]; then
   printf '\033[?25h' 2>/dev/null; setterm --cursor on 2>/dev/null || true
   exec bash
 fi
@@ -1393,6 +1466,7 @@ fi
 aplay -q /usr/local/bin/chime.wav 2>/dev/null &
 
 rm -f /tmp/sheepshaver.exit
+start=$(date +%s)
 # labwc reads ~/.config/labwc/rc.xml and rotates the output from the DRM
 # panel-orientation at init (rotated first frame, no flash). -S runs the
 # session command and terminates labwc when it (the emulator) exits.
@@ -1402,6 +1476,14 @@ XCURSOR_THEME=transparent XCURSOR_PATH="$HOME/.local/share/icons:/usr/share/icon
   labwc -S "/usr/local/bin/mac-session sheepshaver SheepShaver /tmp/sheepshaver.exit"
 rc=$(cat /tmp/sheepshaver.exit 2>/dev/null || echo 99)
 rm -f /tmp/sheepshaver.exit
+
+# A ROM just added on the setup page that quits within a minute didn't work:
+# move it out of the way, so the setup screen asks for another.
+if [ -e /run/mac-setup/rom-trial ] && [ $(( $(date +%s) - start )) -lt 60 ]; then
+  rom=$(sed -n 's/^rom //p' ~/.sheepshaver_prefs | head -1)
+  [ -n "$rom" ] && mv -f "$rom" "$HOME/.ROM.rejected"
+  exit 0
+fi
 
 if [ "$rc" = "0" ] || [ "$rc" = "143" ]; then
   clear 2>/dev/null
@@ -1557,7 +1639,18 @@ chmod 700 "$XDG_RUNTIME_DIR"
 
 cd ~
 
-if ! /usr/local/bin/mac-preflight basilisk; then
+# Wi-Fi setup asked for (left button held) or no Wi-Fi saved: the setup
+# screen instead of the Mac. It exits when setup is over, and getty starts
+# this launcher again.
+if [ -x /usr/local/bin/mac-setup ] && /usr/local/bin/mac-setup needed; then
+  exec /usr/local/bin/mac-setup screen
+fi
+
+/usr/local/bin/mac-preflight basilisk; pre=$?
+if [ $pre -eq 2 ]; then
+  exec /usr/local/bin/mac-setup screen   # only the ROM is missing
+fi
+if [ $pre -ne 0 ]; then
   printf '\033[?25h' 2>/dev/null; setterm --cursor on 2>/dev/null || true
   exec bash
 fi
@@ -1565,6 +1658,7 @@ fi
 aplay -q /usr/local/bin/chime.wav 2>/dev/null &
 
 rm -f /tmp/basilisk.exit
+start=$(date +%s)
 # labwc reads ~/.config/labwc/rc.xml and rotates the output from the DRM
 # panel-orientation at init (rotated first frame, no flash). -S runs the
 # session command and terminates labwc when it (the emulator) exits.
@@ -1574,6 +1668,14 @@ XCURSOR_THEME=transparent XCURSOR_PATH="$HOME/.local/share/icons:/usr/share/icon
   labwc -S "/usr/local/bin/mac-session basilisk BasiliskII /tmp/basilisk.exit"
 rc=$(cat /tmp/basilisk.exit 2>/dev/null || echo 99)
 rm -f /tmp/basilisk.exit
+
+# A ROM just added on the setup page that quits within a minute didn't work:
+# move it out of the way, so the setup screen asks for another.
+if [ -e /run/mac-setup/rom-trial ] && [ $(( $(date +%s) - start )) -lt 60 ]; then
+  rom=$(sed -n 's/^rom //p' ~/.basilisk_ii_prefs | head -1)
+  [ -n "$rom" ] && mv -f "$rom" "$HOME/.ROM.rejected"
+  exit 0
+fi
 
 if [ "$rc" = "0" ] || [ "$rc" = "143" ]; then
   clear 2>/dev/null
@@ -1651,6 +1753,60 @@ EOF
   run "[basilisk] Appending autostart to ~/.profile" patch_profile_basilisk
 fi
 
+# --- Wi-Fi setup from a phone -----------------------------------------------
+# mac-setup offers an open "Macintosh Mini XXXX" hotspot when no Wi-Fi is saved
+# or the left button is held for 10 s, with a setup page phones open by
+# themselves; and, while there's no ROM, a ROM page on the owner's network.
+# See maclock-build/mac_setup.py.
+if [[ $INSTALL_SHEEPSHAVER -eq 1 || $INSTALL_BASILISK -eq 1 ]]; then
+  install_mac_setup() {
+    local f emulator=basilisk prefs="$HOME/.basilisk_ii_prefs"
+    if [[ $INSTALL_SHEEPSHAVER -eq 1 ]]; then
+      emulator=sheepshaver; prefs="$HOME/.sheepshaver_prefs"
+    fi
+    sudo install -d /usr/local/lib/mac-setup || return $?
+    for f in mac_setup.py mac_setup_rom.py mac_setup_web.py mac_setup_screen.py; do
+      curl -fL --retry 3 -o "/tmp/$f" "$REPO_RAW/maclock-build/$f" || return $?
+      sudo install -m644 "/tmp/$f" "/usr/local/lib/mac-setup/$f" || return $?
+    done
+    curl -fL --retry 3 -o /tmp/mac-setup.service "$REPO_RAW/maclock-build/mac-setup.service" || return $?
+    sudo install -m644 /tmp/mac-setup.service /etc/systemd/system/mac-setup.service || return $?
+    sudo tee /usr/local/bin/mac-setup >/dev/null <<'WRAPPER'
+#!/bin/sh
+# Wi-Fi setup from a phone: see /usr/local/lib/mac-setup/mac_setup.py.
+if [ "$1" = needed ]; then
+  # The launcher asks this on every start, so no Python here. Setup is due when
+  # the left button asked for it, or when no Wi-Fi is saved. If NetworkManager
+  # can't answer, say no: never keep the Mac from starting.
+  [ -e /run/mac-setup/requested ] && exit 0
+  saved=$(nmcli -t -f NAME,TYPE connection show 2>/dev/null) || exit 1
+  printf '%s\n' "$saved" | grep -v '^mac-setup-hotspot:' | grep -q ':802-11-wireless$' && exit 1
+  # No Wi-Fi saved, but on a wired network (USB Ethernet): not a first run.
+  nmcli -t -f TYPE connection show --active 2>/dev/null | grep -q '^802-3-ethernet$' && exit 1
+  exit 0
+fi
+exec python3 /usr/local/lib/mac-setup/mac_setup.py "$@"
+WRAPPER
+    sudo chmod 755 /usr/local/bin/mac-setup
+    printf 'USER=%s\nHOME=%s\nEMULATOR=%s\nPREFS=%s\n' "$USER" "$HOME" "$emulator" "$prefs" \
+      | sudo tee /etc/mac-setup.conf >/dev/null
+    # On the hotspot every name points at the Mac, so phones' "is there
+    # internet?" checks land on the setup page and they pop it up.
+    sudo install -d /etc/NetworkManager/dnsmasq-shared.d
+    printf '%s\n' '# Wi-Fi setup hotspot (mac-setup)' 'address=/#/10.42.0.1' \
+      | sudo tee /etc/NetworkManager/dnsmasq-shared.d/mac-setup.conf >/dev/null
+    # The setup screen sends people to <hostname>.local, which avahi answers.
+    # Installs before 1.7.0 masked it with the performance options.
+    sudo systemctl unmask avahi-daemon.service avahi-daemon.socket 2>/dev/null || true
+    sudo systemctl enable --now avahi-daemon.service 2>/dev/null || true
+    sudo systemctl daemon-reload
+    sudo systemctl enable mac-setup.service
+    # restart, not start: on an update the old service is still running
+    sudo systemctl restart mac-setup.service
+  }
+  run "Installing Wi-Fi setup (hotspot + setup page)" install_mac_setup
+fi
+
 # --- Record what was installed, so the next run knows it is an update -----
 record_install() {
   local emulator=$INSTALLED_EMULATOR maclock=${INSTALLED_MACLOCK:-0}
@@ -1666,6 +1822,69 @@ run "Recording the install" record_install
 emit_gauge 100 "Done"
 sleep 1
 stop_gauge
+
+# --hotspot-setup: erase what belongs to whoever ran this, then shut down. It
+# runs detached, because forgetting the Wi-Fi ends this SSH session.
+if [[ $HOTSPOT_SETUP -eq 1 ]]; then
+  ho_rom=$(installed_rom_path)
+  sudo tee /run/mac-setup-handoff.sh >/dev/null <<'HANDOFF'
+#!/bin/bash
+# Prepare a Mac for phone setup (setup.sh --hotspot-setup). Args: user home log rom
+user=$1 home=$2 log=$3 rom=$4
+sleep 3
+# Keep the Wi-Fi country: cloud-init, which may have set it, is cleared below.
+cc=$(iw reg get 2>/dev/null | sed -n 's/^country \([A-Z][A-Z]\):.*/\1/p' | head -1)
+if [ -n "$cc" ] && [ "$cc" != 00 ] && command -v raspi-config >/dev/null; then
+  raspi-config nonint do_wifi_country "$cc"
+fi
+# SSH by password: the one the new owner picks is the only way in.
+install -d /etc/ssh/sshd_config.d
+printf '%s\n' '# Prepared for phone setup: log in with the password chosen there.' \
+  'PasswordAuthentication yes' > /etc/ssh/sshd_config.d/10-mac-setup.conf
+rm -f /etc/ssh/sshd_config.d/50-cloud-init.conf
+systemctl enable ssh 2>/dev/null
+passwd -l "$user"
+rm -rf "$home/.ssh"
+rm -f /root/.ssh/authorized_keys "$home/.bash_history" "$home/.ROM.rejected" "$log"
+# No ROM ships: the one in prefs, and anything mac-preflight would take for one.
+[ -n "$rom" ] && rm -f "$rom"
+find "$home" -maxdepth 1 -type f \( -size 524288c -o -size 1048576c -o -size 4194304c \) \
+  ! -name '*.hda' ! -name '*.dsk' ! -name '*.img' ! -name '*.hfv' -delete
+# A hand-set location for night dimming is a precise address.
+[ -f /etc/default/brightness-control ] &&
+  sed -i 's/^LAT=.*/LAT=/;s/^LON=.*/LON=/' /etc/default/brightness-control
+install -d /var/lib/mac-setup
+touch /var/lib/mac-setup/needs-password
+# cloud-init carried the preparer's Wi-Fi and login: turn it off and clear it.
+touch /etc/cloud/cloud-init.disabled
+rm -rf /var/lib/cloud
+# Backup copies too: a user-data.bak holds the login as much as user-data does.
+rm -f /boot/firmware/user-data* /boot/firmware/network-config* /var/log/cloud-init*.log
+# Forget every Wi-Fi network. If this session is over Wi-Fi, it ends here.
+nmcli -t -f UUID,TYPE connection show | awk -F: '$2 == "802-11-wireless" { print $1 }' |
+  while read -r uuid; do nmcli connection delete uuid "$uuid"; done
+grep -ls '^type=wifi' /etc/NetworkManager/system-connections/* 2>/dev/null | xargs -r rm -f
+for f in /etc/netplan/*.yaml; do grep -qs 'wifis:' "$f" && rm -f "$f"; done
+# What NetworkManager remembers about those networks: access points seen (with
+# the network name, enough to find a home on public Wi-Fi maps) and leases.
+rm -f /var/lib/NetworkManager/seen-bssids /var/lib/NetworkManager/timestamps \
+  /var/lib/NetworkManager/*.lease
+# End the preparer's sessions now: a shell saves its history when it is hung
+# up on at shutdown, after the rm above.
+pkill -KILL -u "$user"
+sleep 2
+rm -f "$home/.bash_history"
+journalctl --rotate >/dev/null 2>&1
+journalctl --vacuum-time=1s >/dev/null 2>&1
+sync
+poweroff
+HANDOFF
+  printf '\n\033[1;32m✓ Setup complete.\033[0m  Erasing this Mac'"'"'s Wi-Fi, keys and password, then shutting down…\n'
+  printf '  When it next starts, it offers the Wi-Fi network "Macintosh Mini %s".\n\n' "$(setup_suffix | tr a-f A-F)"
+  sudo systemd-run --unit=mac-setup-handoff --collect /bin/bash /run/mac-setup-handoff.sh \
+    "$USER" "$HOME" "$LOG_FILE" "$ho_rom" >/dev/null
+  exit 0
+fi
 
 printf '\n\033[1;32m✓ Setup complete.\033[0m  Rebooting in 5 seconds (Ctrl-C to cancel)…\n'
 printf '  log: %s\n\n' "$LOG_FILE"
