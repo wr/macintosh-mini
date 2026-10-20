@@ -82,14 +82,14 @@ The touch-sensitive pad on top of the case isn't used: cut its wires, or leave t
 
 My board talks to the Pi over five GPIO pins: the dial (two pins), the two buttons, and the audio. The Waveshare display plugs onto the Pi's 40-pin header and **uses some of the same pins**, and when it does, the buttons and dial behave erratically. There are two ways around this, and I recommend the first.
 
-**Use the GPIO interposer (recommended).** **Press the interposer onto the Pi's header, then press the display onto the interposer.** The interposer steals the five pins away from the display and plugs straight into the custom PCB: no cable. Nothing on the Pi is cut, bent, or soldered.
+**Use the GPIO interposer (recommended).** Press the interposer onto the Pi's header, then press the display onto the interposer. The interposer steals the five pins away from the display and plugs straight into the custom PCB: no cable. Nothing on the Pi is cut, bent, or soldered.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/drawings/interposer-dark.svg">
   <img src="docs/drawings/interposer.svg" width="800" alt="Both sides of the GPIO interposer: on the screen side, the 2×20 header the display plugs onto and the 1×7 female socket that plugs straight onto the board's header, carrying the dial, buttons, audio, power, and ground; on the Pi side, the 2×20 socket that plugs onto the Pi">
 </picture>
 
-**No interposer (requires soldering):** **Cut or desolder pins 13, 19, 23, 35, and 37** on the Pi's header so they don't reach the display. Then solder a wire to the back of the Pi at each pin in the table below, and plug the female ends onto the board's "Pi GPIO" header:
+**No interposer (requires soldering):** Cut or desolder pins 13, 19, 23, 35, and 37 on the Pi's header so they don't reach the display. Then solder a wire to the back of the Pi at each pin in the table below, and plug the female ends onto the board's "Pi GPIO" header:
 
 | Board pin | Pi pin | What it carries |
 | --- | --- | --- |
