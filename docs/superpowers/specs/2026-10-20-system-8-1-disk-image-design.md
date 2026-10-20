@@ -1,14 +1,21 @@
-# Mac OS 8.1 disk image for the Macintosh Mini: design
+# A clean Mac OS 8.1 disk image for Basilisk II: design
 
 Written 2026-10-20 from a conversation with Wells. Calls made without him are listed at the end.
 
 ## Intent
 
 Today, Macintosh Mini owners bring their own disk image (the README points at the BlueSCSI
-library). Wells wants a ready-made Mac OS 8.1 image that anyone can download and that shows off
-what the Mini can do from the first boot: browse the vintage web (FrogFind, 68k.news), fetch
-software with MR Browser, print to a real ImageWriter II over AppleTalk through AirWriter
-(`~/Projects/airwriter`), and run After Dark when idle.
+library). Wells wants a ready-made Mac OS 8.1 image anyone can download. In his words, it's about:
+
+1. a basic, known-working, clean install;
+2. supporting AirWriter (`~/Projects/airwriter`), his other project: printing to a real
+   ImageWriter II over AppleTalk;
+3. a simple path to an After Dark desk toy;
+4. a known-working configuration for Basilisk II on the Pi.
+
+The image itself is AirWriter-, Pi- and Macintosh Mini-agnostic: nothing in it names or depends on
+them, so it works in any Basilisk II. The Mini's setup script offers it. (Reframed by Wells on
+2026-10-20, after the first draft leaned on the Mini.)
 
 It is a public download. Mac OS 8.1, After Dark and the other software are abandonware, not
 freely licensed; Wells has accepted that, as is common practice.
@@ -19,7 +26,8 @@ freely licensed; Wells has accepted that, as is common practice.
   (`modelid 14`), 640×480, 64 or 128 MB RAM, `ether slirp`, at the colour depths `setup.sh`
   offers (see Settings).
 - On first boot, with no setup dialogs and no configuration: the browser reaches the web, the
-  Chooser finds AirWriter, and After Dark starts after 5 minutes idle.
+  Chooser finds any AppleTalk ImageWriter on the network (AirWriter included), and After Dark
+  starts after 5 minutes idle.
 - Two ways to get it: a download link in the docs, and `setup.sh` offering to download it when
   the Pi has no disk image.
 - Printing works out of the box on a Mini: `setup.sh` builds Basilisk II with the AppleTalk-only
@@ -34,11 +42,10 @@ freely licensed; Wells has accepted that, as is common practice.
 | After Dark | 4.0.3 | Earlier 4.0.x doesn't work on Mac OS 8. Randomizer module active, 5-minute delay, only modules that pass testing on the Pi (see Testing). |
 | Web browser | iCab 2.9.9 (68k build) | Desktop alias. If iCab nags at launch or misbehaves in testing, use Internet Explorer 4.01 instead. Not Netscape: the copy on the test disk failed on some pages and once froze the Mac. |
 | SimpleText | ships with 8.1 | Desktop alias. |
-| MR Browser | latest 68K build (not the sys6 build) | Macintosh Repository's own client. Desktop alias. |
-| FrogFind, 68k.news | — | Desktop items that open the site in the browser. |
+| MR Browser | latest 68K build (not the sys6 build) | Macintosh Repository's own client. Desktop alias. It asks for a sign-in PIN when opened (not at startup); kept at Wells's request. |
+| FrogFind | — | Desktop item that opens the site in the browser. |
 | StuffIt Expander | 5.5 | So downloads open. |
 | Disk Copy | 6.3.3 | So downloaded disk images open. |
-| Read Me | — | Short SimpleText note on the desktop: printing to AirWriter, FrogFind, MR Browser. Wells approves the text. |
 
 Sources for everything after the first two rows aren't pinned yet: the builder finds each one
 (Macintosh Garden, Macintosh Repository, archive.org) and pins it. Where a site gives no stable
@@ -54,10 +61,10 @@ After Dark (version unknown); check it, it may be a usable source.
   address, which is why its web was broken under slirp.
 - AppleTalk: active, on Ethernet. The Chooser has no printer selected: each AirWriter has its own
   name, so the user picks it once.
-- The browser's home page is a small local start page on the disk with links to FrogFind,
-  68k.news and Macintosh Repository, so a first launch never lands on an error. FrogFind was down
-  for hours on 2026-10-20.
-- The Mac is named "Macintosh Mini". File Sharing is off. Virtual memory is off.
+- The browser's home page is a small, unbranded local start page on the disk with links to
+  FrogFind, 68k.news and Macintosh Repository, so a first launch never lands on an error.
+  FrogFind was down for hours on 2026-10-20.
+- The Mac is named "Macintosh". File Sharing is off. Virtual memory is off.
 - Extensions that do nothing in the emulator are turned off for a faster boot.
 - No first-boot assistants, registration or "Welcome" dialogs.
 - Colour depth: `setup.sh` offers Color (16-bit), Grayscale (8-bit, the Basilisk II default)
@@ -68,7 +75,8 @@ After Dark (version unknown); check it, it may be a usable source.
 
 ## Delivery
 
-- **Host:** an Internet Archive item, holding a zip of the raw image (`.hda`, which `setup.sh`
+- **Host:** an Internet Archive item, `macos-8.1-basilisk-ii`, titled "Mac OS 8.1 for Basilisk II
+  (clean install)", holding a zip of the raw image (`.hda`, which `setup.sh`
   already discovers) and its SHA-256. Not GitHub releases: a takedown there can hit the whole
   repo. The image is versioned by date (e.g. 2026.10); a new version is a new file, so a pinned
   checksum never goes stale.
@@ -102,8 +110,9 @@ Until both merge, `setup.sh` builds from `wr/macemu` at a pinned commit of the
 at the merge. Existing installs rebuild once to pick it up.
 
 New Basilisk II installs get `udptunnel true`, `udpport 6066` and `udpappletalkonly true` with
-`ether slirp`. Existing installs keep their prefs: the update or reconfigure menu offers to turn
-it on, and never changes it silently. SheepShaver has no tunnel and is unchanged.
+`ether slirp`. Existing installs keep their prefs: Edit settings has an "AppleTalk" row (On:
+"AppleTalk printers and file sharing on your network, plus the internet"; Off: "The internet
+only"), and nothing changes silently. SheepShaver has no tunnel and is unchanged.
 
 ## Non-goals
 
@@ -121,6 +130,7 @@ it on, and never changes it silently. SheepShaver has no tunnel and is unchanged
 - `setup.sh` replacing, rewriting or silently reconfiguring someone's existing disk or prefs.
 - Nag screens, registration prompts or setup assistants at startup.
 - The image, or any third-party file from it, committed to the repo.
+- Anything in the image that names or depends on the Macintosh Mini, the Pi or AirWriter.
 
 ## Constraints
 
@@ -131,7 +141,7 @@ it on, and never changes it silently. SheepShaver has no tunnel and is unchanged
   AirWriter enclosure and the KiCad scripts here). Every downloaded source is pinned by URL and
   checksum. Build scripts are GPL-3.0-or-later and docs CC BY-SA, with `REUSE.toml` entries for
   any third-party file. The image's contents are third-party and not covered.
-- Copy that users see (the Read Me, `setup.sh` prompts) is shown to Wells before it's committed.
+- Copy that users see (the start page, `setup.sh` prompts) is shown to Wells before it's committed.
 
 ## Testing: what has to pass
 
@@ -166,7 +176,7 @@ session scratchpad; re-fetch it from archive.org and check the MD5 if it's gone.
 - The final After Dark module list, from testing on the Pi.
 - How the FrogFind and 68k.news desktop items work (Internet location file, AppleScript applet,
   or an HTML page), as long as a double-click opens the site in the browser.
-- The start page's contents and the Read Me's text, for Wells to approve.
+- The start page's contents, for Wells to approve.
 - Zip and file naming, Internet Archive metadata, and the versioning scheme.
 - The `setup.sh` prompt flow and any new flags.
 
@@ -177,7 +187,7 @@ session scratchpad; re-fetch it from archive.org and check the MD5 if it's gone.
 - iCab first, Internet Explorer 4.01 as the fallback.
 - Only the AppleTalk ImageWriter driver, not the LQ one.
 - Disk Copy 6.3.3.
-- The Mac named "Macintosh Mini"; File Sharing and virtual memory off; idle extensions off.
+- File Sharing and virtual memory off; idle extensions off.
 - The AppleTalk-only tunnel on by default for new Basilisk II installs, offered (not forced) on
   existing ones.
 - Testing at 16-bit and 8-bit, with 1-bit best effort.

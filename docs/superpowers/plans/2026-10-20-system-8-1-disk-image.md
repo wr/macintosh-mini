@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** A downloadable Mac OS 8.1 disk image for the Macintosh Mini, plus the installer changes that build Basilisk II with the AppleTalk-only tunnel, turn printing to AirWriter on, and offer the image when the Pi has none.
+**Goal:** A downloadable, clean Mac OS 8.1 disk image for Basilisk II (not tied to the Mini, the Pi or AirWriter), plus the installer changes that build Basilisk II with the AppleTalk-only tunnel, turn AppleTalk on, and offer the image when the Pi has none.
 
 **Architecture:** Two pieces that ship as two PRs. (1) `setup.sh` builds Basilisk II from a pinned commit of `wr/macemu` (upstream plus kanjitalk755/macemu#321 and #322) and writes the tunnel prefs. (2) A `disk-image/` folder: Python tools on the Mac fetch pinned sources and pack them onto a "Transfer" HFS disk; the image itself is installed and configured inside Basilisk II on the test Pi, driven over VNC, then checked by a script, zipped, uploaded to the Internet Archive with `ia`, and offered by `setup.sh`.
 
@@ -12,15 +12,16 @@
 
 ## Global Constraints
 
-- Volume: HFS (Mac OS Standard), exactly 1 GiB (1073741824 bytes), named `Macintosh HD`. The Mac is named `Macintosh Mini`.
+- Volume: HFS (Mac OS Standard), exactly 1 GiB (1073741824 bytes), named `Macintosh HD`. The Mac is named `Macintosh`.
+- The image is Mini-, Pi- and AirWriter-agnostic: none of them is named or needed anywhere on it (Wells, 2026-10-20).
 - Target emulator: Basilisk II, `modelid 14`, `screen win/640/480`, `ramsize` 64 or 128 MB, `ether slirp`. Must pass at `displaycolordepth` 16 and 8; 1 is best effort.
 - macemu pin: `MACEMU_REPO="https://github.com/wr/macemu.git"`, `MACEMU_COMMIT="722458b7c9bd7148a050e40638023ebe84a67863"`.
 - Tunnel prefs, exactly: `udptunnel true`, `udpport 6066`, `udpappletalkonly true`.
-- Internet Archive item `macintosh-mini-os81`; file `macintosh-mini-os81-<version>.zip` holding `macintosh-mini-os81-<version>.hda`; first version `2026.10`. Never GitHub releases.
+- Internet Archive item `macos-8.1-basilisk-ii`, title "Mac OS 8.1 for Basilisk II (clean install)"; file `macos-8.1-basilisk-ii-<version>.zip` holding `macos-8.1-basilisk-ii-<version>.hda`; first version `2026.10`. Never GitHub releases.
 - Known sources: Mac OS 8.1 CD `https://archive.org/download/mac-os-8.1/MacOS-8.1.iso`, SHA-256 `b80a1f181d1ad6ec23924450694e673957723e420b2a5463160abea4252270b0`; ImageWriter LocalTalk Option `https://old.mac.gdn/apps/iw_0.sit`, SHA-256 `6ba91270bc4303cb8826ce268165665918815f9bbd2ceb1e35736c1d0bc9e8ec`.
 - No image, ISO or third-party file in git. Caches and outputs live in `disk-image/.cache/` and `disk-image/out/` (gitignored).
 - Python files carry the repo's SPDX header (`GPL-3.0-or-later`, like `maclock-build/button_handler.py`); tests run with `cd disk-image && .venv/bin/python -m unittest -v`.
-- Copy users see (Read Me, start page, `setup.sh` prompts, CHANGELOG entries, the Internet Archive title and description) goes to Wells before it's committed or uploaded.
+- Copy users see (start page, `setup.sh` prompts, CHANGELOG entries, the Internet Archive title and description) goes to Wells before it's committed or uploaded.
 - `setup.sh` never replaces, rewrites or silently reconfigures an existing disk image or prefs file. README stays a landing page; details go in `BUILD.md` or `disk-image/README.md`.
 - Commit and push freely; merge only when Wells says "ship it".
 
@@ -63,8 +64,8 @@
 - Produces: `reconf_appletalk <prefs>`: a yes/no that sets the three tunnel prefs (on) or `udptunnel false` and `udpappletalkonly false` (off).
 
 - [ ] **Step 1:** Add the three tunnel lines to the new-install prefs heredoc, after `ether slirp`.
-- [ ] **Step 2:** Add a Basilisk II-only row `"AppleTalk printing:"` to the Emulator Settings menu showing `On` when `udptunnel` and `udpappletalkonly` are both `true`, else `Off`; selecting it runs `reconf_appletalk`. Grow the menu by one row.
-- [ ] **Step 3:** Draft the yes/no copy and the CHANGELOG `[1.8.0]` entry (printing to AirWriter while online; new installs get it, existing ones in Edit settings; Basilisk II rebuilds once). Show Wells; apply his edits. Bump `VERSION="1.8.0"`.
+- [ ] **Step 2:** Add a Basilisk II-only row `"AppleTalk:"` to the Emulator Settings menu showing `On` when `udptunnel` and `udpappletalkonly` are both `true`, else `Off`; selecting it runs `reconf_appletalk`, a menu with `On` "AppleTalk printers and file sharing on your network, plus the internet" and `Off` "The internet only" (Wells's approved copy). Grow the menu by one row.
+- [ ] **Step 3:** Draft the CHANGELOG `[1.8.0]` entry (AppleTalk printers and file sharing alongside the internet; new installs get it, existing ones in Edit settings; Basilisk II rebuilds once). Show Wells; apply his edits. Bump `VERSION="1.8.0"`.
 - [ ] **Step 4: Test on the Pi.** New install path: move `~/.basilisk_ii_prefs` aside, run, expect the three lines in the new prefs; put the old file back. Update path: drive the menu with `expect` over `ssh -t`: toggle Off then On, check the prefs after each. Then with it On, the Chooser on the Mac shows "ImageWriter II" under AppleTalk ImageWriter (the test disk has the driver) and `atping.py` gets 5/5.
 - [ ] **Step 5: Commit, push, open PR 1** (`gh pr create`, body: what changes for users, the Pi results; the upstream PRs it depends on). Bind it with the ccd_pr tools.
 
@@ -100,19 +101,19 @@
 ### Task 5: The Transfer disk
 
 **Files:**
-- Create: `disk-image/mmdisk/macfile.py`, `disk-image/mmdisk/transfer.py`, `disk-image/transfer.toml`, `disk-image/make_transfer.py`, `disk-image/files/Start Page.html`, `disk-image/files/Read Me.txt`, `disk-image/files/FrogFind.html`, `disk-image/files/68k.news.html`, `disk-image/tests/test_transfer.py`
+- Create: `disk-image/mmdisk/macfile.py`, `disk-image/mmdisk/transfer.py`, `disk-image/transfer.toml`, `disk-image/make_transfer.py`, `disk-image/files/Start Page.html`, `disk-image/files/FrogFind.html`, `disk-image/tests/test_transfer.py`
 
 **Interfaces:**
 - Consumes: `load_sources`, `fetch` (Task 3).
 - Produces: `@dataclass MacFile(name: str, data: bytes, rsrc: bytes, type: bytes, creator: bytes, flags: int = 0)`; `read_host_file(path: Path) -> MacFile` (data fork, `path/..namedfork/rsrc`, type/creator/flags from `xattr -px com.apple.FinderInfo`); `extract_archive(archive: Path, dest: Path) -> Path` (`unar -q -forks fork -o dest`); `files_from_floppy(image: bytes) -> dict[str, MacFile]` (via `machfs.Volume().read`); `build_transfer(files: dict[str, MacFile], size: int = 256 * 2**20, name: str = "Transfer") -> bytes`, each key the file's colon-separated path on the volume (folders created as needed). `make_transfer.py` reads `transfer.toml` (each entry: source id or local file, member path inside the archive, destination folder, and for local files the type and creator) and writes `disk-image/out/transfer.dsk`.
 
-The web shortcuts are small HTML pages that redirect (`<meta http-equiv="refresh">`) to `http://frogfind.com/` and `http://68k.news/`, typed `TEXT` with the chosen browser's creator code (iCab `iCAB`; IE `MSIE`) so a double-click opens the browser. The start page is plain HTML 3.2 with links to FrogFind, 68k.news and `http://www.macintoshrepository.org/`. The Read Me is plain text, `TEXT`/`ttxt`, under 40 lines.
+The FrogFind shortcut is a small HTML page that redirects (`<meta http-equiv="refresh">`) to `http://frogfind.com/`, typed `TEXT` with the chosen browser's creator code (iCab `iCAB`; IE `MSIE`) so a double-click opens the browser. The start page is plain, unbranded HTML 3.2 with links to FrogFind, 68k.news and `http://www.macintoshrepository.org/`.
 
 - [ ] **Step 1: Write the failing tests:** `test_build_transfer_roundtrip` (two files in nested folders; read back with machfs: names, forks, type, creator equal); `test_files_from_floppy` (a machfs-built 800K fixture with one file); `test_read_host_file` (macOS only, `skipUnless(sys.platform == "darwin")`: write a file, set a resource fork through `..namedfork/rsrc` and FinderInfo with `xattr -wx`, read it back).
 - [ ] **Step 2: Run, expect failures.**
-- [ ] **Step 3: Implement** the interfaces and `transfer.toml` for every source in Task 4 plus the four local files.
+- [ ] **Step 3: Implement** the interfaces and `transfer.toml` for every source in Task 4 plus the two local files.
 - [ ] **Step 4: Run, expect PASS.** Then `make_transfer.py` produces `out/transfer.dsk`, and a machfs listing shows every app with a non-empty resource fork.
-- [ ] **Step 5: Copy review:** show Wells the Read Me, start page and the two shortcut titles; apply his edits.
+- [ ] **Step 5: Copy review:** show Wells the start page and the shortcut's title; apply his edits.
 - [ ] **Step 6: Commit** `git commit -m "Disk image: Transfer disk with the apps and pages"`
 
 ### Task 6: Install and configure the image (on the test Pi)
@@ -125,8 +126,8 @@ The web shortcuts are small HTML pages that redirect (`<meta http-equiv="refresh
 
 - [ ] **Step 1: Write the failing tests** for `check_image` with machfs-built fixtures: `test_passes_complete_volume`, `test_reports_missing_path`, `test_reports_wrong_size`, `test_reports_non_alias_desktop_item`.
 - [ ] **Step 2: Run, expect failures; implement; run, expect PASS.**
-- [ ] **Step 3: Base install.** On the Pi, `truncate -s 1G ~/macintosh-mini-os81.hda`; copy over `out/transfer.dsk` and the CD ISO. Shut the Mac down and boot with prefs (absolute paths, as the Pi's prefs use): `disk /home/wells/HD10_512.hda` (the existing 8.1 test disk, to run the installer), `disk /home/wells/macintosh-mini-os81.hda`, `disk /home/wells/transfer.dsk`, `cdrom /home/wells/MacOS-8.1.iso`. Initialize the new disk as Mac OS Standard, named `Macintosh HD`. Run the CD's Mac OS Install onto it, customised to leave out Internet Access's browsers, Personal Web Sharing, speech and Java. Write each step into `disk-image/README.md` as you go.
-- [ ] **Step 4: Configure.** Boot from `Macintosh HD` (first `disk` line), with the Transfer disk attached. Copy everything off the Transfer disk; install the AppleTalk ImageWriter in Extensions and After Dark (all modules for now); TCP/IP to Ethernet + DHCP; AppleTalk on, Ethernet; no printer chosen; Mac named `Macintosh Mini`, File Sharing off; virtual memory off; no Setup Assistant or registration in Startup Items; a "Macintosh Mini" Extensions Manager set without the do-nothing extensions; browser home page = the start page; desktop aliases for the browser, SimpleText and MR Browser; the two web shortcuts and the Read Me on the desktop. Add each step to the README.
+- [ ] **Step 3: Base install.** On the Pi, `truncate -s 1G ~/macos-8.1.hda`; copy over `out/transfer.dsk` and the CD ISO. Shut the Mac down and boot with prefs (absolute paths, as the Pi's prefs use): `disk /home/wells/HD10_512.hda` (the existing 8.1 test disk, to run the installer), `disk /home/wells/macos-8.1.hda`, `disk /home/wells/transfer.dsk`, `cdrom /home/wells/MacOS-8.1.iso`. Initialize the new disk as Mac OS Standard, named `Macintosh HD`. Run the CD's Mac OS Install onto it, customised to leave out Internet Access's browsers, Personal Web Sharing, speech and Java. Write each step into `disk-image/README.md` as you go.
+- [ ] **Step 4: Configure.** Boot from `Macintosh HD` (first `disk` line), with the Transfer disk attached. Copy everything off the Transfer disk; install the AppleTalk ImageWriter in Extensions and After Dark (all modules for now); TCP/IP to Ethernet + DHCP; AppleTalk on, Ethernet; no printer chosen; Mac named `Macintosh`, File Sharing off; virtual memory off; no Setup Assistant or registration in Startup Items; a "Basilisk II" Extensions Manager set without the do-nothing extensions; browser home page = the start page; desktop aliases for the browser, SimpleText and MR Browser; the FrogFind shortcut on the desktop. Add each step to the README.
 - [ ] **Step 5: Check.** Copy the image to the Mac; `check_image.py` passes. On the Pi, boot it alone at 16-bit and 8-bit: no dialogs at startup; the browser opens without a nag screen (if iCab nags, switch to Internet Explorer 4.01 and redo its part of Tasks 5 and 6); the start page and 68k.news load; FrogFind loads if it's up; MR Browser connects and downloads a file, and StuffIt Expander opens it; Disk Copy mounts the ImageWriter `.img`; the Chooser lists "ImageWriter II" and one page prints.
 - [ ] **Step 6: Commit** `git commit -m "Disk image: install steps and image check"`
 
@@ -146,10 +147,10 @@ The web shortcuts are small HTML pages that redirect (`<meta http-equiv="refresh
 **Files:**
 - Create: `disk-image/package.sh` (zip with `zip -9`, write `.sha256`), `disk-image/ia-metadata.toml` (title, description, subject, mediatype `software`)
 
-- [ ] **Step 1:** `package.sh out/macintosh-mini-os81.hda 2026.10` writes `out/macintosh-mini-os81-2026.10.zip` and its SHA-256. Unzip it into a temp folder and run `check_image.py` on the result: passes.
-- [ ] **Step 2: Copy review:** show Wells the title and description (contents, credit to the sources, "Mac OS 8.1 and the included software are © their owners"); apply his edits.
-- [ ] **Step 3:** `ia upload macintosh-mini-os81 out/macintosh-mini-os81-2026.10.zip` with the metadata. Wait for `ia tasks macintosh-mini-os81` to show no pending tasks.
-- [ ] **Step 4:** `curl -fL -o /tmp/check.zip https://archive.org/download/macintosh-mini-os81/macintosh-mini-os81-2026.10.zip` and compare SHA-256: equal. Record the URL, SHA-256 and size in MB for Task 9.
+- [ ] **Step 1:** `package.sh out/macos-8.1.hda 2026.10` writes `out/macos-8.1-basilisk-ii-2026.10.zip` (holding `macos-8.1-basilisk-ii-2026.10.hda`) and its SHA-256. Unzip it into a temp folder and run `check_image.py` on the result: passes.
+- [ ] **Step 2: Copy review:** show Wells the title and description (a clean Mac OS 8.1 install for Basilisk II as a Quadra; contents; known-working settings; credit to the sources; "Mac OS 8.1 and the included software are © their owners"); apply his edits.
+- [ ] **Step 3:** `ia upload macos-8.1-basilisk-ii out/macos-8.1-basilisk-ii-2026.10.zip` with the metadata. Wait for `ia tasks macos-8.1-basilisk-ii` to show no pending tasks.
+- [ ] **Step 4:** `curl -fL -o /tmp/check.zip https://archive.org/download/macos-8.1-basilisk-ii/macos-8.1-basilisk-ii-2026.10.zip` and compare SHA-256: equal. Record the URL, SHA-256 and size in MB for Task 9.
 - [ ] **Step 5: Commit** `git commit -m "Disk image: packaging and Internet Archive metadata"`
 
 ### Task 9: Offer the image in `setup.sh`
@@ -158,7 +159,7 @@ The web shortcuts are small HTML pages that redirect (`<meta http-equiv="refresh
 - Modify: `setup.sh` (constants near `MACEMU_DIR`; `check_basilisk_assets` ~line 275; the disk discovery block ~line 560; argument parsing for a `--get-disk` flag; usage comment at the top), `README.md` (Step 2: one "or download ours" line), `BUILD.md` (what's on the disk, how setup offers it, the direct link), `CHANGELOG.md`, `VERSION`
 
 **Interfaces:**
-- Produces: `DISK_DL_VERSION`, `DISK_DL_URL`, `DISK_DL_SHA256`, `DISK_DL_MB` (from Task 8); `get_disk_image()`: checks free space in `$HOME` (zip size + 1 GiB + 100 MB), downloads to `$HOME/.macintosh-mini-os81.zip.part`, verifies with `sha256sum -c`, unzips with `python3 -m zipfile -e` into a temp folder, moves the `.hda` into `$HOME`, cleans up on every exit path, sets `DISK_IMAGE`; returns non-zero with a one-line reason on failure.
+- Produces: `DISK_DL_VERSION`, `DISK_DL_URL`, `DISK_DL_SHA256`, `DISK_DL_MB` (from Task 8); `get_disk_image()`: checks free space in `$HOME` (zip size + 1 GiB + 100 MB), downloads to `$HOME/.macos-8.1-basilisk-ii.zip.part`, verifies with `sha256sum -c`, unzips with `python3 -m zipfile -e` into a temp folder, moves the `.hda` into `$HOME`, cleans up on every exit path, sets `DISK_IMAGE`; returns non-zero with a one-line reason on failure.
 
 - [ ] **Step 1:** In `check_basilisk_assets`, a missing disk no longer dies when installing Basilisk II; SheepShaver still dies as today.
 - [ ] **Step 2:** In the disk discovery block, when no disk is found for a new Basilisk II install: a yes/no offering the download (version, size in MB); `--get-disk` skips the question. Yes → `get_disk_image`; on failure or No → the existing `die` message. Existing installs and anyone with a disk never see it.
