@@ -231,7 +231,9 @@ wt_menu() {
   local title=$1 prompt=$2 default=$3 list_height=$4
   shift 4
   local extra=8; [[ -z $prompt ]] && extra=7
-  local newlines=${prompt//[!$'\n']/}; extra=$(( extra + ${#newlines} ))
+  # One row per line of prompt as whiptail shows it, long lines wrapped
+  local rows; rows=$(printf '%s\n' "$prompt" | fold -s -w 74 | wc -l)
+  extra=$(( extra + rows - 1 ))
   local total_height=$(( list_height + extra ))
   whiptail --backtitle "macintosh-mini" --title "$title" $nocancel \
     --default-item "$default" \
