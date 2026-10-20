@@ -21,7 +21,7 @@ FRAME_H = 59.650
 FRAME_T = 5.000
 
 WINDOW_W = 66.106
-"""The LCD opening. Snug on the Waveshare 2.8-inch panel: BUILD.md says to
+"""The LCD opening. Snug on the Waveshare 2.8-inch panel: the build guide says to
 sand the inner edges if the panel has to be forced, since a tight bezel can
 crack it."""
 WINDOW_H = 47.906

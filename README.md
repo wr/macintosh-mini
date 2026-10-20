@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="BUILD.md">Build guide</a> ⬪
+  <a href="https://wells.ee/projects/macintosh-mini/?ref=gh-macintosh-mini">Build guide</a> ⬪
   <a href="#step-2-install-the-software">Install the software</a> ⬪
   <a href="https://shop.wells.ee/products/macintosh-mini/?ref=gh-macintosh-mini">Buy a kit</a> ⬪
   <a href="#donate">Donate</a>
@@ -25,7 +25,7 @@ A [Maclock](https://www.aliexpress.us/w/wholesale-maclock.html) is a cheap alarm
 
 ## Step 1: Build or buy one
 
-The [build guide](BUILD.md) covers everything from opening the clock to the first boot: parts, assembly, software, and troubleshooting.
+The [build guide](https://wells.ee/projects/macintosh-mini/?ref=gh-macintosh-mini), on my site, covers everything from opening the clock to the first boot: parts, assembly, software, and troubleshooting.
 
 You can [buy a DIY kit or a finished build](https://shop.wells.ee/products/macintosh-mini/?ref=gh-macintosh-mini) from my maker shop. Faster than shipping from China, and your purchase supports the continued development of this project.
 
