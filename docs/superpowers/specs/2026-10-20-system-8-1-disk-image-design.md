@@ -57,6 +57,8 @@ After Dark (version unknown); check it, it may be a usable source.
 
 ## Settings in the image
 
+- The pinned CD is the UK English edition. Wells chose to keep it (2026-10-20): menus and dialogs
+  use British spellings, and the keyboard layout, date, time and number formats are set to US.
 - TCP/IP: Ethernet, using DHCP (slirp hands out 10.0.2.x). The test disk had a hand-set LAN
   address, which is why its web was broken under slirp.
 - AppleTalk: active, on Ethernet. The Chooser has no printer selected: each AirWriter has its own
