@@ -15,3 +15,65 @@ file = "iw_0.sit"
 url = "https://old.mac.gdn/apps/iw_0.sit"
 sha256 = "6ba91270bc4303cb8826ce268165665918815f9bbd2ceb1e35736c1d0bc9e8ec"
 note = "ImageWriter II/LQ LocalTalk Option disk: an 800K floppy image holding AppleTalk ImageWriter"
+
+# After Dark is put together from three Macintosh Garden archives
+# (macintoshgarden.org/apps/after-dark-40): the 4.03 control panel, the
+# standard modules, and the After Dark Files layout (Randomizer, module
+# libraries) from the "After Dark for OS 9" package, whose own patched
+# control panel is not used.
+
+[[source]]
+id = "after-dark-cdev"
+file = "After_Dark_4.0.sit"
+url = "https://old.mac.gdn/apps/After_Dark_4.0.sit"
+sha256 = "9701cd536562a1ae5515178b2496d4712507b201cf9085904804c18e760f40fc"
+note = "Member 'After Dark 4.0': the control panel (cdev/ADr3), vers 4.03. No serial."
+
+[[source]]
+id = "after-dark-modules"
+file = "After_Dark_4_Files.sit"
+url = "https://old.mac.gdn/apps/After_Dark_4_Files.sit"
+sha256 = "8c67ad155b1dd6da033e3b1f29cdca2308a19ffbedb4657a7cc337b069a032d7"
+note = "Member folder 'After Dark 4.0': Faceplate, Shared and 22 standard modules."
+
+[[source]]
+id = "after-dark-files"
+file = "After_Dark_for_OS_9.SIT"
+url = "https://old.mac.gdn/apps/After_Dark_for_OS_9.SIT"
+sha256 = "ff4603f67d64193f10efcaf32aaf641333d9c4e76d7f30fb7736cf0588e321ec"
+note = "Member 'After Dark 9 v1.0 (9:9:03)/After Dark Files': Module Resources and Randomizers. Its 'After Dark 9' control panel is not used."
+
+[[source]]
+id = "icab-68k"
+file = "iCab_Pre2.99b_English_68k.sit"
+url = "https://icab.clauss-net.de/icab/iCab_Pre2.99b_English_68k.sit"
+sha256 = "53043c8e79a8ee295bc13a502f0bc29faaaa2067e75da1286852615128366751"
+note = "iCab 2.9.9 (Classic, 68K), linked from icab.de/download.html. Members: 'iCab' (APPL/iCAB), 'Plug-ins'. Has a 'Register iCab' app; 2.9.9 is said to run with no limits."
+
+[[source]]
+id = "mr-browser-68k"
+file = "MR-Browser-68K-v0.39.bin"
+url = "https://macintoshrepository.org/files/direct/MR-Browser-68K-v0.39.bin"
+sha256 = "5d50cc972ce91e039e6097cb3049e27df6656a446996933dcf0ce8e520aec541"
+note = "MacBinary of 'MR Browser 68K v0.39' (APPL/MRBr). Asks for a sign-in PIN when opened. Replaced in place once (2026-02); re-pin if it changes again."
+
+[[source]]
+id = "stuffit-expander"
+file = "StuffIt_Expander_v5-5.bin"
+url = "https://archive.org/download/stuffit_expander_55_selfcontained/StuffIt_Expander_v5-5.bin"
+sha256 = "7c63533ea7144e4bf6cf0ce776b58f6686c17eacc28cd5a49c11c3886a9244a6"
+note = "MacBinary of 'StuffIt Expander' 5.5 (APPL/SITx, fat, self-contained). No serial."
+
+[[source]]
+id = "disk-copy"
+file = "Disk-Copy-633-smi.sit"
+url = "https://old.mac.gdn/apps/Disk-Copy-633-smi.sit"
+sha256 = "b035fba7facd0d2d81fcb599ad3b95ba49c4d477d49389ee851dd9b309851519"
+note = "Member 'Disk Copy 6.3.3.smi': a self-mounting image; open it in the emulator and copy Disk Copy out. No serial."
+
+[[source]]
+id = "ie-401-68k"
+file = "IE_4.01_68K.sit"
+url = "https://old.mac.gdn/apps/IE_4.01_68K.sit"
+sha256 = "c488efbbf97927ddddd82c0a01a9f280f6c54d3fa61f2b933094897bcb4e18fb"
+note = "Fallback browser only (if iCab nags): 'IE 4.01 Full 68K Installer', run in the emulator. Free, no serial."
