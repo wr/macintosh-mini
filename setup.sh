@@ -48,7 +48,7 @@ set -euo pipefail
 
 REPO_BRANCH="main"   # --branch: test an unmerged branch on a real Pi
 REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/$REPO_BRANCH"
-VERSION="1.7.0"
+VERSION="1.8.0"
 
 # SheepShaver paths (DISK_IMAGE is auto-discovered or set via --disk)
 DISK_IMAGE=""
@@ -697,6 +697,27 @@ reconf_modelid() {  # $1=prefs (BasiliskII only)
   pref_set "$1" modelid "$id"
 }
 
+# AppleTalk on the network: AppleTalk goes through Basilisk II's UDP tunnel,
+# where printers (an AirWriter, say) and other Macs on the network hear it, and
+# everything else through slirp, so the Mac stays online.
+appletalk_on() { [[ $(pref_get "$1" udptunnel) == true && $(pref_get "$1" udpappletalkonly) == true ]]; }
+
+reconf_appletalk() {  # $1=prefs (BasiliskII only)
+  local cur=Off pick
+  appletalk_on "$1" && cur=On
+  pick=$(wt_menu "AppleTalk" "" "$cur" 2 \
+    "On"  "AppleTalk printers and file sharing on your network, plus the internet" \
+    "Off" "The internet only") || return 0
+  if [[ $pick == On ]]; then
+    pref_set "$1" udptunnel true
+    pref_set "$1" udpport 6066
+    pref_set "$1" udpappletalkonly true
+  else
+    pref_set "$1" udptunnel false
+    pref_set "$1" udpappletalkonly false
+  fi
+}
+
 reconf_chime() {
   local tag name="" crash entry t d f; local args=()
   for entry in "${CHIMES_DATA[@]}"; do IFS='|' read -r t d _ <<< "$entry"; args+=("$t" "$d"); done
@@ -713,7 +734,7 @@ reconf_chime() {
 }
 
 configure_existing() {  # $1=prefs  $2=is_basilisk
-  local prefs=$1 isb=$2 cur_disk cur_depth cur_chime cur_color cur_modelid cur_model pick
+  local prefs=$1 isb=$2 cur_disk cur_depth cur_chime cur_color cur_modelid cur_model cur_atalk pick
   while true; do
     cur_disk=$(basename "$(pref_get "$prefs" disk)" 2>/dev/null)
     if [[ $isb -eq 1 ]]; then cur_depth=$(pref_get "$prefs" displaycolordepth)
@@ -734,12 +755,14 @@ configure_existing() {  # $1=prefs  $2=is_basilisk
         14) cur_model="Quadra (14) — System 7.5+ / OS 8" ;;
         *)  cur_model="modelid ${cur_modelid:-?}" ;;
       esac
+      cur_atalk=Off; appletalk_on "$prefs" && cur_atalk=On
       pick=$(whiptail --backtitle "macintosh-mini" --title "Emulator Settings" \
-          --ok-button "Select" --cancel-button "Back" --menu "" 13 72 4 \
+          --ok-button "Select" --cancel-button "Back" --menu "" 14 72 5 \
           "Disk image:"    "${cur_disk:-unknown}" \
           "Startup chime:" "${cur_chime:-—}" \
           "Color depth:"   "$cur_color" \
           "Mac model:"     "$cur_model" \
+          "AppleTalk:"     "$cur_atalk" \
           3>&1 1>&2 2>&3 </dev/tty) || break
     else
       pick=$(whiptail --backtitle "macintosh-mini" --title "Emulator Settings" \
@@ -754,6 +777,7 @@ configure_existing() {  # $1=prefs  $2=is_basilisk
       "Startup chime:") reconf_chime                   || true ;;
       "Color depth:")   reconf_color   "$prefs" "$isb" || true ;;
       "Mac model:")     reconf_modelid "$prefs"        || true ;;
+      "AppleTalk:")     reconf_appletalk "$prefs"      || true ;;
     esac
   done
 }
@@ -1728,6 +1752,9 @@ fpu true
 nogui true
 nosound false
 ether slirp
+udptunnel true
+udpport 6066
+udpappletalkonly true
 jit false
 jitfpu false
 frameskip 2
