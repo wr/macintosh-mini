@@ -1,0 +1,65 @@
+# What make_transfer.py puts on the Transfer disk. Each [[item]] takes files
+# from an unpacked source (sources.toml): "pick" globs, relative to the
+# unpacked archive, or to the HFS floppy named by "floppy". A folder brings
+# everything below it. "dest" is a folder on the Transfer disk.
+# Each [[file]] is a page from files/, with its Mac name, type and creator.
+
+[[item]]
+source = "imagewriter-option"
+floppy = "*.img"
+pick = ["AppleTalk ImageWriter"]
+dest = "Printing"
+
+[[item]]
+source = "after-dark-cdev"
+pick = ["After Dark 4.0"]
+dest = "After Dark"
+
+[[item]]
+source = "after-dark-files"
+pick = ["After Dark 9*/After Dark Files/Module Resources", "After Dark 9*/After Dark Files/Randomizers"]
+dest = "After Dark:After Dark Files"
+
+[[item]]
+source = "after-dark-modules"
+pick = ["After Dark 4.0"]
+dest = "After Dark:After Dark Files"
+
+[[item]]
+source = "icab-68k"
+pick = ["iCab", "Plug-ins"]
+dest = "Internet:iCab"
+
+[[item]]
+source = "mr-browser-68k"
+pick = ["MR Browser*"]
+dest = "Internet"
+
+[[item]]
+source = "stuffit-expander"
+pick = ["StuffIt Expander*"]
+dest = "Utilities"
+
+[[item]]
+source = "disk-copy"
+pick = ["Disk Copy*.smi"]
+dest = "Utilities"
+
+[[item]]
+source = "ie-401-68k"
+pick = ["IE 4.01*"]
+dest = "Fallback"
+
+[[file]]
+path = "files/Start Page.html"
+name = "Start Page"
+type = "TEXT"
+creator = "iCAB"
+dest = "Internet"
+
+[[file]]
+path = "files/FrogFind.html"
+name = "FrogFind"
+type = "TEXT"
+creator = "iCAB"
+dest = "Internet"
