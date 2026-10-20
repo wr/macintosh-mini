@@ -3,6 +3,10 @@
 Notable changes to the macintosh-mini installer (`setup.sh`). Re-running on an
 existing Pi shows the entries added since the installed version.
 
+## [1.8.0] - 2026-10-20
+- AppleTalk printers and file sharing work on your network alongside the internet, so the Chooser can find an AirWriter, say, while the browser stays online. New installs have it on; on an existing Mac, turn on AppleTalk in Edit settings.
+- Basilisk II is rebuilt once, with fixes to its AppleTalk tunnel.
+
 ## [1.7.0] - 2026-10-17
 - Change Wi-Fi without opening the case: hold the left button for 10 seconds, join the "Macintosh Mini XXXX" network from your phone, and pick your network on the page that opens. A Mac with no saved Wi-Fi offers it by itself.
 - A Mac with no ROM says on screen how to add one from a phone or computer on the same Wi-Fi, with a QR code that opens the page.
