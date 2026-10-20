@@ -72,6 +72,10 @@ After Dark (version unknown); check it, it may be a usable source.
   already discovers) and its SHA-256. Not GitHub releases: a takedown there can hit the whole
   repo. The image is versioned by date (e.g. 2026.10); a new version is a new file, so a pinned
   checksum never goes stale.
+- **Upload:** Wells signs the Internet Archive's `ia` command-line tool (installed with Homebrew)
+  in to his account on his Mac once, with `ia configure`. After that the builder uploads each
+  version with `ia` and verifies a real download before pinning it. The builder never handles
+  his password.
 - **Docs:** the README stays a landing page. Its Step 2 gains a short "or download ours" link.
   Details (what's on it, how to use it) go in `BUILD.md` or a page linked from it.
 - **`setup.sh`:** on an install that finds no disk image in `$HOME`, it offers to download this one
