@@ -37,7 +37,7 @@ freely licensed; Wells has accepted that, as is common practice.
 
 | Item | Version | Notes |
 |---|---|---|
-| Mac OS 8.1 | retail CD | archive.org item `mac-os-8.1`, `MacOS-8.1.iso`, MD5 `c1fdf24a0aa911aa3110c9c0d34ac4d1` (downloaded and checked 2026-10-20). Installed for a 68040 Quadra. |
+| Mac OS 8.1 | CD, US English | archive.org item `apple-mac-os-8.1-iso`, `MacOS8_1.iso`, MD5 `4a88bcda344356faac62af9749f4c61e`; its System's `vers` region is 0 (US). The `mac-os-8.1` item first pinned is the UK edition, and Wells chose US. Installed for a 68040 Quadra. |
 | AppleTalk ImageWriter | from the ImageWriter II/LQ LocalTalk Option disk | `https://old.mac.gdn/apps/iw_0.sit` (Wells's source; a StuffIt archive holding an 800K floppy image). Proven on the test Pi: Chooser listed AirWriter's "ImageWriter II" and a page printed. |
 | After Dark | 4.0.3 | Earlier 4.0.x doesn't work on Mac OS 8. Randomizer module active, 5-minute delay, only modules that pass testing on the Pi (see Testing). |
 | Web browser | iCab 2.9.9 (68k build) | Desktop alias. If iCab nags at launch or misbehaves in testing, use Internet Explorer 4.01 instead. Not Netscape: the copy on the test disk failed on some pages and once froze the Mac. |
@@ -57,8 +57,6 @@ After Dark (version unknown); check it, it may be a usable source.
 
 ## Settings in the image
 
-- The pinned CD is the UK English edition. Wells chose to keep it (2026-10-20): menus and dialogs
-  use British spellings, and the keyboard layout, date, time and number formats are set to US.
 - TCP/IP: Ethernet, using DHCP (slirp hands out 10.0.2.x). The test disk had a hand-set LAN
   address, which is why its web was broken under slirp.
 - AppleTalk: active, on Ethernet. The Chooser has no printer selected: each AirWriter has its own

@@ -4,10 +4,10 @@
 
 [[source]]
 id = "macos81-cd"
-file = "MacOS-8.1.iso"
-url = "https://archive.org/download/mac-os-8.1/MacOS-8.1.iso"
-sha256 = "b80a1f181d1ad6ec23924450694e673957723e420b2a5463160abea4252270b0"
-note = "Mac OS 8.1 retail CD (archive.org item mac-os-8.1, MD5 c1fdf24a0aa911aa3110c9c0d34ac4d1)"
+file = "MacOS8_1.iso"
+url = "https://archive.org/download/apple-mac-os-8.1-iso/Apple%20Mac%20OS%208.1%20(ISO)/MacOS8_1.iso"
+sha256 = "10f218f5ad4105d27b7ad3f82a7a12a8c1e2203e42cdd358936c8a27f6892c51"
+note = "Mac OS 8.1 CD, US English (its System's vers region is 0), archive.org item apple-mac-os-8.1-iso, MD5 4a88bcda344356faac62af9749f4c61e. Not mac-os-8.1: that one is the UK edition."
 
 [[source]]
 id = "imagewriter-option"

@@ -37,7 +37,7 @@ The first build ran on a Raspberry Pi Zero 2 W with Basilisk II as a Quadra (`mo
 
 **Base install**
 
-1. Make a blank 1 GiB disk: `truncate -s 1G macos-8.1.hda`. Copy `.cache/MacOS-8.1.iso` and
+1. Make a blank 1 GiB disk: `truncate -s 1G macos-8.1.hda`. Copy `.cache/MacOS8_1.iso` and
    `out/transfer.dsk` beside it.
 2. Boot an existing Mac OS 8.x disk (it only runs the installer), with the blank disk, the
    Transfer disk and the CD attached:
@@ -46,14 +46,14 @@ The first build ran on a Raspberry Pi Zero 2 W with Basilisk II as a Quadra (`mo
    disk /path/to/an-existing-8.x.hda
    disk /path/to/macos-8.1.hda
    disk /path/to/transfer.dsk
-   cdrom /path/to/MacOS-8.1.iso
+   cdrom /path/to/MacOS8_1.iso
    modelid 14
    ramsize 134217728
    ```
 
 3. The Mac asks to initialise the unreadable disk: name it `Macintosh HD`, format
    **Mac OS Standard 1 GB**.
-4. Open **Install Mac OS 8.1** on the CD (it's the UK English edition). Destination:
+4. Open **Install Mac OS 8.1** on the CD. Destination:
    **Macintosh HD** (not the disk you booted from). Agree to the licence. Click **Customise** and
    leave on only **Mac OS 8.1**, **Mac OS Info Centre**, **OpenDoc** and **MacLink Plus**: untick
    Internet Access, Open Transport PPP, Mac OS Runtime for Java, Personal Web Sharing and
