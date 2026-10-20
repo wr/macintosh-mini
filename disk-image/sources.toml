@@ -1,0 +1,17 @@
+# The downloads the Mac OS 8.1 disk image is built from, pinned by SHA-256.
+# fetch.py puts them in .cache/. An entry with no url is fetched by hand:
+# its note says from where.
+
+[[source]]
+id = "macos81-cd"
+file = "MacOS-8.1.iso"
+url = "https://archive.org/download/mac-os-8.1/MacOS-8.1.iso"
+sha256 = "b80a1f181d1ad6ec23924450694e673957723e420b2a5463160abea4252270b0"
+note = "Mac OS 8.1 retail CD (archive.org item mac-os-8.1, MD5 c1fdf24a0aa911aa3110c9c0d34ac4d1)"
+
+[[source]]
+id = "imagewriter-option"
+file = "iw_0.sit"
+url = "https://old.mac.gdn/apps/iw_0.sit"
+sha256 = "6ba91270bc4303cb8826ce268165665918815f9bbd2ceb1e35736c1d0bc9e8ec"
+note = "ImageWriter II/LQ LocalTalk Option disk: an 800K floppy image holding AppleTalk ImageWriter"
