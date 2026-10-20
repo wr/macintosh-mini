@@ -41,7 +41,7 @@ Everything is open source, though, so you're just as welcome to order the bare b
 - Waveshare 2.8-inch DPI LCD · [Amazon](https://amzn.to/4ue5GaP)
 - Macintosh Mini board · [PCBWay](https://www.pcbway.com/project/shareproject/W654223ASS41_Untitled_kicad_pcb_95cca7e3.html)
 - GPIO interposer · [Shop](https://shop.wells.ee/products/macintosh-mini/?ref=gh-macintosh-mini)
-- Speaker, 8 Ω with a JST PH plug · [Shop](https://shop.wells.ee/products/macintosh-mini/?ref=gh-macintosh-mini)
+- Speaker, 8 Ohm with a JST PH plug · [Shop](https://shop.wells.ee/products/macintosh-mini/?ref=gh-macintosh-mini)
 - Screen bezel, 3D-printed · [STL file](maclock-screen-bezel/)
 - 32 GB microSD card
 - Optional: micro-USB to USB-A cable, for a USB port on the back · [AliExpress](https://www.aliexpress.us/item/3256807845070147.html) (color `OTGV8DO-AFH`)
