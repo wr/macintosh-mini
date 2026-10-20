@@ -55,6 +55,12 @@ DISK_IMAGE=""
 ROM_FILE="ROM"
 CHIME_FILE="chime.wav"
 MACEMU_DIR="$HOME/macemu"
+# kanjitalk755/macemu plus the UDP tunnel fixes in its PRs #321 (the Pi's
+# address) and #322 (AppleTalk-only tunnel), so the Mac can print to an
+# AirWriter and stay online. Back to kanjitalk755 once both are merged.
+MACEMU_REPO="https://github.com/wr/macemu.git"
+MACEMU_COMMIT="722458b7c9bd7148a050e40638023ebe84a67863"
+BASILISK_STAMP=/usr/local/share/macintosh-mini/basilisk.commit
 
 # tag (clean display name) | description | filename (without .wav)
 CHIMES_DATA=(
@@ -904,10 +910,21 @@ fi
 # offline) is a modal dialog the kiosk can't dismiss — `nogui true` doesn't
 # cover alerts in the SDL build. Builds are now configured --with-gtk=no so
 # alerts go to the journal instead; a GTK-linked binary from an older install
-# gets rebuilt once on update.
+# gets rebuilt once on update. With a stamp file ($2), a binary built from
+# another macemu commit than MACEMU_COMMIT is rebuilt too.
 needs_build() {
   [[ -x $1 ]] || return 0
+  [[ -n ${2:-} && $(cat "$2" 2>/dev/null) != "$MACEMU_COMMIT" ]] && return 0
   ldd "$1" 2>/dev/null | grep -q libgtk
+}
+
+# Clone macemu if needed and check out MACEMU_COMMIT, whatever the clone
+# tracked before (installs before 1.8.0 cloned kanjitalk755 HEAD).
+checkout_macemu() {
+  [[ -d $MACEMU_DIR/.git ]] || git clone "$MACEMU_REPO" "$MACEMU_DIR" || return $?
+  git -C "$MACEMU_DIR" remote set-url origin "$MACEMU_REPO" || return $?
+  git -C "$MACEMU_DIR" fetch origin "$MACEMU_COMMIT" || return $?
+  git -C "$MACEMU_DIR" checkout --detach -f "$MACEMU_COMMIT"
 }
 
 # --- Total step count (for gauge) -----------------------------------------
@@ -924,8 +941,8 @@ if [[ $INSTALL_SHEEPSHAVER -eq 1 ]]; then
   fi
 fi
 if [[ $INSTALL_BASILISK -eq 1 ]]; then
-  if needs_build /usr/local/bin/BasiliskII; then
-    TOTAL_STEPS=$((TOTAL_STEPS+12))
+  if needs_build /usr/local/bin/BasiliskII "$BASILISK_STAMP"; then
+    TOTAL_STEPS=$((TOTAL_STEPS+13))
   else
     TOTAL_STEPS=$((TOTAL_STEPS+8))
   fi
@@ -1401,8 +1418,7 @@ SYSCTL
   if ! needs_build /usr/local/bin/SheepShaver; then
     : # already installed; no steps consumed
   else
-    run "[sheepshaver] Cloning macemu (kanjitalk755 HEAD)" \
-      bash -c "[[ -d '$MACEMU_DIR/.git' ]] || git clone https://github.com/kanjitalk755/macemu.git '$MACEMU_DIR'"
+    run "[sheepshaver] Fetching macemu (pinned: AppleTalk tunnel fixes)" checkout_macemu
 
     prepare_build() {
       cd "$MACEMU_DIR/SheepShaver" || return $?
@@ -1589,11 +1605,10 @@ SYSCTL
       -o "$HOME/crash.wav" "$REPO_RAW/emulators/chimes/${CRASH_NAME}.wav"
   fi
 
-  if ! needs_build /usr/local/bin/BasiliskII; then
+  if ! needs_build /usr/local/bin/BasiliskII "$BASILISK_STAMP"; then
     : # already installed; no steps consumed
   else
-    run "[basilisk] Cloning macemu (kanjitalk755 HEAD)" \
-      bash -c "[[ -d '$MACEMU_DIR/.git' ]] || git clone https://github.com/kanjitalk755/macemu.git '$MACEMU_DIR'"
+    run "[basilisk] Fetching macemu (pinned: AppleTalk tunnel fixes)" checkout_macemu
 
     # JIT is x86-only (interpreter on ARM). VOSF on: only changed screen regions
     # get re-blitted — meaningfully snappier UI, and stable on this Pi's aarch64.
@@ -1617,6 +1632,9 @@ SYSCTL
 
     run "[basilisk] Installing BasiliskII binary" \
       sudo install -m755 "$MACEMU_DIR/BasiliskII/src/Unix/BasiliskII" /usr/local/bin/BasiliskII
+    # Written only once the binary is in place: a failed build retries next run.
+    run "[basilisk] Recording the macemu commit" \
+      bash -c "sudo mkdir -p '$(dirname "$BASILISK_STAMP")' && echo '$MACEMU_COMMIT' | sudo tee '$BASILISK_STAMP' >/dev/null"
   fi
 
   install_basilisk_launcher() {
