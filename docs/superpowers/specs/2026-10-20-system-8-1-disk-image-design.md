@@ -151,10 +151,11 @@ AirWriter board 1 on the network (10.0.1.115):
 
 The test Pi can be driven remotely (wayvnc and vncdotool; notes in Claude's project memory).
 
-**Build environment.** The one-time install runs on Wells's Mac, not the Pi. Basilisk II for
-macOS is at `~/Applications/BasiliskII/BasiliskII` (stock) and the patched build is in
-`~/Projects/macemu`. The ROM comes from the test Pi (`~/68K.ROM`, Wells's own), copied over for
-the build. Only that ROM is tested. The Mac OS 8.1 CD image was downloaded on 2026-10-20 to the
+**Build environment.** The scripted parts (fetching sources, packing them onto a transfer disk,
+checking and zipping the result) run on Wells's Mac. The one-time install and configuration run
+inside Basilisk II on the test Pi, driven over VNC: that is the exact target, it uses the Pi's own
+ROM (`~/68K.ROM`), and it doesn't take over Wells's screen the way driving the emulator on his Mac
+would. Only that ROM is tested. The Mac OS 8.1 CD image was downloaded on 2026-10-20 to the
 session scratchpad; re-fetch it from archive.org and check the MD5 if it's gone.
 
 ## Left to the builder
@@ -180,7 +181,7 @@ session scratchpad; re-fetch it from archive.org and check the MD5 if it's gone.
 - The AppleTalk-only tunnel on by default for new Basilisk II installs, offered (not forced) on
   existing ones.
 - Testing at 16-bit and 8-bit, with 1-bit best effort.
-- Building on the Mac with the test Pi's ROM.
+- Installing and configuring the image on the test Pi over VNC, with its ROM; scripts on the Mac.
 - The emulator change merging before the download offer.
 
 ## Later
