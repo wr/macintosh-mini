@@ -36,19 +36,15 @@ Everything is open source, though, so you're just as welcome to order the bare b
 
 ### Parts
 
-- A Maclock
-- A Raspberry Pi Zero 2 W (or a Pi 3 Model A+)
-- A Waveshare 2.8-inch IPS LCD (the DPI version)
-- The Macintosh Mini board, which connects the clock's dial, buttons, power switch, battery, and speaker to the Pi, and carries the audio amplifier
-- A small speaker: 8 Ω, 1 W, 28–40 mm, with a JST PH 2.0 mm plug
-- A 3D-printed screen bezel ([STL file](maclock-screen-bezel/))
-- A way to connect the board to the Pi: the GPIO interposer (recommended), or 7 jumper wires with a female end on one side
-- A 32 GB microSD card
-- Optional: a micro-USB to USB-A cable, to add a USB port on the back for a keyboard or mouse
-
-<!-- github-only -->
-**Where to buy:** [Maclock](https://amzn.to/4e7FKrw) · [Raspberry Pi Zero 2 W](https://amzn.to/4ac7FVR) · [Waveshare 2.8-inch LCD](https://amzn.to/4ue5GaP) · [Macintosh Mini board](https://www.pcbway.com/project/shareproject/W654223ASS41_Untitled_kicad_pcb_95cca7e3.html) from PCBWay ([$5 off with my referral code](https://pcbway.com/g/AsfKU9)) · [micro-USB to USB-A cable](https://www.aliexpress.us/item/3256807845070147.html?gatewayAdapt=glo2usa#nav-specification) (choose `Color: OTGV8DO-AFH`) · the speaker and the GPIO interposer, from [Wells Workshop](https://shop.wells.ee/products/macintosh-mini/?ref=gh-macintosh-mini)
-<!-- /github-only -->
+- Maclock · [Amazon](https://amzn.to/4e7FKrw)
+- Raspberry Pi Zero 2 W · [Amazon](https://amzn.to/4ac7FVR)
+- Waveshare 2.8-inch DPI LCD · [Amazon](https://amzn.to/4ue5GaP)
+- Macintosh Mini board · [PCBWay](https://www.pcbway.com/project/shareproject/W654223ASS41_Untitled_kicad_pcb_95cca7e3.html)
+- GPIO interposer · [Wells Workshop](https://shop.wells.ee/products/macintosh-mini/?ref=gh-macintosh-mini)
+- Speaker, 8 Ω with a JST PH plug · [Wells Workshop](https://shop.wells.ee/products/macintosh-mini/?ref=gh-macintosh-mini)
+- Screen bezel, 3D-printed · [STL file](maclock-screen-bezel/)
+- 32 GB microSD card
+- Optional: micro-USB to USB-A cable, for a USB port on the back · [AliExpress](https://www.aliexpress.us/item/3256807845070147.html) (color `OTGV8DO-AFH`)
 
 ### Tools
 
