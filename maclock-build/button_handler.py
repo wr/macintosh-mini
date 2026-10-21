@@ -12,7 +12,7 @@
 # Edit the COMMANDS / DOUBLE_COMMANDS / HOLD_COMMANDS dicts below to set what
 # each button does.
 #
-# March 26, 2026 - https://github.com/wr/macintosh-mini/blob/main/BUILD.md
+# March 26, 2026 - https://wells.ee/projects/macintosh-mini/
 # ####################################
 
 import os

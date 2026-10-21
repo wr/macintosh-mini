@@ -3,9 +3,11 @@
 Notable changes to the macintosh-mini installer (`setup.sh`). Re-running on an
 existing Pi shows the entries added since the installed version.
 
-## [1.8.0] - 2026-10-20
+## [1.8.0] - 2026-10-21
 - AppleTalk printers and file sharing work on your network alongside the internet, so the Chooser can find an AirWriter, say, while the browser stays online. New installs have it on; on an existing Mac, turn on AppleTalk in Edit settings.
-- Basilisk II is rebuilt once, with fixes to its AppleTalk tunnel.
+- Basilisk II is replaced once, with fixes to its AppleTalk tunnel. Macs running SheepShaver get a new one too, since it shares that network code.
+- The emulators now arrive ready-built: the installer downloads the one built for this release, checks it, and compiles on the Pi only if that doesn't work. A new emulator takes seconds instead of about 8 minutes, and the Pi no longer runs short of memory compiling it. Fresh installs skip the compiler tools too.
+- Turning the performance option on or off now swaps the emulator for one with or without its speed tuning, to match the setting.
 
 ## [1.7.0] - 2026-10-17
 - Change Wi-Fi without opening the case: hold the left button for 10 seconds, join the "Macintosh Mini XXXX" network from your phone, and pick your network on the page that opens. A Mac with no saved Wi-Fi offers it by itself.
