@@ -55,11 +55,11 @@ DISK_IMAGE=""
 ROM_FILE="ROM"
 CHIME_FILE="chime.wav"
 MACEMU_DIR="$HOME/macemu"
-# kanjitalk755/macemu plus the UDP tunnel fixes in its PRs #321 (the Pi's
-# address) and #322 (AppleTalk-only tunnel), so the Mac can print to an
-# AirWriter and stay online. Back to kanjitalk755 once both are merged.
-MACEMU_REPO="https://github.com/wr/macemu.git"
-MACEMU_COMMIT="722458b7c9bd7148a050e40638023ebe84a67863"
+# kanjitalk755/macemu as of its PRs #321 (the Pi's address) and #322
+# (AppleTalk-only tunnel), the UDP tunnel fixes that let the Mac print to
+# an AirWriter and stay online.
+MACEMU_REPO="https://github.com/kanjitalk755/macemu.git"
+MACEMU_COMMIT="b9a71d7a4ef109ef3b0a218a37481af37aa2974a"
 BASILISK_STAMP=/usr/local/share/macintosh-mini/basilisk.commit
 
 # tag (clean display name) | description | filename (without .wav)
