@@ -64,6 +64,78 @@ MACEMU_COMMIT="b9a71d7a4ef109ef3b0a218a37481af37aa2974a"
 BASILISK_STAMP=/usr/local/share/macintosh-mini/basilisk.commit
 SHEEPSHAVER_STAMP=/usr/local/share/macintosh-mini/sheepshaver.commit
 
+# How both emulators are built, on the Pi and by CI: CI reads this block (and
+# MACEMU_REPO/MACEMU_COMMIT above) from this file and builds the same way in
+# .github/scripts/build-emulator.sh, so keep it self-contained.
+# >>> emulator build settings >>>
+MACEMU_BUILD_PKGS=(build-essential autoconf automake libtool pkg-config
+  libsdl2-dev libgl1-mesa-dev libxkbcommon-dev libmpfr-dev)
+MACEMU_RUNTIME_PKGS=(libsdl2-2.0-0 libmpfr6)   # what a downloaded build needs
+BASILISK_CFLAGS="-g -O3"
+# JIT is x86-only (interpreter on ARM). VOSF on: only changed screen regions
+# get re-blitted — meaningfully snappier UI, and stable on this Pi's aarch64.
+BASILISK_CONFIGURE=(--enable-sdl-video --enable-sdl-audio
+  --disable-jit-compiler --enable-vosf --with-gtk=no)
+SHEEPSHAVER_CFLAGS="-DMEM_BULK -g -O3"
+SHEEPSHAVER_CONFIGURE=(--with-gtk=no)
+PERF_CFLAGS="-mcpu=cortex-a53 -mtune=cortex-a53"   # added by the performance option
+EMULATORS_IMAGE="debian:trixie"   # CI builds in this, to match Raspberry Pi OS 13
+EMULATORS_RECIPE_REV=1   # bump when build-emulator.sh changes what it builds
+
+# The release a matching download comes from. A hash of everything above that
+# shapes the binaries (not the runtime packages), so a Pi only downloads what
+# was built from exactly its pin and settings.
+emulators_recipe() {
+  printf '%s\n' "$MACEMU_REPO" "$MACEMU_COMMIT" "${MACEMU_BUILD_PKGS[*]}" \
+    "$BASILISK_CFLAGS" "${BASILISK_CONFIGURE[*]}" "$SHEEPSHAVER_CFLAGS" \
+    "${SHEEPSHAVER_CONFIGURE[*]}" "$PERF_CFLAGS" "$EMULATORS_IMAGE" \
+    "$EMULATORS_RECIPE_REV" | sha256sum | cut -c1-8
+}
+emulators_tag() { echo "emulators-${MACEMU_COMMIT:0:7}-$(emulators_recipe)"; }
+
+# An emulator binary is usable when every library it needs is there and it
+# starts: both print their usage and exit on --help (SheepShaver opens SDL
+# first, hence the dummy drivers, which need no screen or sound card).
+check_emulator() {
+  local out
+  if ldd "$1" | grep 'not found'; then return 1; fi
+  out=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy timeout 30 "$1" --help 2>&1) ||
+    { echo "$out" | tail -n 5; return 1; }
+  grep -q 'Build Date' <<<"$out" || { echo "$out" | tail -n 5; return 1; }
+}
+
+# The download for emulator $1 (BasiliskII or SheepShaver) at the current
+# performance setting, and its checksum from the pins below.
+prebuilt_asset() { echo "$1-perf${PERF:-0}.gz"; }
+prebuilt_sha() {
+  local entry
+  for entry in ${EMULATORS_SHA256[@]+"${EMULATORS_SHA256[@]}"}; do
+    [[ ${entry%% *} == "$1" ]] && { echo "${entry#* }"; return 0; }
+  done
+  return 1
+}
+# Whether the pins are for exactly this build and cover emulator $1. After a
+# change to the pin or the settings they aren't until CI re-pins, and the Pi
+# compiles meanwhile.
+prebuilt_pinned() {
+  [[ $EMULATORS_RELEASE == "$(emulators_tag)" ]] &&
+    prebuilt_sha "$(prebuilt_asset "$1")" >/dev/null
+}
+# <<< emulator build settings <<<
+
+# The CI release to download the emulators from, and their checksums. Written
+# by CI (.github/workflows/emulators.yml), never by hand.
+# >>> prebuilt emulators >>>
+EMULATORS_RELEASE="emulators-b9a71d7-d656fad2"
+EMULATORS_SHA256=(
+  "BasiliskII-perf0.gz b3ec933eff82aede27dfca85a0c61a6ed0927f994ed419d7f9deaae0c5f5dc2e"
+  "BasiliskII-perf1.gz 1a453b6deef23b63a2d0b1572eb97a517dd7bde8db2d3655756f69a39786f907"
+  "SheepShaver-perf0.gz 9830d332f04643c6b660c483055ca09d1f83bb37913c8a9d77797dc2b2f8e60f"
+  "SheepShaver-perf1.gz 12e078d82fdbfb04007a464bd44c0102bef64f3ed376b8319be9b56603968a48"
+)
+# <<< prebuilt emulators <<<
+EMULATORS_URL="https://github.com/wr/macintosh-mini/releases/download"
+
 # tag (clean display name) | description | filename (without .wav)
 CHIMES_DATA=(
   "Macintosh I|1984|StartupMacI"
@@ -186,6 +258,22 @@ run() {
   fi
 }
 
+# Like run, but a failure is logged and handed back instead of ending the install.
+try_run() {
+  local label=$1; shift
+  CURRENT_STEP=$((CURRENT_STEP + 1))
+  if [[ $DEBUG -eq 1 ]]; then
+    printf '\n\033[1;36m==>\033[0m \033[1m%s\033[0m\n' "$label"
+    "$@"
+    return $?
+  fi
+  emit_gauge "$(step_pct)" "$label"
+  local rc=0
+  { "$@"; } >>"$LOG_FILE" 2>&1 || rc=$?
+  [[ $rc -eq 0 ]] || echo "--- $label: didn't work (exit $rc), carrying on" >>"$LOG_FILE"
+  return $rc
+}
+
 # Like run but updates the gauge message every 30s with elapsed time.
 run_long() {
   local label=$1; shift
@@ -237,7 +325,19 @@ wt_menu() {
   local rows; rows=$(printf '%s\n' "$prompt" | fold -s -w 74 | wc -l)
   extra=$(( extra + rows - 1 ))
   local total_height=$(( list_height + extra ))
-  whiptail --backtitle "macintosh-mini" --title "$title" $nocancel \
+  # Never taller than the screen: whiptail centres the box, so a taller one
+  # starts above the top and hides its title and buttons. A long prompt (the
+  # update's what's new) then scrolls instead (Tab to it, then the arrow keys).
+  local screen_rows scroll=""
+  screen_rows=$(stty size </dev/tty 2>/dev/null) && screen_rows=${screen_rows%% *}
+  [[ $screen_rows =~ ^[0-9]+$ ]] || screen_rows=${LINES:-24}
+  local max_height=$(( screen_rows - 2 ))   # the backtitle row, and the box's shadow
+  (( max_height < list_height + 7 )) && max_height=$(( list_height + 7 ))
+  if (( total_height > max_height )); then
+    total_height=$max_height
+    scroll=--scrolltext
+  fi
+  whiptail --backtitle "macintosh-mini" --title "$title" $nocancel $scroll \
     --default-item "$default" \
     --menu "$prompt" "$total_height" 78 "$list_height" \
     "$@" 3>&1 1>&2 2>&3 </dev/tty
@@ -956,6 +1056,49 @@ record_build() {
   sudo mkdir -p "$(dirname "$1")" && emu_build | sudo tee "$1" >/dev/null
 }
 
+# Whether emulator $1 can be downloaded instead of compiled: CI builds for
+# Raspberry Pi OS 13 (Debian trixie), 64-bit, only.
+prebuilt_available() {
+  [[ $(dpkg --print-architecture 2>/dev/null) == arm64 ]] || return 1
+  # shellcheck source=/dev/null
+  [[ $(. /etc/os-release 2>/dev/null && echo "${VERSION_CODENAME:-}") == trixie ]] || return 1
+  prebuilt_pinned "$1"
+}
+
+# Download emulator $1 from CI's release, check it, install it and record the
+# build in stamp $2. A download that fails any check is never installed.
+install_prebuilt() {
+  local asset sha dir rc=0
+  asset=$(prebuilt_asset "$1") && sha=$(prebuilt_sha "$asset") || return 1
+  dir=$(mktemp -d) || return 1
+  # Time limits, so a stalled download falls back to compiling within about
+  # five minutes, retries included, instead of hanging (2.5 MB in 150 s needs
+  # only ~17 KB/s).
+  { curl -fsSL --retry 3 --retry-max-time 150 --connect-timeout 20 --max-time 150 \
+      -o "$dir/$asset" "$EMULATORS_URL/$EMULATORS_RELEASE/$asset" &&
+    echo "$sha  $dir/$asset" | sha256sum -c - &&
+    gunzip -c "$dir/$asset" > "$dir/$1" && chmod 755 "$dir/$1" &&
+    check_emulator "$dir/$1" &&
+    sudo install -m755 "$dir/$1" "/usr/local/bin/$1" &&
+    record_build "$2"; } || rc=1
+  rm -rf "$dir"
+  return $rc
+}
+
+# Compiling needs these; only Pis that compile install them.
+install_build_tools() { sudo apt-get install -y "${MACEMU_BUILD_PKGS[@]}"; }
+
+# Steps to get emulator $1 in place: none when it's current, one to download
+# it, or the compile's six (build tools, fetch, configure, build, install,
+# record). $2 = its binary, $3 = its stamp.
+EMU_BUILD_STEPS=6
+emu_steps() {
+  if ! needs_build "$2" "$3"; then echo 0
+  elif prebuilt_available "$1"; then echo 1
+  else echo "$EMU_BUILD_STEPS"
+  fi
+}
+
 # Clone macemu if needed and check out MACEMU_COMMIT, whatever the clone
 # tracked before (installs before 1.8.0 cloned kanjitalk755 HEAD).
 checkout_macemu() {
@@ -972,18 +1115,10 @@ TOTAL_STEPS=4   # apt update, apt install, patch_cmdline, record_install
 [[ -n $TIMEZONE ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
 [[ $INSTALL_MACLOCK -eq 1 ]] && TOTAL_STEPS=$((TOTAL_STEPS+7))
 if [[ $INSTALL_SHEEPSHAVER -eq 1 ]]; then
-  if needs_build /usr/local/bin/SheepShaver "$SHEEPSHAVER_STAMP"; then
-    TOTAL_STEPS=$((TOTAL_STEPS+13))
-  else
-    TOTAL_STEPS=$((TOTAL_STEPS+8))
-  fi
+  TOTAL_STEPS=$((TOTAL_STEPS + 8 + $(emu_steps SheepShaver /usr/local/bin/SheepShaver "$SHEEPSHAVER_STAMP")))
 fi
 if [[ $INSTALL_BASILISK -eq 1 ]]; then
-  if needs_build /usr/local/bin/BasiliskII "$BASILISK_STAMP"; then
-    TOTAL_STEPS=$((TOTAL_STEPS+13))
-  else
-    TOTAL_STEPS=$((TOTAL_STEPS+8))
-  fi
+  TOTAL_STEPS=$((TOTAL_STEPS + 8 + $(emu_steps BasiliskII /usr/local/bin/BasiliskII "$BASILISK_STAMP")))
 fi
 [[ $PERF -eq 1 ]] && TOTAL_STEPS=$((TOTAL_STEPS+2))
 TOTAL_STEPS=$((TOTAL_STEPS+1))   # bluetooth
@@ -1045,9 +1180,7 @@ fi
 APT_PKGS=(curl git iw qrencode dnsmasq-base)
 if [[ $INSTALL_SHEEPSHAVER -eq 1 || $INSTALL_BASILISK -eq 1 ]]; then
   APT_PKGS+=(
-    build-essential autoconf automake libtool pkg-config
-    libsdl2-dev libgl1-mesa-dev libxkbcommon-dev
-    libmpfr-dev
+    "${MACEMU_RUNTIME_PKGS[@]}"
     labwc wlr-randr seatd
     alsa-utils
   )
@@ -1455,7 +1588,14 @@ SYSCTL
 
   if ! needs_build /usr/local/bin/SheepShaver "$SHEEPSHAVER_STAMP"; then
     : # already installed; no steps consumed
+  elif prebuilt_available SheepShaver &&
+       try_run "[sheepshaver] Downloading SheepShaver (built by GitHub)" \
+         install_prebuilt SheepShaver "$SHEEPSHAVER_STAMP"; then
+    : # downloaded and checked
   else
+    # Compile it here. If a download was on offer, the step count assumed it.
+    prebuilt_available SheepShaver && TOTAL_STEPS=$((TOTAL_STEPS + EMU_BUILD_STEPS))
+    run "[sheepshaver] Installing build tools" install_build_tools
     run "[sheepshaver] Fetching macemu (pinned: AppleTalk tunnel fixes)" checkout_macemu
 
     prepare_build() {
@@ -1463,11 +1603,10 @@ SYSCTL
       make links || return $?
       cd src/Unix || return $?
       make distclean >/dev/null 2>&1 || true   # existing clone: drop old configure
-      local extra_cflags=""
-      [[ $PERF -eq 1 ]] && extra_cflags=" -mcpu=cortex-a53 -mtune=cortex-a53"
-      CFLAGS="-DMEM_BULK -g -O3${extra_cflags}" \
-      CXXFLAGS="-DMEM_BULK -g -O3${extra_cflags}" \
-      ./autogen.sh --with-gtk=no || return $?
+      local cflags=$SHEEPSHAVER_CFLAGS
+      [[ $PERF -eq 1 ]] && cflags+=" $PERF_CFLAGS"
+      CFLAGS="$cflags" CXXFLAGS="$cflags" \
+      ./autogen.sh "${SHEEPSHAVER_CONFIGURE[@]}" || return $?
     }
     run "[sheepshaver] Configuring build (no GTK)" prepare_build
 
@@ -1646,20 +1785,23 @@ SYSCTL
 
   if ! needs_build /usr/local/bin/BasiliskII "$BASILISK_STAMP"; then
     : # already installed; no steps consumed
+  elif prebuilt_available BasiliskII &&
+       try_run "[basilisk] Downloading Basilisk II (built by GitHub)" \
+         install_prebuilt BasiliskII "$BASILISK_STAMP"; then
+    : # downloaded and checked
   else
+    # Compile it here. If a download was on offer, the step count assumed it.
+    prebuilt_available BasiliskII && TOTAL_STEPS=$((TOTAL_STEPS + EMU_BUILD_STEPS))
+    run "[basilisk] Installing build tools" install_build_tools
     run "[basilisk] Fetching macemu (pinned: AppleTalk tunnel fixes)" checkout_macemu
 
-    # JIT is x86-only (interpreter on ARM). VOSF on: only changed screen regions
-    # get re-blitted — meaningfully snappier UI, and stable on this Pi's aarch64.
     prepare_basilisk_build() {
       cd "$MACEMU_DIR/BasiliskII/src/Unix" || return $?
       make distclean >/dev/null 2>&1 || true   # existing clone: drop old configure
-      local extra_cflags=""
-      [[ $PERF -eq 1 ]] && extra_cflags=" -mcpu=cortex-a53 -mtune=cortex-a53"
-      CFLAGS="-g -O3${extra_cflags}" \
-      CXXFLAGS="-g -O3${extra_cflags}" \
-      ./autogen.sh --enable-sdl-video --enable-sdl-audio \
-        --disable-jit-compiler --enable-vosf --with-gtk=no || return $?
+      local cflags=$BASILISK_CFLAGS
+      [[ $PERF -eq 1 ]] && cflags+=" $PERF_CFLAGS"
+      CFLAGS="$cflags" CXXFLAGS="$cflags" \
+      ./autogen.sh "${BASILISK_CONFIGURE[@]}" || return $?
     }
     run "[basilisk] Configuring build (SDL, no JIT, VOSF, no GTK)" prepare_basilisk_build
 
