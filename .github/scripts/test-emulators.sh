@@ -34,7 +34,7 @@ same() {  # same <name> <got> <want>
 # subshell so each test starts clean. $1 = a setup.sh, then commands to run.
 in_settings() {
   local file=$1; shift
-  ( eval "$("$pin" settings "$file")" || exit 99; eval "$*" )
+  ( eval "$("$pin" --setup "$file" settings)" || exit 99; eval "$*" )
 }
 
 # --- The shared build settings -----------------------------------------------
@@ -83,6 +83,36 @@ check "pins for an older commit: compile" \
   in_settings "$setup" "$shas; EMULATORS_RELEASE=\$(MACEMU_COMMIT=1111111111111111111111111111111111111111 emulators_tag); ! prebuilt_pinned BasiliskII"
 check "pins for older flags: compile" \
   in_settings "$setup" "$shas; EMULATORS_RELEASE=\$(BASILISK_CFLAGS=-O2 emulators_tag); ! prebuilt_pinned BasiliskII"
+
+# --- pin-emulators.sh write ----------------------------------------------------
+
+copy="$work/setup.sh"
+cp "$setup" "$copy"
+sums="$work/SHA256SUMS"
+for f in BasiliskII-perf0 BasiliskII-perf1 SheepShaver-perf0 SheepShaver-perf1; do
+  printf '%s  %s.gz\n' "$(printf '%s' "$f" | sha256sum | cut -c1-64)" "$f"
+done > "$sums"
+"$pin" --setup "$copy" write "$sums"
+outside() { sed '/^# >>> prebuilt emulators/,/^# <<< prebuilt emulators/d' "$1"; }
+check "write changes nothing outside the pin block" \
+  cmp -s <(outside "$setup") <(outside "$copy")
+same "write pins the current tag" "$(in_settings "$copy" 'echo "$EMULATORS_RELEASE"')" "$tag"
+want=$(awk '$2 == "SheepShaver-perf1.gz" { print $1 }' "$sums")
+same "write pins each checksum" "$(in_settings "$copy" 'prebuilt_sha SheepShaver-perf1.gz')" "$want"
+for emu in BasiliskII SheepShaver; do
+  for perf in 0 1; do
+    check "after write, $emu perf=$perf downloads" \
+      in_settings "$copy" "PERF=$perf; prebuilt_pinned $emu"
+  done
+done
+cp "$copy" "$work/once"
+"$pin" --setup "$copy" write "$sums"
+check "writing the same pins twice is a no-op" cmp -s "$work/once" "$copy"
+check "the pinned setup.sh still parses" bash -n "$copy"
+grep -v SheepShaver-perf1 "$sums" > "$work/short"
+check "write refuses SHA256SUMS missing a file" \
+  bash -c '! "$1" --setup "$2" write "$3" 2>/dev/null' _ "$pin" "$copy" "$work/short"
+check "a refused write leaves setup.sh alone" cmp -s "$work/once" "$copy"
 
 echo
 echo "$passes passed, $fails failed"
