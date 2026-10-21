@@ -126,8 +126,13 @@ prebuilt_pinned() {
 # The CI release to download the emulators from, and their checksums. Written
 # by CI (.github/workflows/emulators.yml), never by hand.
 # >>> prebuilt emulators >>>
-EMULATORS_RELEASE=""
-EMULATORS_SHA256=()
+EMULATORS_RELEASE="emulators-b9a71d7-d656fad2"
+EMULATORS_SHA256=(
+  "BasiliskII-perf0.gz b3ec933eff82aede27dfca85a0c61a6ed0927f994ed419d7f9deaae0c5f5dc2e"
+  "BasiliskII-perf1.gz 1a453b6deef23b63a2d0b1572eb97a517dd7bde8db2d3655756f69a39786f907"
+  "SheepShaver-perf0.gz 9830d332f04643c6b660c483055ca09d1f83bb37913c8a9d77797dc2b2f8e60f"
+  "SheepShaver-perf1.gz 12e078d82fdbfb04007a464bd44c0102bef64f3ed376b8319be9b56603968a48"
+)
 # <<< prebuilt emulators <<<
 EMULATORS_URL="https://github.com/wr/macintosh-mini/releases/download"
 
