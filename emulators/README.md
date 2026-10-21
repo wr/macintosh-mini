@@ -50,7 +50,10 @@ sudo sysctl --system
 
 ```bash
 git clone https://github.com/kanjitalk755/macemu.git ~/macemu
+git -C ~/macemu checkout b9a71d7a4ef109ef3b0a218a37481af37aa2974a
 ```
+
+That's the commit the installer builds (`MACEMU_COMMIT` in [`setup.sh`](../setup.sh)), which has the AppleTalk tunnel fixes. Newer commits may work too, but they haven't been tested on the Mac.
 
 Basilisk II:
 
@@ -284,7 +287,7 @@ The Pi logs in on `tty1`, `~/.profile` starts the launcher, and within a few sec
 This part is for maintainers. The installer builds both emulators from one pinned macemu commit, `MACEMU_COMMIT` in [`setup.sh`](../setup.sh), so every Mac runs the same, tested emulator. CI builds each pin once, and Macs download that build instead of compiling (they compile only if the download is missing or doesn't check out). Moving the pin makes every Mac replace its emulator on its next update, so move it only on purpose, as a normal installer release:
 
 1. **Have a reason.** A fix or feature in [kanjitalk755/macemu](https://github.com/kanjitalk755/macemu) that the Mac needs, not just a newer commit.
-2. **Make one PR** that moves `MACEMU_COMMIT`, bumps `VERSION` in `setup.sh`, and adds a [changelog](../CHANGELOG.md) line saying what's fixed and that the emulator is replaced once.
+2. **Make one PR** that moves `MACEMU_COMMIT` (and the commit in the [Build](#3-build) section above), bumps `VERSION` in `setup.sh`, and adds a [changelog](../CHANGELOG.md) line saying what's fixed and that the emulator is replaced once.
 3. **Let CI build it.** Pushing the branch starts the "Prebuilt emulators" workflow. It builds both emulators, plain and tuned, publishes them as a pre-release named `emulators-<commit>-<settings>`, and commits their checksums into `setup.sh` on the branch. That takes a few minutes. Pull its commit before pushing anything else to the branch. Changing the build flags in `setup.sh` works the same way. If you change what `.github/scripts/build-emulator.sh` builds, bump `EMULATORS_RECIPE_REV` in `setup.sh` too, or CI won't rebuild.
 4. **Test it on a Pi** that already runs the emulator, with the installer from the PR's branch:
 
