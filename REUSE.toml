@@ -13,7 +13,7 @@ SPDX-License-Identifier = "CC-BY-SA-4.0"
 
 # Software.
 [[annotations]]
-path = ["setup.sh", "maclock-build/**"]
+path = ["setup.sh", "maclock-build/**", ".github/workflows/**", ".github/scripts/**"]
 SPDX-FileCopyrightText = "2026 Wells Riley"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
