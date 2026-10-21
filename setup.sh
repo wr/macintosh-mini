@@ -325,7 +325,19 @@ wt_menu() {
   local rows; rows=$(printf '%s\n' "$prompt" | fold -s -w 74 | wc -l)
   extra=$(( extra + rows - 1 ))
   local total_height=$(( list_height + extra ))
-  whiptail --backtitle "macintosh-mini" --title "$title" $nocancel \
+  # Never taller than the screen: whiptail centres the box, so a taller one
+  # starts above the top and hides its title and buttons. A long prompt (the
+  # update's what's new) then scrolls instead (Tab to it, then the arrow keys).
+  local screen_rows scroll=""
+  screen_rows=$(stty size </dev/tty 2>/dev/null) && screen_rows=${screen_rows%% *}
+  [[ $screen_rows =~ ^[0-9]+$ ]] || screen_rows=${LINES:-24}
+  local max_height=$(( screen_rows - 2 ))   # the backtitle row, and the box's shadow
+  (( max_height < list_height + 7 )) && max_height=$(( list_height + 7 ))
+  if (( total_height > max_height )); then
+    total_height=$max_height
+    scroll=--scrolltext
+  fi
+  whiptail --backtitle "macintosh-mini" --title "$title" $nocancel $scroll \
     --default-item "$default" \
     --menu "$prompt" "$total_height" 78 "$list_height" \
     "$@" 3>&1 1>&2 2>&3 </dev/tty
@@ -1059,8 +1071,10 @@ install_prebuilt() {
   local asset sha dir rc=0
   asset=$(prebuilt_asset "$1") && sha=$(prebuilt_sha "$asset") || return 1
   dir=$(mktemp -d) || return 1
-  # Time limits, so a stalled download falls back to compiling instead of hanging.
-  { curl -fsSL --retry 3 --connect-timeout 20 --max-time 300 \
+  # Time limits, so a stalled download falls back to compiling within about
+  # five minutes, retries included, instead of hanging (2.5 MB in 150 s needs
+  # only ~17 KB/s).
+  { curl -fsSL --retry 3 --retry-max-time 150 --connect-timeout 20 --max-time 150 \
       -o "$dir/$asset" "$EMULATORS_URL/$EMULATORS_RELEASE/$asset" &&
     echo "$sha  $dir/$asset" | sha256sum -c - &&
     gunzip -c "$dir/$asset" > "$dir/$1" && chmod 755 "$dir/$1" &&

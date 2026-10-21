@@ -6,12 +6,16 @@
 # setup.sh, the Pi's "can I download?" check, and pin-emulators.sh.
 #
 # Usage: test-emulators.sh [setup.sh]
-# Runs anywhere bash, sed and sha256sum do (CI, or a Mac). Changes nothing.
+# Runs anywhere bash (3.2 or later), sed and sha256sum do, so CI or a Mac;
+# a Mac has sha256sum in /sbin, which must be on PATH. Changes nothing.
 
 # The snippets passed to in_settings are expanded there, not here.
 # shellcheck disable=SC2016
 
 set -uo pipefail
+
+command -v sha256sum >/dev/null ||
+  { echo "test-emulators: needs sha256sum on PATH (on a Mac: PATH=\$PATH:/sbin)" >&2; exit 2; }
 
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 setup=${1:-$here/../../setup.sh}
@@ -151,6 +155,7 @@ curl_args=$(in_settings "$setup" "
     install_prebuilt BasiliskII /stamp" 2>/dev/null)
 check "the download has a connect timeout" grep -q -- '--connect-timeout' <<<"$curl_args"
 check "the download has an overall time limit" grep -q -- '--max-time' <<<"$curl_args"
+check "retries stop within the same time budget" grep -q -- '--retry-max-time' <<<"$curl_args"
 
 echo
 echo "$passes passed, $fails failed"

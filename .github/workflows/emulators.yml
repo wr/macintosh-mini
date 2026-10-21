@@ -46,7 +46,7 @@ jobs:
       status: ${{ steps.plan.outputs.status }}
       image: ${{ steps.plan.outputs.image }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
       - name: Test the pin plumbing
@@ -67,26 +67,30 @@ jobs:
     needs: plan
     if: needs.plan.outputs.status == 'build'
     runs-on: ubuntu-24.04-arm
+    env:
+      IMAGE: ${{ needs.plan.outputs.image }}
+      EMULATOR: ${{ matrix.emulator }}
+      PERF: ${{ matrix.perf }}
     strategy:
       fail-fast: false   # see every build's result, not just the first failure
       matrix:
         emulator: [BasiliskII, SheepShaver]
         perf: [0, 1]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
       - name: Let configure map low memory, as setup.sh does on the Pi
         run: sudo sysctl -w vm.mmap_min_addr=0
       - name: Build
         run: >-
-          docker run --rm -v "$PWD:/repo" -w /repo "${{ needs.plan.outputs.image }}"
-          .github/scripts/build-emulator.sh build ${{ matrix.emulator }} ${{ matrix.perf }} out
+          docker run --rm -v "$PWD:/repo" -w /repo "$IMAGE"
+          .github/scripts/build-emulator.sh build "$EMULATOR" "$PERF" out
       - name: Check it runs with only the runtime packages
         run: >-
-          docker run --rm -v "$PWD:/repo" -w /repo "${{ needs.plan.outputs.image }}"
-          .github/scripts/build-emulator.sh check ${{ matrix.emulator }} ${{ matrix.perf }} out
-      - uses: actions/upload-artifact@v4
+          docker run --rm -v "$PWD:/repo" -w /repo "$IMAGE"
+          .github/scripts/build-emulator.sh check "$EMULATOR" "$PERF" out
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: ${{ matrix.emulator }}-perf${{ matrix.perf }}
           path: out/
@@ -105,10 +109,10 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       TAG: ${{ needs.plan.outputs.tag }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           path: out
           merge-multiple: true
@@ -129,7 +133,7 @@ jobs:
             --latest=false --target "$GITHUB_SHA" \
             --title "Emulators $commit (Debian 13, arm64)" --notes-file "$RUNNER_TEMP/notes.md"
           gh release edit "$TAG" --draft=false --prerelease --latest=false
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: config.h
           path: out/*.config.h
@@ -145,8 +149,9 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       TAG: ${{ needs.plan.outputs.tag }}
+      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.ref_name }}   # the branch tip now, not the pushed commit
       - name: Pin the release in setup.sh
@@ -163,7 +168,7 @@ jobs:
             exit 0
           fi
           git diff
-          if [[ $GITHUB_REF_NAME == "${{ github.event.repository.default_branch }}" ]]; then
+          if [[ $GITHUB_REF_NAME == "$DEFAULT_BRANCH" ]]; then
             echo "::error::setup.sh on $GITHUB_REF_NAME doesn't pin $TAG, so Pis compile. Re-pin in a PR: the diff above is the change."
             exit 1
           fi
