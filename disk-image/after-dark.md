@@ -99,6 +99,18 @@ Basilisk II build: macemu b9a71d7a (the installer's prebuilt-binaries branch).
 `MAD Fish!` in the add-on isn't a module: it's extra fish data with no file type, which nothing
 loads. It isn't installed.
 
+## Soak
+
+An hour idle at 8-bit with the image's settings (2026-10-21, Randomizer, 5 minutes each): After
+Dark started at 5 minutes and changed module every 5 minutes (Nocturnes, Stained Glass, Fish!,
+Slide Show, Vertigo, Warp!, Virex-D and more). Half-way through, AirWriter's AppleTalk test peer
+found the Mac by name and got 5 of 5 echo replies. After the hour, moving the mouse woke it to the
+desktop and the Apple menu opened. Without Clear Screen, some modules (Nocturnes, Stained Glass)
+drew on a white screen left by the module before; the image has Clear Screen on.
+
+In a Demo (not in real sleep), Lunatic Fringe says it doesn't run in Demo mode, and Down the
+Drain can refuse to start from a Randomizer Demo; both run in real sleep.
+
 ## Found along the way
 
 - A `Display Preferences` file in the System Folder makes Mac OS restore the colour depth it was

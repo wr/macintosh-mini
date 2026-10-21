@@ -111,7 +111,8 @@ ramsize 134217728
 10. **After Dark** control panel. The first time, it asks to personalise the copy: Name
     `Macintosh`, Organization blank. Then:
     - Select **Randomizer** in the list: Order Random, Duration 5 min (the last step before
-      "1 module"), Choose… ▸ All ▸ OK.
+      "1 module"), tick **Clear Screen** (otherwise a module can start on the last one's
+      leftovers), Choose… ▸ All ▸ OK.
     - When: Sleep in 5 minutes (the default); tick **No sleep corners**.
     - Leave the speaker beside Demo at its lowest setting (no sound waves), which is sound off.
 11. Clean up what using the apps left behind: the items inside
