@@ -3178,6 +3178,17 @@
 		)
 		(uuid "1924a947-6aa7-473d-8385-769bc25adef6")
 	)
+	(text "J2  Maclock power harness (silk + -):\n    pin 1 = +5 V, pin 2 = GND, 3-4 unused\nJ1  Maclock power switch, in series with\n    the 5 V rail (closed = on)\nMolex PicoBlade 1.25 mm, 1 A per contact\nNT1 joins the Pi's ground return (GND_PI) to the\nboard ground at J2, so the Pi's supply current\nnever crosses the audio ground."
+		(exclude_from_sim no)
+		(at 50.8 117.47 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left top)
+		)
+		(uuid "43ca7641-86c7-4cd8-beed-fd6cc1621834")
+	)
 	(text "Power"
 		(exclude_from_sim no)
 		(at 15.24 90.17 0)
@@ -3222,17 +3233,6 @@
 			(justify left top)
 		)
 		(uuid "6c6d8a81-ba54-4bb0-a680-1fb372215338")
-	)
-	(text "J2  Maclock power harness (silk - +):\n    pin 4 = +5 V, pin 3 = GND, 1-2 unused\nJ1  Maclock power switch, in series with\n    the 5 V rail (closed = on)\nMolex PicoBlade 1.25 mm, 1 A per contact\nNT1 joins the Pi's ground return (GND_PI) to the\nboard ground at J2, so the Pi's supply current\nnever crosses the audio ground."
-		(exclude_from_sim no)
-		(at 50.8 117.47 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left top)
-		)
-		(uuid "79309d59-0e9c-47da-8019-721383eb68fc")
 	)
 	(text "Buttons"
 		(exclude_from_sim no)
@@ -3369,20 +3369,20 @@
 		(uuid "3f7c7252-224b-4179-9232-745bed684813")
 	)
 	(no_connect
-		(at 33.02 104.14)
-		(uuid "456d4280-fb65-4792-9b74-0905c1f597ce")
-	)
-	(no_connect
-		(at 33.02 101.6)
-		(uuid "47d6da7f-b091-470b-a000-868bcf10a2c4")
-	)
-	(no_connect
 		(at 191.77 137.16)
 		(uuid "7f9bb7a5-0da5-4d69-8b23-8e49028b49d7")
 	)
 	(no_connect
 		(at 243.84 63.5)
 		(uuid "8f037b4b-f0ce-4500-89e8-44baf58371ca")
+	)
+	(no_connect
+		(at 33.02 109.22)
+		(uuid "d3189fd4-dab5-4693-9df8-8a69dd0fbedf")
+	)
+	(no_connect
+		(at 33.02 106.68)
+		(uuid "f60e9694-a21c-4611-9544-64eeba9023b3")
 	)
 	(wire
 		(pts
@@ -3396,6 +3396,16 @@
 	)
 	(wire
 		(pts
+			(xy 40.64 109.22) (xy 55.88 109.22)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "08e44578-d098-41c9-b20b-b1265361f2c5")
+	)
+	(wire
+		(pts
 			(xy 146.05 35.56) (xy 148.59 35.56)
 		)
 		(stroke
@@ -3403,6 +3413,16 @@
 			(type default)
 		)
 		(uuid "0b2ee570-88b6-4351-84fd-6983616f853d")
+	)
+	(wire
+		(pts
+			(xy 40.64 101.6) (xy 40.64 109.22)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "0b584885-77b6-4faf-9fa7-6af08b9a769a")
 	)
 	(wire
 		(pts
@@ -3506,16 +3526,6 @@
 	)
 	(wire
 		(pts
-			(xy 33.02 106.68) (xy 35.56 106.68)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "3e46e467-7358-429f-96b9-0dde02d267ea")
-	)
-	(wire
-		(pts
 			(xy 105.41 53.34) (xy 110.49 53.34)
 		)
 		(stroke
@@ -3583,6 +3593,16 @@
 			(type default)
 		)
 		(uuid "58100fb1-c689-4c59-a0fc-b8aeef8ad9ae")
+	)
+	(wire
+		(pts
+			(xy 33.02 104.14) (xy 35.56 104.14)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "590487a6-4b5d-439c-8880-ffb263cbf99f")
 	)
 	(wire
 		(pts
@@ -3796,6 +3816,16 @@
 	)
 	(wire
 		(pts
+			(xy 33.02 101.6) (xy 40.64 101.6)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "a352ee6b-aa2f-45aa-a441-da305a5e585f")
+	)
+	(wire
+		(pts
 			(xy 146.05 38.1) (xy 148.59 38.1)
 		)
 		(stroke
@@ -3883,16 +3913,6 @@
 			(type default)
 		)
 		(uuid "cb09cd2d-3a76-4ee7-8989-a3ebdf6f0df0")
-	)
-	(wire
-		(pts
-			(xy 33.02 109.22) (xy 55.88 109.22)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "d386e0ff-169c-4b69-bdc5-465313f3f30d")
 	)
 	(wire
 		(pts
@@ -8461,7 +8481,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 35.56 106.68 90)
+		(at 35.56 104.14 90)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -8471,7 +8491,7 @@
 		(dnp no)
 		(uuid "cbd76a54-d705-464b-a2f9-975540a32d6d")
 		(property "Reference" "#PWR003"
-			(at 35.56 106.68 90)
+			(at 35.56 104.14 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8482,7 +8502,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 38.86 106.68 90)
+			(at 38.86 104.14 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -8493,7 +8513,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 35.56 106.68 0)
+			(at 35.56 104.14 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -8503,7 +8523,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 35.56 106.68 0)
+			(at 35.56 104.14 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -8513,7 +8533,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 35.56 106.68 0)
+			(at 35.56 104.14 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
