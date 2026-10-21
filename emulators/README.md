@@ -281,21 +281,22 @@ The Pi logs in on `tty1`, `~/.profile` starts the launcher, and within a few sec
 
 ## Updating Basilisk II / SheepShaver
 
-This part is for maintainers. The installer builds both emulators from one pinned macemu commit, `MACEMU_COMMIT` in [`setup.sh`](../setup.sh), so every Mac runs the same, tested emulator. Moving the pin makes every Mac recompile its emulator on its next update, so move it only on purpose, as a normal installer release:
+This part is for maintainers. The installer builds both emulators from one pinned macemu commit, `MACEMU_COMMIT` in [`setup.sh`](../setup.sh), so every Mac runs the same, tested emulator. CI builds each pin once, and Macs download that build instead of compiling (they compile only if the download is missing or doesn't check out). Moving the pin makes every Mac replace its emulator on its next update, so move it only on purpose, as a normal installer release:
 
 1. **Have a reason.** A fix or feature in [kanjitalk755/macemu](https://github.com/kanjitalk755/macemu) that the Mac needs, not just a newer commit.
 2. **Make one PR** that moves `MACEMU_COMMIT`, bumps `VERSION` in `setup.sh`, and adds a [changelog](../CHANGELOG.md) line saying what's fixed and that the emulator rebuilds once.
-3. **Test it on a Pi** that already runs the emulator, with the installer from the PR's branch:
+3. **Let CI build it.** Pushing the branch starts the "Prebuilt emulators" workflow. It builds both emulators, plain and tuned, publishes them as a pre-release named `emulators-<commit>-<settings>`, and commits their checksums into `setup.sh` on the branch. That takes about 15 minutes. Pull its commit before pushing anything else to the branch. Changing the build flags in `setup.sh` works the same way. If you change what `.github/scripts/build-emulator.sh` builds, bump `EMULATORS_RECIPE_REV` in `setup.sh` too, or CI won't rebuild.
+4. **Test it on a Pi** that already runs the emulator, with the installer from the PR's branch:
 
    ```bash
    curl -fsSL https://raw.githubusercontent.com/wr/macintosh-mini/<branch>/setup.sh | bash -s -- --branch <branch>
    ```
 
-   - The update rebuilds the emulator once. Running it again doesn't rebuild.
+   - The update downloads the emulator once (the log says "Downloading Basilisk II (built by GitHub)") and doesn't compile. Running it again doesn't download it again.
    - The Mac boots and plays its startup chime.
    - It gets online: a page loads in the browser.
    - It prints over AppleTalk: pick a printer in the Chooser, such as an AirWriter, and print a page.
 
    Test SheepShaver too if the change touches its code.
-4. **Merge the PR to main.** That is the release: every Mac fetches the installer from main.
-5. **Tag the merge** `vX.Y.Z`, matching `VERSION`.
+5. **Merge the PR to main.** That is the release: every Mac fetches the installer from main.
+6. **Tag the merge** `vX.Y.Z`, matching `VERSION`.
