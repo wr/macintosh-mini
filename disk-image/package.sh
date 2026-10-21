@@ -12,7 +12,9 @@ die() { echo "package.sh: $*" >&2; exit 1; }
 [[ $# -eq 2 ]] || die "usage: package.sh IMAGE VERSION   (e.g. out/macos-8.1.hda 2026.10)"
 image=$1; version=$2
 [[ -f $image ]] || die "no image at $image"
-[[ $version =~ ^[0-9]{4}\.[0-9]{2}$ ]] || die "VERSION is a year and month, like 2026.10, not $version"
+# A year and month, with .1, .2… for another version in the same month: a
+# version is never uploaded twice, since installers pin its checksum.
+[[ $version =~ ^[0-9]{4}\.[0-9]{2}(\.[0-9]+)?$ ]] || die "VERSION is a year and month, like 2026.10 or 2026.10.1, not $version"
 
 out=$(cd "$(dirname "$image")" && pwd)
 name=macos-8.1-basilisk-ii-$version

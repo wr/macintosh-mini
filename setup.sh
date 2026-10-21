@@ -389,8 +389,8 @@ check_sheepshaver_assets() {
   fi
 }
 
-# Verify a 68k ROM and a disk image exist for BasiliskII. The 68k ROM is
-# 512 KB or 1 MB; reject the 4 MB PPC ROM, which is a common mix-up.
+# Verify a 68k ROM exists for BasiliskII, and the disk passed with --disk. The
+# 68k ROM is 512 KB or 1 MB; reject the 4 MB PPC ROM, a common mix-up.
 check_basilisk_assets() {
   [[ -f "$HOME/.basilisk_ii_prefs" ]] && return 0   # existing install -> update, keep config
   if [[ $HOTSPOT_SETUP -ne 1 ]]; then   # --hotspot-setup: the new owner adds the ROM
@@ -422,13 +422,17 @@ get_disk_image() {
   fi
   tmp=$(mktemp -d "$HOME/.macos-8.1-basilisk-ii.XXXXXX") || {
     DISK_DL_ERROR="couldn't make a folder for it in $HOME"; return 1; }
+  # Stopped part-way (Ctrl-C), don't leave up to 1 GB behind in hidden files.
+  # shellcheck disable=SC2064  # expanded now: the paths are this function's locals
+  trap "rm -rf $(printf %q "$tmp") $(printf %q "$part"); exit 130" INT TERM HUP
   printf 'Downloading Mac OS 8.1 (%s MB)…\n' "$DISK_DL_MB"
   if ! curl -fL --retry 3 --connect-timeout 20 --speed-limit 1024 --speed-time 60 \
        --progress-bar -o "$part" "$DISK_DL_URL"; then
     DISK_DL_ERROR="the download didn't finish"; rc=1
   elif ! echo "$DISK_DL_SHA256  $part" | sha256sum -c --status -; then
     DISK_DL_ERROR="the download is damaged (its checksum doesn't match)"; rc=1
-  elif ! python3 -m zipfile -e "$part" "$tmp" || [[ ! -f $tmp/$hda ]]; then
+  elif ! printf 'Unpacking it (a minute or two)…\n' ||
+       ! python3 -m zipfile -e "$part" "$tmp" || [[ ! -f $tmp/$hda ]]; then
     DISK_DL_ERROR="it didn't unzip"; rc=1
   elif ! mv "$tmp/$hda" "$HOME/$hda"; then
     DISK_DL_ERROR="it couldn't be moved into $HOME"; rc=1
@@ -436,6 +440,7 @@ get_disk_image() {
     DISK_IMAGE=$hda
   fi
   rm -rf "$tmp" "$part"
+  trap - INT TERM HUP
   return $rc
 }
 

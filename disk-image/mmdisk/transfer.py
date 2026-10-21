@@ -2,12 +2,28 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """The Transfer disk: an HFS volume that carries the software into the
 emulated Mac, which installs it from there."""
+import shutil
 from fnmatch import fnmatchcase
 from pathlib import Path
 
 import machfs
 
-from .macfile import MacFile, files_from_tree, read_host_file
+from .macfile import MacFile, extract_archive, files_from_tree, read_host_file
+from .sources import Source, fetch
+
+
+def unpacked(src: Source, cache: Path, root: Path) -> Path:
+    """The source's archive unpacked under root, in a folder named by its
+    checksum, so a re-pinned source is unpacked afresh. The download is
+    checked every time; an unpack is only kept once it has finished."""
+    archive = fetch(src, cache)
+    dest = root / f"{src.id}-{src.sha256[:12]}"
+    if not dest.exists():
+        part = root / f".{dest.name}.part"
+        shutil.rmtree(part, ignore_errors=True)
+        extract_archive(archive, part)
+        part.rename(dest)
+    return dest
 
 
 def collect(root: Path, pattern: str) -> dict[str, MacFile]:

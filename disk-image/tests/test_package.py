@@ -43,6 +43,13 @@ class PackageTest(unittest.TestCase):
         self.assertIn("nope.hda", r.stderr)
         self.assertEqual(list(self.dir.iterdir()), [])
 
+    def test_a_second_version_in_a_month_gets_a_suffix(self):
+        image = self.dir / "macos-8.1.hda"
+        image.write_bytes(b"BD")
+        r = self.run_package(str(image), "2026.10.1")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertTrue((self.dir / "macos-8.1-basilisk-ii-2026.10.1.zip").exists())
+
     def test_version_must_look_like_a_year_and_month(self):
         image = self.dir / "macos-8.1.hda"
         image.write_bytes(b"BD")

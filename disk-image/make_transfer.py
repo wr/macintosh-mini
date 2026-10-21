@@ -7,9 +7,9 @@ import sys
 import tomllib
 from pathlib import Path
 
-from mmdisk.macfile import extract_archive, files_from_floppy
-from mmdisk.sources import fetch, load_sources
-from mmdisk.transfer import build_transfer, collect, local_file, pick_from_floppy
+from mmdisk.macfile import files_from_floppy
+from mmdisk.sources import load_sources
+from mmdisk.transfer import build_transfer, collect, local_file, pick_from_floppy, unpacked
 
 HERE = Path(__file__).resolve().parent
 
@@ -23,10 +23,7 @@ def main() -> int:
     plan = tomllib.loads((HERE / "transfer.toml").read_text())
     files = {}
     for item in plan["item"]:
-        src = sources[item["source"]]
-        root = out / "unpacked" / src.id
-        if not root.exists():
-            extract_archive(fetch(src, args.cache), root)
+        root = unpacked(sources[item["source"]], args.cache, out / "unpacked")
         if "floppy" in item:
             floppy = collect(root, item["floppy"])
             [image] = floppy.values()

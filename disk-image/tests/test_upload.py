@@ -4,7 +4,7 @@ import tomllib
 import unittest
 from pathlib import Path
 
-from upload import description_html, ia_args
+from upload import already_there, description_html, ia_args
 
 HERE = Path(__file__).resolve().parent.parent
 
@@ -29,6 +29,12 @@ class UploadTest(unittest.TestCase):
         self.assertIn("--metadata=subject:b", args)
         self.assertIn("--metadata=description:<p>Hello there.</p>", args)
         self.assertNotIn("--metadata=identifier:item", args)
+
+    def test_files_already_on_the_archive_are_named(self):
+        listed = "macos-8.1-basilisk-ii-2026.10.zip\nmacos-8.1-basilisk-ii-2026.10.zip.sha256\nx_meta.xml\n"
+        self.assertEqual(already_there(["out/macos-8.1-basilisk-ii-2026.10.zip"], listed),
+                         ["macos-8.1-basilisk-ii-2026.10.zip"])
+        self.assertEqual(already_there(["macos-8.1-basilisk-ii-2026.11.zip"], listed), [])
 
     def test_real_metadata_has_what_the_archive_needs(self):
         meta = tomllib.loads((HERE / "ia-metadata.toml").read_text())

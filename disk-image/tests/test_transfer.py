@@ -1,5 +1,6 @@
 # SPDX-FileCopyrightText: 2026 Wells Riley
 # SPDX-License-Identifier: GPL-3.0-or-later
+import hashlib
 import subprocess
 import sys
 import tempfile
@@ -11,7 +12,8 @@ import machfs
 
 from mmdisk.macfile import (MacFile, extract_archive, files_from_floppy,
                             files_from_tree, read_host_file)
-from mmdisk.transfer import build_transfer, collect, local_file, pick_from_floppy
+from mmdisk.sources import ChecksumError, Source
+from mmdisk.transfer import build_transfer, collect, local_file, pick_from_floppy, unpacked
 
 ON_MAC = sys.platform == "darwin"
 
@@ -105,6 +107,45 @@ class TransferTest(unittest.TestCase):
             z.writestr("Pages/Start Page.html", "<html></html>")
         out = extract_archive(archive, self.dir / "out")
         self.assertEqual((out / "Pages" / "Start Page.html").read_text(), "<html></html>")
+
+    def source_zip(self, text: str) -> Source:
+        """A source whose cached download is a zip holding Pages/Start Page.html."""
+        cache = self.dir / "cache"
+        cache.mkdir(exist_ok=True)
+        archive = cache / "pages.zip"
+        with zipfile.ZipFile(archive, "w") as z:
+            z.writestr("Pages/Start Page.html", text)
+        return Source("pages", "pages.zip", hashlib.sha256(archive.read_bytes()).hexdigest(), None, "")
+
+    def test_unpacked_names_the_folder_by_checksum(self):
+        src = self.source_zip("<html>1</html>")
+        out = unpacked(src, self.dir / "cache", self.dir / "unpacked")
+        self.assertEqual(out.name, f"pages-{src.sha256[:12]}")
+        self.assertEqual((out / "Pages" / "Start Page.html").read_text(), "<html>1</html>")
+
+    def test_unpacked_never_reuses_another_pins_folder(self):
+        stale = self.dir / "unpacked" / "pages"
+        (stale / "Pages").mkdir(parents=True)
+        (stale / "Pages" / "Start Page.html").write_text("old")
+        src = self.source_zip("<html>new</html>")
+        out = unpacked(src, self.dir / "cache", self.dir / "unpacked")
+        self.assertEqual((out / "Pages" / "Start Page.html").read_text(), "<html>new</html>")
+
+    def test_unpacked_redoes_an_interrupted_unpack(self):
+        src = self.source_zip("<html>whole</html>")
+        part = self.dir / "unpacked" / f".pages-{src.sha256[:12]}.part"
+        part.mkdir(parents=True)
+        (part / "half").write_text("x")
+        out = unpacked(src, self.dir / "cache", self.dir / "unpacked")
+        self.assertEqual((out / "Pages" / "Start Page.html").read_text(), "<html>whole</html>")
+        self.assertFalse(part.exists())
+
+    def test_unpacked_checks_the_download_every_time(self):
+        src = self.source_zip("<html>1</html>")
+        unpacked(src, self.dir / "cache", self.dir / "unpacked")
+        (self.dir / "cache" / "pages.zip").write_bytes(b"not the pinned file")
+        with self.assertRaises(ChecksumError):
+            unpacked(src, self.dir / "cache", self.dir / "unpacked")
 
     @unittest.skipUnless(ON_MAC, "resource forks and FinderInfo are read the macOS way")
     def test_collect_keeps_folder_structure_under_its_name(self):

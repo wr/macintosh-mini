@@ -145,8 +145,9 @@ After Dark: [after-dark.md](after-dark.md) has each module's result and the hour
 
 ## 5. Package and publish
 
-Each version is named by year and month and gets a new file, so a checksum pinned in `setup.sh`
-never goes stale.
+Each version is named by year and month (with `.1`, `.2`… for another in the same month) and
+gets a new file, so a checksum pinned in `setup.sh` never goes stale. `upload.py` refuses to
+replace a file that's already on the archive.
 
 ```bash
 ./package.sh out/macos-8.1.hda 2026.10

@@ -37,6 +37,13 @@ def ia_args(meta: dict, files: list[str]) -> list[str]:
     return args + ["--retries=10"]
 
 
+def already_there(files: list[str], listed: str) -> list[str]:
+    """Which of files the item already has, from `ia list`'s output. Installers
+    pin each version's checksum, so a file once uploaded is never replaced."""
+    names = set(listed.split())
+    return [Path(f).name for f in files if Path(f).name in names]
+
+
 def main() -> int:
     if len(sys.argv) != 2 or not sys.argv[1].endswith(".zip"):
         print(__doc__, file=sys.stderr)
@@ -48,7 +55,16 @@ def main() -> int:
             print(f"missing: {f}", file=sys.stderr)
             return 1
     meta = tomllib.loads((HERE / "ia-metadata.toml").read_text())
-    return subprocess.run(ia_args(meta, [str(zip_path), str(sha)])).returncode
+    files = [str(zip_path), str(sha)]
+    listed = subprocess.run(["ia", "list", meta["identifier"]], capture_output=True, text=True)
+    if listed.returncode != 0:
+        print(f"couldn't list {meta['identifier']}: {listed.stderr.strip()}", file=sys.stderr)
+        return 1
+    if clash := already_there(files, listed.stdout):
+        print(f"already on the archive, never replaced: {', '.join(clash)}. "
+              "Package a new version (e.g. 2026.10.1) instead.", file=sys.stderr)
+        return 1
+    return subprocess.run(ia_args(meta, files)).returncode
 
 
 if __name__ == "__main__":
