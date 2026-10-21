@@ -8,6 +8,9 @@
 # Usage: test-emulators.sh [setup.sh]
 # Runs anywhere bash, sed and sha256sum do (CI, or a Mac). Changes nothing.
 
+# The snippets passed to in_settings are expanded there, not here.
+# shellcheck disable=SC2016
+
 set -uo pipefail
 
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -59,6 +62,27 @@ done
 # ...but the runtime packages don't: they change what's installed next to it.
 same "changing MACEMU_RUNTIME_PKGS keeps the tag" \
   "$(in_settings "$setup" 'MACEMU_RUNTIME_PKGS=(foo); emulators_tag')" "$tag"
+
+# --- The pins: does a Pi download, or compile? ---------------------------------
+
+check "the pin helpers are defined" \
+  in_settings "$setup" 'declare -F prebuilt_asset prebuilt_sha prebuilt_pinned >/dev/null'
+shas='EMULATORS_SHA256=("BasiliskII-perf0.gz aaaa" "BasiliskII-perf1.gz bbbb" "SheepShaver-perf0.gz cccc")'
+same "the asset follows PERF" "$(in_settings "$setup" 'PERF=1; prebuilt_asset BasiliskII')" "BasiliskII-perf1.gz"
+same "the asset defaults to perf0" "$(in_settings "$setup" 'unset PERF; prebuilt_asset SheepShaver')" "SheepShaver-perf0.gz"
+same "prebuilt_sha picks its line" "$(in_settings "$setup" "$shas; prebuilt_sha BasiliskII-perf1.gz")" "bbbb"
+check "prebuilt_sha fails for a missing asset" \
+  in_settings "$setup" "$shas; ! prebuilt_sha SheepShaver-perf1.gz"
+check "no pins: compile" \
+  in_settings "$setup" 'EMULATORS_RELEASE=""; EMULATORS_SHA256=(); ! prebuilt_pinned BasiliskII'
+check "pins for this build: download" \
+  in_settings "$setup" "$shas; EMULATORS_RELEASE=\$(emulators_tag); PERF=1; prebuilt_pinned BasiliskII"
+check "pins for this build, but not this variant: compile" \
+  in_settings "$setup" "$shas; EMULATORS_RELEASE=\$(emulators_tag); PERF=1; ! prebuilt_pinned SheepShaver"
+check "pins for an older commit: compile" \
+  in_settings "$setup" "$shas; EMULATORS_RELEASE=\$(MACEMU_COMMIT=1111111111111111111111111111111111111111 emulators_tag); ! prebuilt_pinned BasiliskII"
+check "pins for older flags: compile" \
+  in_settings "$setup" "$shas; EMULATORS_RELEASE=\$(BASILISK_CFLAGS=-O2 emulators_tag); ! prebuilt_pinned BasiliskII"
 
 echo
 echo "$passes passed, $fails failed"
