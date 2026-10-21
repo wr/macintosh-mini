@@ -19,6 +19,7 @@ name: Prebuilt emulators
 
 on:
   push:
+    branches: ['**']   # not tags: tagging a release must not start a build
     paths:
       - setup.sh
       - .github/scripts/build-emulator.sh
@@ -27,8 +28,10 @@ on:
       - .github/workflows/emulators.yml
   workflow_dispatch:
 
+# Read-only by default. Only publish and pin can write, and the build, which
+# runs upstream's configure and make, never sees a token.
 permissions:
-  contents: write
+  contents: read
 
 # One run per branch at a time, so a release is never left half-made.
 concurrency:
@@ -44,6 +47,8 @@ jobs:
       image: ${{ steps.plan.outputs.image }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Test the pin plumbing
         run: .github/scripts/test-emulators.sh
       - id: plan
@@ -69,6 +74,8 @@ jobs:
         perf: [0, 1]
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Let configure map low memory, as setup.sh does on the Pi
         run: sudo sysctl -w vm.mmap_min_addr=0
       - name: Build
@@ -92,11 +99,15 @@ jobs:
     concurrency:
       group: emulators-release-${{ needs.plan.outputs.tag }}
       cancel-in-progress: false
+    permissions:
+      contents: write   # create the release
     env:
       GH_TOKEN: ${{ github.token }}
       TAG: ${{ needs.plan.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/download-artifact@v4
         with:
           path: out
@@ -129,6 +140,8 @@ jobs:
       always() && needs.plan.result == 'success' &&
       (needs.plan.outputs.status == 'repin' || needs.publish.result == 'success')
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write   # push the pin commit
     env:
       GH_TOKEN: ${{ github.token }}
       TAG: ${{ needs.plan.outputs.tag }}

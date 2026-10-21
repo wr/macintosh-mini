@@ -1059,7 +1059,9 @@ install_prebuilt() {
   local asset sha dir rc=0
   asset=$(prebuilt_asset "$1") && sha=$(prebuilt_sha "$asset") || return 1
   dir=$(mktemp -d) || return 1
-  { curl -fsSL --retry 3 -o "$dir/$asset" "$EMULATORS_URL/$EMULATORS_RELEASE/$asset" &&
+  # Time limits, so a stalled download falls back to compiling instead of hanging.
+  { curl -fsSL --retry 3 --connect-timeout 20 --max-time 300 \
+      -o "$dir/$asset" "$EMULATORS_URL/$EMULATORS_RELEASE/$asset" &&
     echo "$sha  $dir/$asset" | sha256sum -c - &&
     gunzip -c "$dir/$asset" > "$dir/$1" && chmod 755 "$dir/$1" &&
     check_emulator "$dir/$1" &&

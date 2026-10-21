@@ -142,6 +142,15 @@ check "a wrong checksum doesn't install" fails try_install "${good//?/0}"
 check "...and installs nothing" test ! -e "$work/installed"
 rm "$rel/BasiliskII-perf1.gz"
 check "a missing download doesn't install" fails try_install "$good"
+# A stalled download must give up (and the Pi compile) rather than hang the install.
+curl_args=$(in_settings "$setup" "
+    $fn
+    EMULATORS_URL=file:///nowhere; EMULATORS_RELEASE=emulators-test; PERF=1
+    EMULATORS_SHA256=('BasiliskII-perf1.gz $good')
+    curl() { echo \"\$*\"; return 1; }
+    install_prebuilt BasiliskII /stamp" 2>/dev/null)
+check "the download has a connect timeout" grep -q -- '--connect-timeout' <<<"$curl_args"
+check "the download has an overall time limit" grep -q -- '--max-time' <<<"$curl_args"
 
 echo
 echo "$passes passed, $fails failed"
