@@ -19,7 +19,7 @@ Change a number in `params.py`, then rebuild. `build.sh` runs the tests and writ
     python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
     ./build.sh
 
-The dimensions were read off the original Tinkercad model to 0.001 mm. The rebuild is the same part: every vertex of the Tinkercad STL lies on its surface, and its four screw holes are now true circles.
+The dimensions were read off the original Tinkercad model to 0.001 mm, and the rebuild was the same part: every vertex of the Tinkercad STL lay on its surface, and its four screw holes are now true circles. Since then the frame's notched left edge has come in 0.4mm and the screen opening has grown 0.4mm each way, for an easier fit.
 
 > [!WARNING]
 > The fit should be snug, but not tight. Scale up the print size slightly or sand down the inner edges if the fit is too tight, otherwise you risk cracking the LCD.
