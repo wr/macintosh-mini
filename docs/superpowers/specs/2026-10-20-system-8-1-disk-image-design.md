@@ -65,7 +65,8 @@ After Dark (version unknown); check it, it may be a usable source.
   FrogFind, 68k.news and Macintosh Repository, so a first launch never lands on an error.
   FrogFind was down for hours on 2026-10-20.
 - The Mac is named "Macintosh". File Sharing is off. Virtual memory is off.
-- Extensions that do nothing in the emulator are turned off for a faster boot.
+- Mac OS 8.1's default extensions stay on. Pruning the ones that do nothing in the emulator
+  saves seconds at boot, and a clean, known-working install matters more.
 - No first-boot assistants, registration or "Welcome" dialogs.
 - Colour depth: `setup.sh` offers Color (16-bit), Grayscale (8-bit, the Basilisk II default)
   and Black & White (1-bit). The image must look right and pass testing at 16-bit and 8-bit,
@@ -187,7 +188,7 @@ session scratchpad; re-fetch it from archive.org and check the MD5 if it's gone.
 - iCab first, Internet Explorer 4.01 as the fallback.
 - Only the AppleTalk ImageWriter driver, not the LQ one.
 - Disk Copy 6.3.3.
-- File Sharing and virtual memory off; idle extensions off.
+- File Sharing and virtual memory off; the default extensions kept.
 - The AppleTalk-only tunnel on by default for new Basilisk II installs, offered (not forced) on
   existing ones.
 - Testing at 16-bit and 8-bit, with 1-bit best effort.

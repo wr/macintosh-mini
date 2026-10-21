@@ -1,0 +1,39 @@
+# What check_image.py expects of the finished Mac OS 8.1 disk image.
+
+volume_name = "Macintosh HD"
+size = 1073741824   # 1 GiB
+
+required = [
+  "System Folder:System",
+  "System Folder:Finder",
+  "System Folder:Extensions:AppleTalk ImageWriter",
+  "System Folder:Control Panels:After Dark 4.0",
+  "System Folder:Control Panels:After Dark Files:Randomizers:All 4.0 Displays",
+  "Applications:SimpleText",
+  "Internet:iCab:iCab",
+  "Internet:Start Page",
+  "Internet:MR Browser 68K v0.39",
+  "Utilities:Disk Copy",
+  "Utilities:StuffIt Expander™",
+]
+
+# Its chosen printer must be blank: each AirWriter has its own name, so the user picks it once.
+printer_driver = "System Folder:Extensions:AppleTalk ImageWriter"
+
+empty = ["Trash"]
+
+[[desktop]]
+name = "iCab"
+alias = true
+
+[[desktop]]
+name = "SimpleText"
+alias = true
+
+[[desktop]]
+name = "MR Browser"
+alias = true
+
+[[desktop]]
+name = "FrogFind"
+alias = false
