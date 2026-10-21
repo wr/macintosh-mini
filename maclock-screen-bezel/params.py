@@ -6,32 +6,37 @@ each layer of the part was cross-sectioned and its outline taken edge by edge.
 The odd thousandths (31.795, 64.005) are Tinkercad's, kept so the rebuild is
 the same part. Rounding them is a design change; print one before committing it.
 
+One fit change since (2026-10-21): the frame's left edge is 0.400 in, and the
+LCD opening is 0.400 larger each way, grown evenly about its centre.
+
 Coordinates are the STL's, so the four parts sit on the print plate where they
 always have. Z = 0 is the print bed.
 """
 
 # --- frame: frames the LCD, screws into the clock's screen posts at the top --
 
-FRAME_X0 = -28.100
-"""Frame's left outside edge."""
+FRAME_X0 = -27.700
+"""Frame's left outside edge, the one with the notch. Tinkercad's was -28.100."""
 FRAME_Y0 = -27.855
 """Frame's bottom outside edge (the edge with the clips)."""
-FRAME_W = 71.100
+FRAME_W = 70.700
 FRAME_H = 59.650
 FRAME_T = 5.000
 
-WINDOW_W = 66.106
-"""The LCD opening. Snug on the Waveshare 2.8-inch panel: the build guide says to
-sand the inner edges if the panel has to be forced, since a tight bezel can
-crack it."""
-WINDOW_H = 47.906
-WINDOW_X0 = -26.703
-"""1.397 in from the frame's left edge; the right wall is 3.597."""
-WINDOW_Y0 = -19.158
-"""8.697 up from the frame's bottom edge; the top wall is 3.047."""
+WINDOW_W = 66.506
+"""The LCD opening, on the Waveshare 2.8-inch panel. Tinkercad's 66.106 x 47.906
+was too snug: the build guide says to sand the inner edges if the panel has to
+be forced, since a tight bezel can crack it."""
+WINDOW_H = 48.306
+WINDOW_X0 = -26.903
+"""0.797 in from the frame's left edge; the right wall is 3.397."""
+WINDOW_Y0 = -19.358
+"""8.497 up from the frame's bottom edge; the top wall is 2.847."""
 
-NOTCH_DEPTH = 0.702
-"""Notch in the left outside edge, full height."""
+NOTCH_DEPTH = 0.302
+"""Notch in the left outside edge, full height. Its floor stays where
+Tinkercad's was (0.702 in from the old edge), leaving 0.495 of wall beside the
+window, the frame's thinnest."""
 NOTCH_Y0 = -19.161
 NOTCH_Y1 = -10.656
 
@@ -44,9 +49,9 @@ SLOT_W = 4.005
 """Two slots through the bottom bar, from SLOT_Z up, open into the window."""
 SLOT_Z = 2.498
 SLOT_LEFT_X0 = -26.303
-"""0.400 in from the window's left edge."""
+"""0.600 in from the window's left edge."""
 SLOT_RIGHT_X0 = 34.498
-"""Ends 0.900 in from the window's right edge."""
+"""Ends 1.100 in from the window's right edge."""
 
 POCKET_X0 = 14.498
 POCKET_X1 = 34.503
