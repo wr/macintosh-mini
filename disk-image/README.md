@@ -133,10 +133,28 @@ get; Desktop Printing then won't let it be thrown away. Test printing on a copy 
 ```
 
 It checks the volume's name and size, the files and desktop items listed in `expected.toml`, that
-no printer is chosen, and that the Trash is empty.
+no printer is chosen, that the Trash is empty, and that nothing listed as absent (such as
+`Display Preferences`) is there.
 
 Then boot a throwaway copy of the disk, since using the apps leaves caches, recent items and a
 chosen printer behind. At 16-bit and 8-bit colour: no dialogs at startup; iCab opens the start
 page, and 68k.news and FrogFind load; MR Browser connects and downloads a file, and StuffIt
 Expander opens it; Disk Copy mounts an `.img`; the Chooser's AppleTalk ImageWriter lists your
 printer and a page prints.
+After Dark: [after-dark.md](after-dark.md) has each module's result and the hour-long soak.
+
+## 5. Package and publish
+
+Each version is named by year and month and gets a new file, so a checksum pinned in `setup.sh`
+never goes stale.
+
+```bash
+./package.sh out/macos-8.1.hda 2026.10
+cd out && ../.venv/bin/python ../upload.py macos-8.1-basilisk-ii-2026.10.zip
+```
+
+`package.sh` writes `out/macos-8.1-basilisk-ii-<version>.zip`, holding the image under that name,
+and its `.sha256`. `upload.py` sends both to the Internet Archive item `macos-8.1-basilisk-ii` with
+the title and description in `ia-metadata.toml`; it needs the `ia` tool
+(`brew install internetarchive`), signed in once with `ia configure`. Then download the zip from
+`https://archive.org/download/macos-8.1-basilisk-ii/` and check its SHA-256 matches.

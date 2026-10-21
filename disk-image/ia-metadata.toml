@@ -1,0 +1,42 @@
+# Internet Archive metadata for the disk image (item macos-8.1-basilisk-ii).
+# upload.py sends it with the zip (see README.md).
+
+identifier = "macos-8.1-basilisk-ii"
+title = "Mac OS 8.1 for Basilisk II (clean install)"
+mediatype = "software"
+collection = "open_source_software"
+creator = "Wells Workshop"
+subject = ["Mac OS 8.1", "Basilisk II", "Macintosh", "68k", "emulation", "disk image", "After Dark"]
+
+description = """
+A clean, known-working Mac OS 8.1 install for the Basilisk II emulator, set up as a Quadra.
+Unzip it and point Basilisk II's disk setting at the .hda file. It boots straight to the
+Finder: no setup assistant, no registration screens.
+
+<b>On the disk</b> (a 1 GB Mac OS Standard volume named Macintosh HD):
+<ul>
+<li>Mac OS 8.1, US English</li>
+<li>iCab 2.9.9, with a small start page linking FrogFind, 68k.news and Macintosh Repository</li>
+<li>MR Browser 68K 0.39, Macintosh Repository's own client</li>
+<li>StuffIt Expander 5.5 and Disk Copy 6.3.3</li>
+<li>The AppleTalk ImageWriter driver, so the Chooser can find an AppleTalk ImageWriter on your network</li>
+<li>After Dark 2.0 with More After Dark: a random module every 5 minutes after 5 minutes idle, sound off</li>
+</ul>
+
+<b>Settings</b>: TCP/IP on Ethernet with DHCP, AppleTalk on Ethernet, computer name
+"Macintosh", File Sharing off, no printer chosen. Desktop aliases for iCab, SimpleText and
+MR Browser.
+
+<b>Known-working Basilisk II settings</b>: modelid 14 (Quadra), 128 MB RAM, 640×480 at 8-bit or
+16-bit colour, ether slirp. Seven After Dark modules need 256 colours and sit out their turn
+at 16-bit.
+For AppleTalk printing alongside the internet, turn on Basilisk II's UDP tunnel with
+udpappletalkonly.
+
+Built by Wells Workshop from pinned downloads; the steps and checks are at
+https://github.com/wr/macintosh-mini/tree/main/disk-image. Software from Apple, Berkeley
+Systems, Alexander Clauss (iCab), Macintosh Repository and Aladdin Systems, found via
+Macintosh Garden, Macintosh Repository and the Internet Archive.
+
+Mac OS 8.1 and the included software are © their owners.
+"""
