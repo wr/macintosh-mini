@@ -21,7 +21,8 @@ they are. The 2.0 control panel runs the same module files.
 Seven modules need 256 colours: FadeAway, Satori, Supernova and Vertigo (2.0) and Globe, Lunatic
 Fringe and Ripple (More After Dark). They're kept (Wells, 2026-10-21): at 8-bit, the Basilisk II
 default, they work; at 16-bit, when the Randomizer picks one, its turn shows a "needs 256 colours"
-note over a starry sky.
+note over a starry sky, except FadeAway, which only dims the screen and so leaves the desktop
+showing for its turn.
 
 ## How they were tested
 
@@ -43,7 +44,7 @@ Basilisk II build: macemu b9a71d7a (the installer's prebuilt-binaries branch).
 | Clock | ✓ | ✓ | |
 | Doodles | ✓ | ✓ | |
 | Down the Drain | ✓ | ✓ | |
-| FadeAway | ✗ | ✓ | Dims the screen; does nothing at 16-bit. |
+| FadeAway | ✗ | ✓ | Dims the screen; at 16-bit the desktop stays showing for its turn. |
 | Fish! | ✓ | ✓ | |
 | Flying Toasters | ✓ | ✓ | |
 | Hard Rain | ✓ | ✓ | |
@@ -112,6 +113,10 @@ Slide Show, Vertigo, Warp!, Virex-D and more). Half-way through, AirWriter's App
 found the Mac by name and got 5 of 5 echo replies. After the hour, moving the mouse woke it to the
 desktop and the Apple menu opened. Without Clear Screen, some modules (Nocturnes, Stained Glass)
 drew on a white screen left by the module before; the image has Clear Screen on.
+
+The same hour at 16-bit (same day): modules changed every 5 minutes, AppleTalk answered 5 of 5
+half-way, and the Mac woke to the desktop afterwards. One turn showed the desktop: FadeAway, as
+above.
 
 In a Demo (not in real sleep), Lunatic Fringe says it doesn't run in Demo mode, and Down the
 Drain can refuse to start from a Randomizer Demo; both run in real sleep.
