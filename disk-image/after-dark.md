@@ -18,6 +18,11 @@ and the Randomizer on a real idle start.
 The module results below were measured in the 4.03 control panel, which runs 2.0 modules as
 they are. The 2.0 control panel runs the same module files.
 
+Seven modules need 256 colours: FadeAway, Satori, Supernova and Vertigo (2.0) and Globe, Lunatic
+Fringe and Ripple (More After Dark). They're kept (Wells, 2026-10-21): at 8-bit, the Basilisk II
+default, they work; at 16-bit, when the Randomizer picks one, its turn shows a "needs 256 colours"
+note over a starry sky.
+
 ## How they were tested
 
 On the test Pi (Raspberry Pi Zero 2 W, Basilisk II as a Quadra, 128 MB, 640×480), 2026-10-21,

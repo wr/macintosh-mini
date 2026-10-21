@@ -39,7 +39,7 @@ freely licensed; Wells has accepted that, as is common practice.
 |---|---|---|
 | Mac OS 8.1 | CD, US English | archive.org item `apple-mac-os-8.1-iso`, `MacOS8_1.iso`, MD5 `4a88bcda344356faac62af9749f4c61e`; its System's `vers` region is 0 (US). The `mac-os-8.1` item first pinned is the UK edition, and Wells chose US. Installed for a 68040 Quadra. |
 | AppleTalk ImageWriter | from the ImageWriter II/LQ LocalTalk Option disk | `https://old.mac.gdn/apps/iw_0.sit` (Wells's source; a StuffIt archive holding an 800K floppy image). Proven on the test Pi: Chooser listed AirWriter's "ImageWriter II" and a page printed. |
-| After Dark | 4.0.3 | Earlier 4.0.x doesn't work on Mac OS 8. Randomizer module active, 5-minute delay, only modules that pass testing on the Pi (see Testing). |
+| After Dark | 2.0w, with More After Dark | Wells chose the original modules (2026-10-21). 4.0.3 can't run a module on a real idle start under Mac OS 8.1 on a 68k Mac; 2.0w can. Randomizer active, every module, 5 minutes each, 5-minute delay, sound off. See `disk-image/after-dark.md`. |
 | Web browser | iCab 2.9.9 (68k build) | Desktop alias. If iCab nags at launch or misbehaves in testing, use Internet Explorer 4.01 instead. Not Netscape: the copy on the test disk failed on some pages and once froze the Mac. |
 | SimpleText | ships with 8.1 | Desktop alias. |
 | MR Browser | latest 68K build (not the sys6 build) | Macintosh Repository's own client. Desktop alias. It asks for a sign-in PIN when opened (not at startup); kept at Wells's request. |
@@ -73,7 +73,9 @@ After Dark (version unknown); check it, it may be a usable source.
 - No first-boot assistants, registration or "Welcome" dialogs.
 - Colour depth: `setup.sh` offers Color (16-bit), Grayscale (8-bit, the Basilisk II default)
   and Black & White (1-bit). The image must look right and pass testing at 16-bit and 8-bit,
-  and the After Dark module list keeps only modules that pass at both. 1-bit is best effort.
+  and the After Dark module list keeps the modules that pass at 8-bit, the Basilisk II
+  default: seven need 256 colours and show a note instead at 16-bit, kept at Wells's call
+  (2026-10-21). 1-bit is best effort.
   Grays versus colours at 8-bit come from the Monitors setting, which lives in the emulator's
   PRAM file, not on the disk.
 
