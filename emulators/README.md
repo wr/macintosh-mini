@@ -7,7 +7,7 @@ There are two emulators, both from [kanjitalk755's macemu](https://github.com/ka
 - **Basilisk II**, the installer's default, emulates a 68k Mac running System 7.0 to 8.5 and is the fastest choice on a Pi Zero 2 W. It needs a 512 KB or 1 MB 68k ROM from a Mac IIci or Quadra (`064DC91D` is a common one).
 - **SheepShaver** emulates a PowerPC Mac running Mac OS 8.1 or later. It needs the 4 MB [PowerPC ROM](https://www.redundantrobot.com/sheepshaver) and is very slow on a Pi Zero, so choose it only for PowerPC-only software.
 
-Rename your ROM file to `ROM` and copy it and a disk image to your home folder on the Pi. The [build guide](../BUILD.md#5-install-the-software) lists the disk image formats that work. Where the steps below differ between the two emulators, both versions are given.
+Rename your ROM file to `ROM` and copy it and a disk image to your home folder on the Pi. The [build guide](https://wells.ee/projects/macintosh-mini/#5-install-the-software) lists the disk image formats that work. Where the steps below differ between the two emulators, both versions are given.
 
 ## 1. Dependencies
 
