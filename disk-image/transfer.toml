@@ -28,13 +28,19 @@ dest = "After Dark:After Dark Files"
 [[item]]
 source = "after-dark-2"
 floppy = "*.img"
-pick = ["After Dark", "After Dark Files"]
-dest = "After Dark 2.0"
+pick = ["After Dark Files:*"]
+dest = "After Dark:After Dark Files:After Dark 2.0"
 
 [[item]]
 source = "more-after-dark"
 pick = ["More After Dark modules/More After Dark"]
-dest = "After Dark 2.0"
+dest = "After Dark:After Dark Files"
+
+[[item]]
+source = "after-dark-2"
+floppy = "*.img"
+pick = ["After Dark"]
+dest = "Fallback:After Dark 2.0"
 
 [[item]]
 source = "icab-68k"
@@ -64,13 +70,6 @@ dest = "Fallback"
 [[file]]
 path = "files/Start Page.html"
 name = "Start Page"
-type = "TEXT"
-creator = "iCAB"
-dest = "Internet"
-
-[[file]]
-path = "files/FrogFind.html"
-name = "FrogFind"
 type = "TEXT"
 creator = "iCAB"
 dest = "Internet"

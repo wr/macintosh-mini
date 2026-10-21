@@ -33,7 +33,3 @@ alias = true
 [[desktop]]
 name = "MR Browser"
 alias = true
-
-[[desktop]]
-name = "FrogFind"
-alias = false

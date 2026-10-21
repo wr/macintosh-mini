@@ -100,12 +100,19 @@ ramsize 134217728
    Untick File ▸ Offline Mode, then quit iCab.
 8. **Desktop**: Command-Option-drag iCab, `Applications:SimpleText` and
    `Internet:MR Browser 68K v0.39` to the desktop to make aliases; rename the last one
-   `MR Browser`. Move `Internet:FrogFind` to the desktop.
-9. Restart. **After Dark 4.0** control panel: Setup already says sleep after 5 minutes and wake
-   on mouse movement. In Randomizers, delete All AD Online Channels and All Deluxe Displays (their
-   packs aren't installed) and select **All 4.0 Displays** (random order, 5 minutes each).
-10. Clean up what using the apps left behind: the items inside
-    `System Folder:Apple Menu Items:Recent Applications`, and `iCab Cache` and
+   `MR Browser`. Throw away the Mac OS Info Center alias the installer left. Line up SimpleText,
+   iCab and MR Browser in the right-hand column under the disks.
+9. **Wells's preferences**:
+   - Desktop Pictures ▸ Pattern: **Gray** (pattern 24 of 47) ▸ Set Desktop.
+   - General Controls: untick **Warn me if computer was shut down improperly** (a Pi can lose
+     power).
+   - Speech ▸ Talking Alerts: both boxes off.
+   - Appearance stays as installed: Chicago system font, Lavender accent, Black & White highlight.
+10. Restart. **After Dark 4.0** control panel: Setup already says sleep after 5 minutes and wake
+    on mouse movement. In Randomizers, delete All AD Online Channels and All Deluxe Displays (their
+    packs aren't installed) and select **All 4.0 Displays** (random order, 5 minutes each).
+11. Clean up what using the apps left behind: the items inside
+    `System Folder:Apple Menu Items:Recent Applications` and `Recent Documents`, and `iCab Cache` and
     `iCab Global History` in `System Folder:Preferences:iCab Preferences`. Empty the Trash, close
     every window and shut down.
 

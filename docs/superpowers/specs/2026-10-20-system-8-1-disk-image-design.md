@@ -43,7 +43,7 @@ freely licensed; Wells has accepted that, as is common practice.
 | Web browser | iCab 2.9.9 (68k build) | Desktop alias. If iCab nags at launch or misbehaves in testing, use Internet Explorer 4.01 instead. Not Netscape: the copy on the test disk failed on some pages and once froze the Mac. |
 | SimpleText | ships with 8.1 | Desktop alias. |
 | MR Browser | latest 68K build (not the sys6 build) | Macintosh Repository's own client. Desktop alias. It asks for a sign-in PIN when opened (not at startup); kept at Wells's request. |
-| FrogFind | — | Desktop item that opens the site in the browser. |
+| FrogFind | — | Linked from the start page. Wells removed the desktop shortcut (2026-10-21). |
 | StuffIt Expander | 5.5 | So downloads open. |
 | Disk Copy | 6.3.3 | So downloaded disk images open. |
 
@@ -65,6 +65,9 @@ After Dark (version unknown); check it, it may be a usable source.
   FrogFind, 68k.news and Macintosh Repository, so a first launch never lands on an error.
   FrogFind was down for hours on 2026-10-20.
 - The Mac is named "Macintosh". File Sharing is off. Virtual memory is off.
+- Wells's preferences (2026-10-21): the Gray desktop pattern, no shut-down warning, Talking
+  Alerts off, desktop icons in one column on the right, no Mac OS Info Center alias. The
+  system font stays Chicago.
 - Mac OS 8.1's default extensions stay on. Pruning the ones that do nothing in the emulator
   saves seconds at boot, and a clean, known-working install matters more.
 - No first-boot assistants, registration or "Welcome" dialogs.
