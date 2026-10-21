@@ -1,8 +1,10 @@
 # SPDX-FileCopyrightText: 2026 Wells Riley
 # SPDX-License-Identifier: GPL-3.0-or-later
 import hashlib
+import http.server
 import re
 import tempfile
+import threading
 import unittest
 from pathlib import Path
 
@@ -14,6 +16,23 @@ HERE = Path(__file__).resolve().parent
 
 def sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+class RejectsPythonUrllib(http.server.BaseHTTPRequestHandler):
+    """Like old.mac.gdn: 403 for Python's default User-Agent."""
+    body = b"after dark"
+
+    def do_GET(self):
+        if self.headers.get("User-Agent", "").startswith("Python-urllib"):
+            self.send_error(403)
+            return
+        self.send_response(200)
+        self.send_header("Content-Length", str(len(self.body)))
+        self.end_headers()
+        self.wfile.write(self.body)
+
+    def log_message(self, *args):
+        pass
 
 
 class SourcesTest(unittest.TestCase):
@@ -68,6 +87,14 @@ class SourcesTest(unittest.TestCase):
             fetch(src, self.cache)
         self.assertIn(str(self.cache / "y.img"), str(cm.exception))
         self.assertIn("Wells has it", str(cm.exception))
+
+    def test_fetch_from_server_that_rejects_python_user_agent(self):
+        server = http.server.HTTPServer(("127.0.0.1", 0), RejectsPythonUrllib)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        self.addCleanup(server.shutdown)
+        url = f"http://127.0.0.1:{server.server_port}/ad.sit"
+        src = Source("ad", "ad.sit", sha256(RejectsPythonUrllib.body), url, "")
+        self.assertEqual(fetch(src, self.cache).read_bytes(), RejectsPythonUrllib.body)
 
     def test_real_sources_toml_is_valid(self):
         sources = load_sources(HERE.parent / "sources.toml")

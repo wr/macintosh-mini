@@ -43,6 +43,23 @@ url = "https://old.mac.gdn/apps/After_Dark_for_OS_9.SIT"
 sha256 = "ff4603f67d64193f10efcaf32aaf641333d9c4e76d7f30fb7736cf0588e321ec"
 note = "Member 'After Dark 9 v1.0 (9:9:03)/After Dark Files': Module Resources and Randomizers. Its 'After Dark 9' control panel is not used."
 
+# The original After Dark 2.0 modules (1990-92) and the More After Dark add-on,
+# chosen by Wells over the 4.0 set.
+
+[[source]]
+id = "after-dark-2"
+file = "After_Dark_2.0w.hqx"
+url = "https://old.mac.gdn/apps/After_Dark_2.0w.hqx"
+sha256 = "0a7775ec2989a3d99509f1f92539fa7f692c0085a05a8f6a2f5b60532f4848b4"
+note = "macintoshgarden.org/apps/after-dark-20: an 800K floppy image, 'After Dark 2.0w.img', with the 2.0w control panel and its modules loose in 'After Dark Files' (no installer, no serial)."
+
+[[source]]
+id = "more-after-dark"
+file = "more_after_dark_modules.sit"
+url = "https://old.mac.gdn/apps/more_after_dark_modules.sit"
+sha256 = "3982f4b42f34a09f575050d59664da0880a86d9ce7080e93c049965b4b68f99f"
+note = "macintoshgarden.org/apps/after-dark-more-after-dark: the More After Dark add-on's 27 modules, loose, in 'More After Dark modules/More After Dark'."
+
 [[source]]
 id = "icab-68k"
 file = "iCab_Pre2.99b_English_68k.sit"

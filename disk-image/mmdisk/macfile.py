@@ -61,7 +61,11 @@ def extract_archive(archive: Path, dest: Path) -> Path:
 
 
 def files_from_floppy(image: bytes) -> dict[str, MacFile]:
-    """Every file on an HFS disk image, keyed by its colon-separated path."""
+    """Every file on an HFS disk image (raw or Disk Copy 4.2), keyed by its
+    colon-separated path."""
+    if image[1024:1026] != b"BD" and image[84 + 1024:84 + 1026] == b"BD":
+        # Disk Copy 4.2: an 84-byte header, then the disk, its size at byte 64
+        image = image[84:84 + int.from_bytes(image[64:68], "big")]
     v = machfs.Volume()
     v.read(image)
     return {":".join(path): MacFile(path[-1], bytes(f.data), bytes(f.rsrc), f.type, f.creator, f.flags)

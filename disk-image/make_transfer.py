@@ -9,7 +9,7 @@ from pathlib import Path
 
 from mmdisk.macfile import extract_archive, files_from_floppy
 from mmdisk.sources import fetch, load_sources
-from mmdisk.transfer import build_transfer, collect, local_file
+from mmdisk.transfer import build_transfer, collect, local_file, pick_from_floppy
 
 HERE = Path(__file__).resolve().parent
 
@@ -31,7 +31,9 @@ def main() -> int:
             floppy = collect(root, item["floppy"])
             [image] = floppy.values()
             on_floppy = files_from_floppy(image.data)
-            picked = {k: on_floppy[k] for k in item["pick"]}
+            picked = {}
+            for pattern in item["pick"]:
+                picked.update(pick_from_floppy(on_floppy, pattern))
         else:
             picked = {}
             for pattern in item["pick"]:

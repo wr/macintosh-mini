@@ -50,7 +50,9 @@ def fetch(src: Source, cache: Path) -> Path:
         cache.mkdir(parents=True, exist_ok=True)
         part = path.with_name(path.name + ".part")
         try:
-            with urllib.request.urlopen(src.url) as r, open(part, "wb") as f:
+            # Some mirrors (old.mac.gdn) refuse Python's default User-Agent
+            req = urllib.request.Request(src.url, headers={"User-Agent": "macintosh-mini-disk-image"})
+            with urllib.request.urlopen(req) as r, open(part, "wb") as f:
                 shutil.copyfileobj(r, f)
             got = _sha256(part)
             if got != src.sha256:

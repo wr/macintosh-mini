@@ -26,6 +26,17 @@ pick = ["After Dark 4.0"]
 dest = "After Dark:After Dark Files"
 
 [[item]]
+source = "after-dark-2"
+floppy = "*.img"
+pick = ["After Dark", "After Dark Files"]
+dest = "After Dark 2.0"
+
+[[item]]
+source = "more-after-dark"
+pick = ["More After Dark modules/More After Dark"]
+dest = "After Dark 2.0"
+
+[[item]]
 source = "icab-68k"
 pick = ["iCab", "Plug-ins"]
 dest = "Internet:iCab"

@@ -11,7 +11,7 @@ import machfs
 
 from mmdisk.macfile import (MacFile, extract_archive, files_from_floppy,
                             files_from_tree, read_host_file)
-from mmdisk.transfer import build_transfer, collect, local_file
+from mmdisk.transfer import build_transfer, collect, local_file, pick_from_floppy
 
 ON_MAC = sys.platform == "darwin"
 
@@ -72,6 +72,17 @@ class TransferTest(unittest.TestCase):
         self.assertEqual((drv.name, drv.rsrc, drv.type, drv.creator),
                          ("AppleTalk ImageWriter", b"driver", b"PRER", b"IWRX"))
 
+    def test_files_from_floppy_reads_disk_copy_42_image(self):
+        v = machfs.Volume()
+        v.name = "After Dark Disk"
+        v["After Dark"] = machfs.File()
+        raw = v.write(size=800 * 1024, desktopdb=False, bootable=False)
+        # Disk Copy 4.2: 64-byte name, data and tag sizes, checksums, disk format, 0x0100
+        header = (bytes([15]) + b"After Dark Disk").ljust(64, b"\0") + \
+            len(raw).to_bytes(4, "big") + bytes(4) + bytes(8) + b"\x01\x22" + b"\x01\x00"
+        self.assertEqual(len(header), 84)
+        self.assertEqual(set(files_from_floppy(header + raw)), {"After Dark"})
+
     @unittest.skipUnless(ON_MAC, "resource forks and FinderInfo are read the macOS way")
     def test_read_host_file(self):
         path = self.dir / "SimpleText"
@@ -111,6 +122,22 @@ class TransferTest(unittest.TestCase):
     def test_collect_missing_pattern_raises(self):
         with self.assertRaises(FileNotFoundError):
             collect(self.dir, "Nothing*")
+
+    def test_pick_from_floppy_keeps_folder_structure_under_its_name(self):
+        mf = MacFile("x", b"", b"r", b"ADgm", b"ADrk")
+        on_floppy = {"After Dark Files:Fish!": mf, "After Dark Files:Slide Show Folder:Logo": mf, "After Dark": mf}
+        picked = pick_from_floppy(on_floppy, "After Dark Files")
+        self.assertEqual(set(picked), {"After Dark Files:Fish!", "After Dark Files:Slide Show Folder:Logo"})
+
+    def test_pick_from_floppy_single_file_by_its_name(self):
+        mf = MacFile("x", b"", b"r", b"cdev", b"ADrk")
+        on_floppy = {"After Dark": mf, "Extras:Read Me": mf}
+        self.assertEqual(list(pick_from_floppy(on_floppy, "After Dark")), ["After Dark"])
+        self.assertEqual(list(pick_from_floppy(on_floppy, "Extras:Read*")), ["Read Me"])
+
+    def test_pick_from_floppy_missing_raises(self):
+        with self.assertRaises(FileNotFoundError):
+            pick_from_floppy({"After Dark": MacFile("x", b"", b"", b"cdev", b"ADrk")}, "Nothing*")
 
     def test_local_file_uses_mac_line_endings(self):
         path = self.dir / "page.html"

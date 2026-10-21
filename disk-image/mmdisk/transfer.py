@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """The Transfer disk: an HFS volume that carries the software into the
 emulated Mac, which installs it from there."""
+from fnmatch import fnmatchcase
 from pathlib import Path
 
 import machfs
@@ -22,6 +23,21 @@ def collect(root: Path, pattern: str) -> dict[str, MacFile]:
             files.update({f"{name}:{key}": mf for key, mf in files_from_tree(m).items()})
         else:
             files[name] = read_host_file(m)
+    return files
+
+
+def pick_from_floppy(on_floppy: dict[str, MacFile], pattern: str) -> dict[str, MacFile]:
+    """Like collect(), for the files of an HFS floppy keyed by colon-separated
+    path: a file by its name, a folder as everything below it, under its name."""
+    files = {}
+    for key, mf in on_floppy.items():
+        parts = key.split(":")
+        for depth in range(1, len(parts) + 1):
+            if fnmatchcase(":".join(parts[:depth]), pattern):
+                files[":".join(parts[depth - 1:])] = mf
+                break
+    if not files:
+        raise FileNotFoundError(f"nothing matches {pattern!r} on the floppy")
     return files
 
 
