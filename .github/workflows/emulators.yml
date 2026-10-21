@@ -63,6 +63,7 @@ jobs:
     if: needs.plan.outputs.status == 'build'
     runs-on: ubuntu-24.04-arm
     strategy:
+      fail-fast: false   # see every build's result, not just the first failure
       matrix:
         emulator: [BasiliskII, SheepShaver]
         perf: [0, 1]

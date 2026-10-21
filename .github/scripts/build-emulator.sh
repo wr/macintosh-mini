@@ -33,6 +33,7 @@ here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 eval "$("$here/pin-emulators.sh" --setup "$here/../../setup.sh" settings)"
 asset="$emu-perf$perf.gz"
 mkdir -p "$out"
+out=$(cd "$out" && pwd)   # the build cds into the source
 
 export DEBIAN_FRONTEND=noninteractive
 apt_install() {
