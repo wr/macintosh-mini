@@ -77,8 +77,8 @@ ramsize 134217728
    `System Folder:Startup Items` ends up empty.
 2. From the Transfer disk (easiest in list view):
    - `Printing:AppleTalk ImageWriter` onto `System Folder:Extensions`.
-   - `After Dark:After Dark 4.0` and `After Dark:After Dark Files` onto
-     `System Folder:Control Panels`.
+   - `After Dark:After Dark` and `After Dark:After Dark Files` onto
+     `System Folder:Control Panels` (After Dark 2.0; see [after-dark.md](after-dark.md)).
    - The `Internet` folder onto Macintosh HD.
    - `Utilities:StuffIt Expander™` into Macintosh HD's `Utilities`. Open
      `Utilities:Disk Copy 6.3.3.smi` from the Transfer disk, copy the Disk Copy app from the disk
@@ -108,9 +108,12 @@ ramsize 134217728
      power).
    - Speech ▸ Talking Alerts: both boxes off.
    - Appearance stays as installed: Chicago system font, Lavender accent, Black & White highlight.
-10. Restart. **After Dark 4.0** control panel: Setup already says sleep after 5 minutes and wake
-    on mouse movement. In Randomizers, delete All AD Online Channels and All Deluxe Displays (their
-    packs aren't installed) and select **All 4.0 Displays** (random order, 5 minutes each).
+10. **After Dark** control panel. The first time, it asks to personalise the copy: Name
+    `Macintosh`, Organization blank. Then:
+    - Select **Randomizer** in the list: Order Random, Duration 5 min (the last step before
+      "1 module"), Choose… ▸ All ▸ OK.
+    - When: Sleep in 5 minutes (the default); tick **No sleep corners**.
+    - Leave the speaker beside Demo at its lowest setting (no sound waves), which is sound off.
 11. Clean up what using the apps left behind: the items inside
     `System Folder:Apple Menu Items:Recent Applications` and `Recent Documents`, and `iCab Cache` and
     `iCab Global History` in `System Folder:Preferences:iCab Preferences`. Throw away

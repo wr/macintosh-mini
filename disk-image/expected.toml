@@ -7,10 +7,10 @@ required = [
   "System Folder:System",
   "System Folder:Finder",
   "System Folder:Extensions:AppleTalk ImageWriter",
-  "System Folder:Control Panels:After Dark 4.0",
-  "System Folder:Control Panels:After Dark Files:Randomizers:Randomizer",
-  "System Folder:Control Panels:After Dark Files:After Dark 2.0:Flying Toasters",
-  "System Folder:Control Panels:After Dark Files:More After Dark:Mowin' Man",
+  "System Folder:Control Panels:After Dark",
+  "System Folder:Control Panels:After Dark Files:Randomizer",
+  "System Folder:Control Panels:After Dark Files:Flying Toasters",
+  "System Folder:Control Panels:After Dark Files:Mowin' Man",
   "Applications:SimpleText",
   "Internet:iCab:iCab",
   "Internet:Start Page",
@@ -28,9 +28,10 @@ empty = ["Trash"]
 # boot, which would override the depth Basilisk II is set to.
 absent = [
   "System Folder:Preferences:Display Preferences",
-  # The After Dark 4.0 module set: the image has the original modules instead.
-  "System Folder:Control Panels:After Dark Files:After Dark 4.0",
-  "System Folder:Control Panels:After Dark Files:Randomizers:All 4.0 Displays",
+  # After Dark 4.03: under Mac OS 8.1 on a 68k Mac it can't run a module on a real idle
+  # start, so the image has After Dark 2.0 instead (after-dark.md).
+  "System Folder:Control Panels:After Dark 4.0",
+  "System Folder:Preferences:After Dark Preferences",
 ]
 
 [[desktop]]

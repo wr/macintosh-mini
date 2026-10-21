@@ -1,9 +1,22 @@
 # After Dark on the disk image
 
-The image runs the After Dark 4.03 control panel with the original modules: After Dark 2.0
-(1990–92) and the More After Dark add-on (1991–93). Wells preferred them to the After Dark 4.0
-set, which isn't installed. The 4.03 panel runs the 2.0 modules as they are, under an
-"After Dark 2.0" group, so the 2.0 control panel isn't needed.
+The image runs After Dark 2.0w: its own control panel, with the original modules from After Dark
+2.0 (1990–92) and the More After Dark add-on (1991–93) together in `After Dark Files`. The
+Randomizer plays every module in random order, 5 minutes each, after 5 minutes idle, with the sound
+off and no sleep corners.
+
+## Why not After Dark 4.03
+
+The first build used the After Dark 4.03 control panel. Its Demo button, and a sleep while the
+panel was open, ran any module, 2.0 or 4.0. But on a real idle start with the panel closed, it only
+ever showed its built-in Starry Night: the Randomizer, a single 2.0 module (Flying Toasters) and a
+single 4.0 module (Time Flies) all fell back to it. Putting back the 4.0 shared library and
+faceplate didn't help. A 68kMLA thread on Mac OS 8.1 reports the same: After Dark 4 doesn't work
+under Mac OS 8 or 8.1 on 68k Macs. The 2.0w control panel, on the same disk, runs Flying Toasters
+and the Randomizer on a real idle start.
+
+The module results below were measured in the 4.03 control panel, which runs 2.0 modules as
+they are. The 2.0 control panel runs the same module files.
 
 ## How they were tested
 
@@ -32,13 +45,13 @@ Basilisk II build: macemu b9a71d7a (the installer's prebuilt-binaries branch).
 | Lissajous | ✓ | ✓ | |
 | Logo | ✓ | ✓ | Floating Berkeley Systems logo. |
 | Messages | ✓ | ✓ | |
-| MultiModule | — | — | Not installed: plays one saved combination, and its default needs 256 colours. The 4.03 panel has its own MultiModules. |
+| MultiModule | — | — | Not installed: plays one saved combination, and its default needs 256 colours. |
 | NightLines | ✓ | ✓ | |
 | PICS Player | ✓ | ✓ | Plays the bundled rotating cube. |
 | Picture Frame | ✓ | ✓ | |
 | Puzzle | ✓ | ✓ | |
 | Rainstorm | ✓ | ✓ | |
-| Randomizer | — | — | Not installed: the 4.03 panel's Randomizer does the job. |
+| Randomizer | ✓ | ✓ | Runs the rest; checked on a real idle start with the 2.0 panel. |
 | Rose | ✓ | ✓ | |
 | Satori | ✗ | ✓ | "Requires a monitor in 256 colors/grays mode." |
 | Shapes | ✓ | ✓ | |
