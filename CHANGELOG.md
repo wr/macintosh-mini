@@ -5,7 +5,8 @@ existing Pi shows the entries added since the installed version.
 
 ## [1.8.0] - 2026-10-20
 - AppleTalk printers and file sharing work on your network alongside the internet, so the Chooser can find an AirWriter, say, while the browser stays online. New installs have it on; on an existing Mac, turn on AppleTalk in Edit settings.
-- Basilisk II is rebuilt once, with fixes to its AppleTalk tunnel.
+- Basilisk II is rebuilt once, with fixes to its AppleTalk tunnel. Macs running SheepShaver rebuild it once too, since it shares that network code.
+- Turning the performance option on or off now rebuilds the emulator, so its speed tuning always matches the setting.
 
 ## [1.7.0] - 2026-10-17
 - Change Wi-Fi without opening the case: hold the left button for 10 seconds, join the "Macintosh Mini XXXX" network from your phone, and pick your network on the page that opens. A Mac with no saved Wi-Fi offers it by itself.

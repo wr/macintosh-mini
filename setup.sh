@@ -60,7 +60,9 @@ MACEMU_DIR="$HOME/macemu"
 # an AirWriter and stay online.
 MACEMU_REPO="https://github.com/kanjitalk755/macemu.git"
 MACEMU_COMMIT="b9a71d7a4ef109ef3b0a218a37481af37aa2974a"
+# What each installed emulator was built from (see needs_build).
 BASILISK_STAMP=/usr/local/share/macintosh-mini/basilisk.commit
+SHEEPSHAVER_STAMP=/usr/local/share/macintosh-mini/sheepshaver.commit
 
 # tag (clean display name) | description | filename (without .wav)
 CHIMES_DATA=(
@@ -936,12 +938,22 @@ fi
 # offline) is a modal dialog the kiosk can't dismiss — `nogui true` doesn't
 # cover alerts in the SDL build. Builds are now configured --with-gtk=no so
 # alerts go to the journal instead; a GTK-linked binary from an older install
-# gets rebuilt once on update. With a stamp file ($2), a binary built from
-# another macemu commit than MACEMU_COMMIT is rebuilt too.
+# gets rebuilt once on update. It is also rebuilt when its stamp file ($2)
+# is missing or holds another line than emu_build: built from another macemu
+# commit, or with the performance option set the other way.
 needs_build() {
   [[ -x $1 ]] || return 0
-  [[ -n ${2:-} && $(cat "$2" 2>/dev/null) != "$MACEMU_COMMIT" ]] && return 0
+  [[ $(cat "$2" 2>/dev/null) != "$(emu_build)" ]] && return 0
   ldd "$1" 2>/dev/null | grep -q libgtk
+}
+
+# How the emulators are built, as one line for the stamp files: the macemu
+# commit, and whether the performance option added -mcpu=cortex-a53.
+emu_build() { echo "$MACEMU_COMMIT perf=${PERF:-0}"; }
+
+# Written only once the binary is in place: a failed build retries next run.
+record_build() {
+  sudo mkdir -p "$(dirname "$1")" && emu_build | sudo tee "$1" >/dev/null
 }
 
 # Clone macemu if needed and check out MACEMU_COMMIT, whatever the clone
@@ -960,10 +972,10 @@ TOTAL_STEPS=4   # apt update, apt install, patch_cmdline, record_install
 [[ -n $TIMEZONE ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
 [[ $INSTALL_MACLOCK -eq 1 ]] && TOTAL_STEPS=$((TOTAL_STEPS+7))
 if [[ $INSTALL_SHEEPSHAVER -eq 1 ]]; then
-  if needs_build /usr/local/bin/SheepShaver; then
-    TOTAL_STEPS=$((TOTAL_STEPS+12))
+  if needs_build /usr/local/bin/SheepShaver "$SHEEPSHAVER_STAMP"; then
+    TOTAL_STEPS=$((TOTAL_STEPS+13))
   else
-    TOTAL_STEPS=$((TOTAL_STEPS+9))
+    TOTAL_STEPS=$((TOTAL_STEPS+8))
   fi
 fi
 if [[ $INSTALL_BASILISK -eq 1 ]]; then
@@ -1441,7 +1453,7 @@ SYSCTL
       -o "$HOME/crash.wav" "$REPO_RAW/emulators/chimes/${CRASH_NAME}.wav"
   fi
 
-  if ! needs_build /usr/local/bin/SheepShaver; then
+  if ! needs_build /usr/local/bin/SheepShaver "$SHEEPSHAVER_STAMP"; then
     : # already installed; no steps consumed
   else
     run "[sheepshaver] Fetching macemu (pinned: AppleTalk tunnel fixes)" checkout_macemu
@@ -1467,6 +1479,7 @@ SYSCTL
 
     run "[sheepshaver] Installing SheepShaver binary" \
       sudo install -m755 "$MACEMU_DIR/SheepShaver/src/Unix/SheepShaver" /usr/local/bin/SheepShaver
+    run "[sheepshaver] Recording the build" record_build "$SHEEPSHAVER_STAMP"
   fi
 
   install_launcher() {
@@ -1658,9 +1671,7 @@ SYSCTL
 
     run "[basilisk] Installing BasiliskII binary" \
       sudo install -m755 "$MACEMU_DIR/BasiliskII/src/Unix/BasiliskII" /usr/local/bin/BasiliskII
-    # Written only once the binary is in place: a failed build retries next run.
-    run "[basilisk] Recording the macemu commit" \
-      bash -c "sudo mkdir -p '$(dirname "$BASILISK_STAMP")' && echo '$MACEMU_COMMIT' | sudo tee '$BASILISK_STAMP' >/dev/null"
+    run "[basilisk] Recording the build" record_build "$BASILISK_STAMP"
   fi
 
   install_basilisk_launcher() {

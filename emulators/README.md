@@ -278,3 +278,24 @@ sudo reboot
 ```
 
 The Pi logs in on `tty1`, `~/.profile` starts the launcher, and within a few seconds you should see the happy Mac.
+
+## Updating Basilisk II / SheepShaver
+
+This part is for maintainers. The installer builds both emulators from one pinned macemu commit, `MACEMU_COMMIT` in [`setup.sh`](../setup.sh), so every Mac runs the same, tested emulator. Moving the pin makes every Mac recompile its emulator on its next update, so move it only on purpose, as a normal installer release:
+
+1. **Have a reason.** A fix or feature in [kanjitalk755/macemu](https://github.com/kanjitalk755/macemu) that the Mac needs, not just a newer commit.
+2. **Make one PR** that moves `MACEMU_COMMIT`, bumps `VERSION` in `setup.sh`, and adds a [changelog](../CHANGELOG.md) line saying what's fixed and that the emulator rebuilds once.
+3. **Test it on a Pi** that already runs the emulator, with the installer from the PR's branch:
+
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/wr/macintosh-mini/<branch>/setup.sh | bash -s -- --branch <branch>
+   ```
+
+   - The update rebuilds the emulator once. Running it again doesn't rebuild.
+   - The Mac boots and plays its startup chime.
+   - It gets online: a page loads in the browser.
+   - It prints over AppleTalk: pick a printer in the Chooser, such as an AirWriter, and print a page.
+
+   Test SheepShaver too if the change touches its code.
+4. **Merge the PR to main.** That is the release: every Mac fetches the installer from main.
+5. **Tag the merge** `vX.Y.Z`, matching `VERSION`.
