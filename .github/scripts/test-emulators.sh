@@ -114,6 +114,35 @@ check "write refuses SHA256SUMS missing a file" \
   bash -c '! "$1" --setup "$2" write "$3" 2>/dev/null' _ "$pin" "$copy" "$work/short"
 check "a refused write leaves setup.sh alone" cmp -s "$work/once" "$copy"
 
+# --- install_prebuilt, with the network and the system stubbed out -------------
+
+# setup.sh's own install_prebuilt, against a file:// "release" in $work.
+fn=$(sed -n '/^install_prebuilt() {/,/^}/p' "$setup")
+check "found install_prebuilt in setup.sh" test -n "$fn"
+rel="$work/release/emulators-test"
+mkdir -p "$rel"
+printf 'fake BasiliskII\n' | gzip -n > "$rel/BasiliskII-perf1.gz"
+good=$(sha256sum < "$rel/BasiliskII-perf1.gz" | cut -c1-64)
+try_install() {  # try_install <sha> -> what got installed, in $work/installed
+  rm -f "$work/installed" "$work/recorded"
+  in_settings "$setup" "
+    $fn
+    EMULATORS_URL='file://$work/release'; EMULATORS_RELEASE=emulators-test; PERF=1
+    EMULATORS_SHA256=('BasiliskII-perf1.gz $1')
+    check_emulator() { grep -q 'fake BasiliskII' \"\$1\"; }
+    sudo() { [[ \$1 == install ]] && cp \"\${@: -2:1}\" '$work/installed'; }
+    record_build() { echo \"\$1\" > '$work/recorded'; }
+    install_prebuilt BasiliskII /stamp" >/dev/null 2>&1
+}
+check "a good download installs" try_install "$good"
+same "it installs the unpacked binary" "$(cat "$work/installed" 2>/dev/null)" "fake BasiliskII"
+same "it records the build" "$(cat "$work/recorded" 2>/dev/null)" "/stamp"
+fails() { ! "$@"; }
+check "a wrong checksum doesn't install" fails try_install "${good//?/0}"
+check "...and installs nothing" test ! -e "$work/installed"
+rm "$rel/BasiliskII-perf1.gz"
+check "a missing download doesn't install" fails try_install "$good"
+
 echo
 echo "$passes passed, $fails failed"
 [[ $fails -eq 0 ]]

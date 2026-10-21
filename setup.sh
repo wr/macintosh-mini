@@ -1061,7 +1061,7 @@ install_prebuilt() {
   dir=$(mktemp -d) || return 1
   { curl -fsSL --retry 3 -o "$dir/$asset" "$EMULATORS_URL/$EMULATORS_RELEASE/$asset" &&
     echo "$sha  $dir/$asset" | sha256sum -c - &&
-    gunzip "$dir/$asset" && chmod 755 "$dir/$1" &&
+    gunzip -c "$dir/$asset" > "$dir/$1" && chmod 755 "$dir/$1" &&
     check_emulator "$dir/$1" &&
     sudo install -m755 "$dir/$1" "/usr/local/bin/$1" &&
     record_build "$2"; } || rc=1
