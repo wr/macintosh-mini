@@ -16,11 +16,11 @@ url = "https://old.mac.gdn/apps/iw_0.sit"
 sha256 = "6ba91270bc4303cb8826ce268165665918815f9bbd2ceb1e35736c1d0bc9e8ec"
 note = "ImageWriter II/LQ LocalTalk Option disk: an 800K floppy image holding AppleTalk ImageWriter"
 
-# After Dark is put together from three Macintosh Garden archives
-# (macintoshgarden.org/apps/after-dark-40): the 4.03 control panel, the
-# standard modules, and the After Dark Files layout (Randomizer, module
-# libraries) from the "After Dark for OS 9" package, whose own patched
-# control panel is not used.
+# After Dark is put together from Macintosh Garden archives
+# (macintoshgarden.org/apps/after-dark-40): the 4.03 control panel, and the
+# After Dark Files layout (Randomizer, module libraries) from the "After Dark
+# for OS 9" package, whose own patched control panel is not used. The modules
+# are the originals, below (after-dark.md).
 
 [[source]]
 id = "after-dark-cdev"
@@ -28,13 +28,6 @@ file = "After_Dark_4.0.sit"
 url = "https://old.mac.gdn/apps/After_Dark_4.0.sit"
 sha256 = "9701cd536562a1ae5515178b2496d4712507b201cf9085904804c18e760f40fc"
 note = "Member 'After Dark 4.0': the control panel (cdev/ADr3), vers 4.03. No serial."
-
-[[source]]
-id = "after-dark-modules"
-file = "After_Dark_4_Files.sit"
-url = "https://old.mac.gdn/apps/After_Dark_4_Files.sit"
-sha256 = "8c67ad155b1dd6da033e3b1f29cdca2308a19ffbedb4657a7cc337b069a032d7"
-note = "Member folder 'After Dark 4.0': Faceplate, Shared and 22 standard modules."
 
 [[source]]
 id = "after-dark-files"

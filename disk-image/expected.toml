@@ -8,7 +8,9 @@ required = [
   "System Folder:Finder",
   "System Folder:Extensions:AppleTalk ImageWriter",
   "System Folder:Control Panels:After Dark 4.0",
-  "System Folder:Control Panels:After Dark Files:Randomizers:All 4.0 Displays",
+  "System Folder:Control Panels:After Dark Files:Randomizers:Randomizer",
+  "System Folder:Control Panels:After Dark Files:After Dark 2.0:Flying Toasters",
+  "System Folder:Control Panels:After Dark Files:More After Dark:Mowin' Man",
   "Applications:SimpleText",
   "Internet:iCab:iCab",
   "Internet:Start Page",
@@ -21,6 +23,15 @@ required = [
 printer_driver = "System Folder:Extensions:AppleTalk ImageWriter"
 
 empty = ["Trash"]
+
+# Display Preferences remembers the colour depth it was saved at and Mac OS restores it at every
+# boot, which would override the depth Basilisk II is set to.
+absent = [
+  "System Folder:Preferences:Display Preferences",
+  # The After Dark 4.0 module set: the image has the original modules instead.
+  "System Folder:Control Panels:After Dark Files:After Dark 4.0",
+  "System Folder:Control Panels:After Dark Files:Randomizers:All 4.0 Displays",
+]
 
 [[desktop]]
 name = "iCab"

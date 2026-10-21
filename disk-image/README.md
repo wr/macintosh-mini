@@ -113,8 +113,10 @@ ramsize 134217728
     packs aren't installed) and select **All 4.0 Displays** (random order, 5 minutes each).
 11. Clean up what using the apps left behind: the items inside
     `System Folder:Apple Menu Items:Recent Applications` and `Recent Documents`, and `iCab Cache` and
-    `iCab Global History` in `System Folder:Preferences:iCab Preferences`. Empty the Trash, close
-    every window and shut down.
+    `iCab Global History` in `System Folder:Preferences:iCab Preferences`. Throw away
+    `System Folder:Preferences:Display Preferences` if it's there: Mac OS restores the colour
+    depth it was saved at on every boot, overriding the depth Basilisk II is set to. Empty the
+    Trash, close every window and shut down.
 
 Don't choose a printer in the Chooser on this disk. Choosing one writes the printer's name into
 the driver and puts a desktop printer on the desktop, which everyone who downloads the image would

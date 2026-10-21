@@ -74,4 +74,7 @@ def check_image(image: bytes, expected: dict) -> list[str]:
         folder = _lookup(v, path)
         if folder is not None and len(folder):
             problems.append(f"{path} isn't empty: {', '.join(sorted(folder))}")
+    for path in expected.get("absent", []):
+        if _lookup(v, path) is not None:
+            problems.append(f"shouldn't be on the image: {path}")
     return problems

@@ -17,24 +17,37 @@ dest = "After Dark"
 
 [[item]]
 source = "after-dark-files"
-pick = ["After Dark 9*/After Dark Files/Module Resources", "After Dark 9*/After Dark Files/Randomizers"]
+pick = ["After Dark 9*/After Dark Files/Module Resources"]
 dest = "After Dark:After Dark Files"
 
 [[item]]
-source = "after-dark-modules"
-pick = ["After Dark 4.0"]
-dest = "After Dark:After Dark Files"
+source = "after-dark-files"
+pick = ["After Dark 9*/After Dark Files/Randomizers/Randomizer"]
+dest = "After Dark:After Dark Files:Randomizers"
 
+# The original modules (after-dark.md). Not the 2.0 Randomizer and MultiModule: the
+# 4.03 control panel has its own.
 [[item]]
 source = "after-dark-2"
 floppy = "*.img"
-pick = ["After Dark Files:*"]
+pick = ["After Dark Files:Bouncing Ball", "After Dark Files:Can of Worms", "After Dark Files:Clock",
+        "After Dark Files:Doodles", "After Dark Files:Down the Drain", "After Dark Files:FadeAway",
+        "After Dark Files:Fish!", "After Dark Files:Flying Toasters", "After Dark Files:Hard Rain",
+        "After Dark Files:Lissajous", "After Dark Files:Logo", "After Dark Files:Messages",
+        "After Dark Files:NightLines", "After Dark Files:PICS Player", "After Dark Files:Rotating Cube.PICS",
+        "After Dark Files:Picture Frame", "After Dark Files:Puzzle", "After Dark Files:Rainstorm",
+        "After Dark Files:Rose", "After Dark Files:Satori", "After Dark Files:Shapes",
+        "After Dark Files:Slide Show", "After Dark Files:Slide Show Folder", "After Dark Files:Spheres",
+        "After Dark Files:Spotlight", "After Dark Files:Starry Skyline", "After Dark Files:String Theory",
+        "After Dark Files:Supernova", "After Dark Files:Vertigo", "After Dark Files:Warp!",
+        "After Dark Files:Zot!"]
 dest = "After Dark:After Dark Files:After Dark 2.0"
 
+# Every More After Dark module; not "MAD Fish!", which is untyped fish data.
 [[item]]
 source = "more-after-dark"
-pick = ["More After Dark modules/More After Dark"]
-dest = "After Dark:After Dark Files"
+pick = ["More After Dark modules/More After Dark/[!M]*", "More After Dark modules/More After Dark/M[!A]*"]
+dest = "After Dark:After Dark Files:More After Dark"
 
 [[item]]
 source = "after-dark-2"

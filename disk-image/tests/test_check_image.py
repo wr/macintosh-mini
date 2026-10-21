@@ -16,6 +16,7 @@ EXPECTED = {
     "desktop": [{"name": "iCab", "alias": True}, {"name": "Read Me", "alias": False}],
     "printer_driver": "System Folder:Extensions:AppleTalk ImageWriter",
     "empty": ["Trash"],
+    "absent": ["System Folder:Preferences:Display Preferences"],
 }
 
 
@@ -36,7 +37,7 @@ def papa(printer: str) -> bytes:
     return data.ljust(103, b"\0")
 
 
-def volume(name="Macintosh HD", size=SIZE, drop=(), alias_flag=0x8000, printer="", trash=()) -> bytes:
+def volume(name="Macintosh HD", size=SIZE, drop=(), alias_flag=0x8000, printer="", trash=(), extra=()) -> bytes:
     v = machfs.Volume()
     v.name = name
     v["System Folder"] = machfs.Folder()
@@ -63,6 +64,13 @@ def volume(name="Macintosh HD", size=SIZE, drop=(), alias_flag=0x8000, printer="
         if path[-1] == "AppleTalk ImageWriter":
             f.rsrc = fork_with(b"PAPA", -8192, papa(printer))
         parent[path[-1]] = f
+    for path in extra:
+        parent = v
+        for part in path[:-1]:
+            if part not in parent:
+                parent[part] = machfs.Folder()
+            parent = parent[part]
+        parent[path[-1]] = machfs.File()
     return v.write(size=size, desktopdb=False, bootable=False)
 
 
@@ -104,6 +112,11 @@ class CheckImageTest(unittest.TestCase):
         problems = check_image(volume(trash={"ImageWriter II"}), EXPECTED)
         self.assertEqual(len(problems), 1)
         self.assertIn("Trash", problems[0])
+
+    def test_reports_file_that_must_be_absent(self):
+        problems = check_image(volume(extra=[("System Folder", "Preferences", "Display Preferences")]), EXPECTED)
+        self.assertEqual(len(problems), 1)
+        self.assertIn("Display Preferences", problems[0])
 
 
 if __name__ == "__main__":
