@@ -64,6 +64,47 @@ MACEMU_COMMIT="b9a71d7a4ef109ef3b0a218a37481af37aa2974a"
 BASILISK_STAMP=/usr/local/share/macintosh-mini/basilisk.commit
 SHEEPSHAVER_STAMP=/usr/local/share/macintosh-mini/sheepshaver.commit
 
+# How both emulators are built, on the Pi and by CI: CI reads this block (and
+# MACEMU_REPO/MACEMU_COMMIT above) from this file and builds the same way in
+# .github/scripts/build-emulator.sh, so keep it self-contained.
+# >>> emulator build settings >>>
+MACEMU_BUILD_PKGS=(build-essential autoconf automake libtool pkg-config
+  libsdl2-dev libgl1-mesa-dev libxkbcommon-dev libmpfr-dev)
+MACEMU_RUNTIME_PKGS=(libsdl2-2.0-0 libmpfr6)   # what a downloaded build needs
+BASILISK_CFLAGS="-g -O3"
+# JIT is x86-only (interpreter on ARM). VOSF on: only changed screen regions
+# get re-blitted — meaningfully snappier UI, and stable on this Pi's aarch64.
+BASILISK_CONFIGURE=(--enable-sdl-video --enable-sdl-audio
+  --disable-jit-compiler --enable-vosf --with-gtk=no)
+SHEEPSHAVER_CFLAGS="-DMEM_BULK -g -O3"
+SHEEPSHAVER_CONFIGURE=(--with-gtk=no)
+PERF_CFLAGS="-mcpu=cortex-a53 -mtune=cortex-a53"   # added by the performance option
+EMULATORS_IMAGE="debian:trixie"   # CI builds in this, to match Raspberry Pi OS 13
+EMULATORS_RECIPE_REV=1   # bump when build-emulator.sh changes what it builds
+
+# The release a matching download comes from. A hash of everything above that
+# shapes the binaries (not the runtime packages), so a Pi only downloads what
+# was built from exactly its pin and settings.
+emulators_recipe() {
+  printf '%s\n' "$MACEMU_REPO" "$MACEMU_COMMIT" "${MACEMU_BUILD_PKGS[*]}" \
+    "$BASILISK_CFLAGS" "${BASILISK_CONFIGURE[*]}" "$SHEEPSHAVER_CFLAGS" \
+    "${SHEEPSHAVER_CONFIGURE[*]}" "$PERF_CFLAGS" "$EMULATORS_IMAGE" \
+    "$EMULATORS_RECIPE_REV" | sha256sum | cut -c1-8
+}
+emulators_tag() { echo "emulators-${MACEMU_COMMIT:0:7}-$(emulators_recipe)"; }
+
+# An emulator binary is usable when every library it needs is there and it
+# starts: both print their usage and exit on --help (SheepShaver opens SDL
+# first, hence the dummy drivers, which need no screen or sound card).
+check_emulator() {
+  local out
+  if ldd "$1" | grep 'not found'; then return 1; fi
+  out=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy timeout 30 "$1" --help 2>&1) ||
+    { echo "$out" | tail -n 5; return 1; }
+  grep -q 'Build Date' <<<"$out" || { echo "$out" | tail -n 5; return 1; }
+}
+# <<< emulator build settings <<<
+
 # tag (clean display name) | description | filename (without .wav)
 CHIMES_DATA=(
   "Macintosh I|1984|StartupMacI"
@@ -1045,9 +1086,7 @@ fi
 APT_PKGS=(curl git iw qrencode dnsmasq-base)
 if [[ $INSTALL_SHEEPSHAVER -eq 1 || $INSTALL_BASILISK -eq 1 ]]; then
   APT_PKGS+=(
-    build-essential autoconf automake libtool pkg-config
-    libsdl2-dev libgl1-mesa-dev libxkbcommon-dev
-    libmpfr-dev
+    "${MACEMU_BUILD_PKGS[@]}"
     labwc wlr-randr seatd
     alsa-utils
   )
@@ -1463,11 +1502,10 @@ SYSCTL
       make links || return $?
       cd src/Unix || return $?
       make distclean >/dev/null 2>&1 || true   # existing clone: drop old configure
-      local extra_cflags=""
-      [[ $PERF -eq 1 ]] && extra_cflags=" -mcpu=cortex-a53 -mtune=cortex-a53"
-      CFLAGS="-DMEM_BULK -g -O3${extra_cflags}" \
-      CXXFLAGS="-DMEM_BULK -g -O3${extra_cflags}" \
-      ./autogen.sh --with-gtk=no || return $?
+      local cflags=$SHEEPSHAVER_CFLAGS
+      [[ $PERF -eq 1 ]] && cflags+=" $PERF_CFLAGS"
+      CFLAGS="$cflags" CXXFLAGS="$cflags" \
+      ./autogen.sh "${SHEEPSHAVER_CONFIGURE[@]}" || return $?
     }
     run "[sheepshaver] Configuring build (no GTK)" prepare_build
 
@@ -1649,17 +1687,13 @@ SYSCTL
   else
     run "[basilisk] Fetching macemu (pinned: AppleTalk tunnel fixes)" checkout_macemu
 
-    # JIT is x86-only (interpreter on ARM). VOSF on: only changed screen regions
-    # get re-blitted — meaningfully snappier UI, and stable on this Pi's aarch64.
     prepare_basilisk_build() {
       cd "$MACEMU_DIR/BasiliskII/src/Unix" || return $?
       make distclean >/dev/null 2>&1 || true   # existing clone: drop old configure
-      local extra_cflags=""
-      [[ $PERF -eq 1 ]] && extra_cflags=" -mcpu=cortex-a53 -mtune=cortex-a53"
-      CFLAGS="-g -O3${extra_cflags}" \
-      CXXFLAGS="-g -O3${extra_cflags}" \
-      ./autogen.sh --enable-sdl-video --enable-sdl-audio \
-        --disable-jit-compiler --enable-vosf --with-gtk=no || return $?
+      local cflags=$BASILISK_CFLAGS
+      [[ $PERF -eq 1 ]] && cflags+=" $PERF_CFLAGS"
+      CFLAGS="$cflags" CXXFLAGS="$cflags" \
+      ./autogen.sh "${BASILISK_CONFIGURE[@]}" || return $?
     }
     run "[basilisk] Configuring build (SDL, no JIT, VOSF, no GTK)" prepare_basilisk_build
 
