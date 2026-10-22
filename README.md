@@ -81,7 +81,7 @@ While this project is free and open source, donations are deeply appreciated, an
 
 Copyright © 2026 Wells Riley.
 
-- **Hardware** (the boards and the bezel): [CERN-OHL-S-2.0](./LICENSES/CERN-OHL-S-2.0.txt)
+- **Hardware** (the boards, the bezel and the USB port jig): [CERN-OHL-S-2.0](./LICENSES/CERN-OHL-S-2.0.txt)
 - **Software** ([`setup.sh`](./setup.sh) and [`maclock-build/`](./maclock-build/)): [GPL-3.0-or-later](./LICENSES/GPL-3.0-or-later.txt)
 - **Everything else** (docs, drawings, photos): [CC BY-SA 4.0](./LICENSES/CC-BY-SA-4.0.txt)
 
