@@ -1,9 +1,9 @@
 """The USB-A cutting jig: a fence for the Dremel's router base, a key that
-anchors it in the USB-C slot, and a stop against the clock's side that squares
-it up. Every number comes from params.py.
+anchors it in the USB-C slot, and a stop against the clock's side and a post
+in the hand-hold that keep it from turning. Every number comes from params.py.
 
-jig(), side_stop() and key() are where they sit on the clock; plate_parts()
-lays them out on the print bed."""
+jig(), side_stop(), key() and post() are where they sit on the clock;
+plate_parts() lays them out on the print bed."""
 from build123d import Axis, Box, Compound, Cone, Cylinder, Pos, Rot, SlotOverall, chamfer, extrude
 
 import params as p
@@ -57,6 +57,9 @@ def jig():
     sw = p.SWITCH_WINDOW_W / 2
     part -= box(p.HOLE_X - sw, p.HOLE_X + sw, p.SWITCH_WINDOW_Y0, p.SWITCH_WINDOW_Y1, -AIR, top)
     part -= slot(p.KEY_RECESS_W, p.KEY_RECESS_L, -AIR, p.KEY_SEAT)
+    c = p.POST_RECESS_CLEAR
+    px0, px1, py0, py1 = post_xy()
+    part -= box(px0 - c, px1 + c, py0 - c, py1 + c, -AIR, p.POST_SEAT)
     for x, y in screws():
         part -= countersunk(x, y)
     return part
@@ -89,6 +92,22 @@ def key():
     return chamfer(part.edges().group_by(Axis.Z)[0], p.KEY_CHAMFER)
 
 
+def post_xy():
+    """(x0, x1, y0, y1) of the post: in the hand-hold, against its end, and
+    above the top, POST_CLEAR off each."""
+    x1 = p.HANDHOLD_CORNER_X - p.POST_CLEAR
+    y0 = p.HANDHOLD_CORNER_Y + p.POST_CLEAR
+    return x1 - p.POST_W, x1, y0, y0 + p.POST_W
+
+
+def post():
+    """Presses POST_SEAT up into the jig and hangs POST_PROUD into the corner."""
+    x0, x1, y0, y1 = post_xy()
+    part = box(x0, x1, y0, y1, -p.POST_PROUD, p.POST_SEAT)
+    corner = part.edges().filter_by(Axis.Z).sort_by(Axis.X)[-2:].sort_by(Axis.Y)[0]
+    return chamfer(corner, p.POST_CHAMFER)
+
+
 def place(part, x0, y0):
     """Move a part so its bounding box starts at (x0, y0, 0)."""
     bb = part.bounding_box()
@@ -103,7 +122,8 @@ def plate_parts():
     bb = j.bounding_box()
     side = place(Rot(180, 0, 0) * side_stop(), bb.max.X + p.PLATE_GAP, bb.min.Y)
     k = place(Rot(180, 0, 0) * key(), side.bounding_box().max.X + p.PLATE_GAP, bb.min.Y)
-    return {"jig": j, "side stop": side, "key": k}
+    pin = place(Rot(180, 0, 0) * post(), k.bounding_box().max.X + p.PLATE_GAP, bb.min.Y)
+    return {"jig": j, "side stop": side, "key": k, "post": pin}
 
 
 def plate():

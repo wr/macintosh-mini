@@ -274,10 +274,58 @@ class TestKey(unittest.TestCase):
         self.assertTrue(solid_at(self.key, x, p.USBC_Y, 0))
 
 
+class TestPost(unittest.TestCase):
+    """A post in the inside corner where the hand-hold's end meets the
+    clock's top, at Wells's mark on the printed jig."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.j = jig.jig()
+        cls.post = jig.post()
+        cls.bb = cls.post.bounding_box()
+
+    def test_mark_is_22_3_in_and_20_65_down_on_the_printed_jig(self):
+        left = p.HOLE_X - p.POCKET_W / 2 - p.WALL_W
+        top = p.HOLE_Y + p.POCKET_H / 2 + p.WALL_W
+        self.assertAlmostEqual(p.HANDHOLD_CORNER_X, left + 22.3, places=6)
+        self.assertAlmostEqual(p.HANDHOLD_CORNER_Y, top - 20.65, places=6)
+        # At that height the jig's left edge is its main body, not the thumb
+        # tab, so the mark is the same on every print.
+        self.assertLess(p.THUMB_Y1, p.HANDHOLD_CORNER_Y)
+
+    def test_valid_single_solid(self):
+        self.assertTrue(self.post.is_valid)
+        self.assertEqual(len(self.post.solids()), 1)
+
+    def test_touches_the_hand_holds_end_and_the_top_with_a_little_clearance(self):
+        c = p.POST_CLEAR
+        self.assertLessEqual(c, 0.25)
+        self.assertAlmostEqual(self.bb.max.X, p.HANDHOLD_CORNER_X - c, places=6)
+        self.assertAlmostEqual(self.bb.min.Y, p.HANDHOLD_CORNER_Y + c, places=6)
+
+    def test_hangs_below_the_back_and_presses_into_the_jig(self):
+        self.assertAlmostEqual(self.bb.min.Z, -p.POST_PROUD, places=6)
+        self.assertAlmostEqual(self.bb.max.Z, p.POST_SEAT, places=6)
+        self.assertGreaterEqual(p.POST_PROUD, 4)
+
+    def test_fits_its_pocket_under_the_router_floor(self):
+        x, y = self.bb.center().X, self.bb.center().Y
+        self.assertAlmostEqual(overlap(self.j, self.post), 0.0, places=6)
+        self.assertFalse(solid_at(self.j, x, y, 1))
+        self.assertTrue(solid_at(self.j, x, y, p.POST_SEAT + EPS))
+        self.assertGreaterEqual(p.FLOOR_T - p.POST_SEAT, 1.0)
+
+    def test_corner_into_the_clocks_corner_is_chamfered(self):
+        # So a fillet where the hand-hold's end meets the top can't hold the
+        # post off either face.
+        self.assertFalse(solid_at(self.post, self.bb.max.X - 0.15, self.bb.min.Y + 0.15, -1))
+        self.assertTrue(solid_at(self.post, self.bb.max.X - 0.15, self.bb.min.Y + 1.0, -1))
+
+
 class TestPlate(unittest.TestCase):
     def test_parts_lie_on_the_bed_apart(self):
         placed = jig.plate_parts()
-        self.assertEqual(set(placed), {"jig", "side stop", "key"})
+        self.assertEqual(set(placed), {"jig", "side stop", "key", "post"})
         boxes = [part.bounding_box() for part in placed.values()]
         for bb in boxes:
             self.assertAlmostEqual(bb.min.Z, 0.0, places=6)
@@ -290,6 +338,7 @@ class TestPlate(unittest.TestCase):
         placed = jig.plate_parts()
         self.assertAlmostEqual(placed["side stop"].volume, jig.side_stop().volume, places=3)
         self.assertAlmostEqual(placed["key"].volume, jig.key().volume, places=3)
+        self.assertAlmostEqual(placed["post"].volume, jig.post().volume, places=3)
 
     def test_stop_and_key_print_with_the_jig_end_on_the_bed(self):
         # Flipped, so the stop's holes open on the bed with the blind end up,

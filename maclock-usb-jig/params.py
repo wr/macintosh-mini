@@ -112,6 +112,31 @@ the slot."""
 JIG_Y0 = USBC_Y - KEY_RECESS_L / 2 - KEY_SURROUND
 """-64.545: the jig's bottom edge."""
 
+# --- post: stops the jig turning about the key ----------------------------------
+
+HANDHOLD_CORNER_X = HOLE_X - POCKET_W / 2 - WALL_W + 22.3
+HANDHOLD_CORNER_Y = HOLE_Y + POCKET_H / 2 + WALL_W - 20.65
+"""(-23.85, 0.805): the inside corner where the end of the hand-hold meets the
+clock's top. Measured by Wells on the printed jig sitting on the clock, 22.3
+in from its left edge and 20.65 down from its top."""
+POST_W = 4.0
+"""A square post filling that corner, so it touches both the hand-hold's end
+and the top. With the side stop on the other side of the key, it stops the
+jig turning either way."""
+POST_CLEAR = 0.2
+"""Off each face of the corner, so a mark a little out can't hold the jig up
+off the key."""
+POST_CHAMFER = 0.5
+"""On the post's corner that goes into the clock's corner, in case that
+corner is rounded."""
+POST_SEAT = 2.0
+POST_PROUD = 5.0
+"""Like the key: pressed up into a pocket under the jig, and down past the
+back into the corner."""
+POST_RECESS_CLEAR = 0.05
+"""Each side of the pocket over the post, which a printer closes up to a
+press fit."""
+
 # --- side stop: a block screwed up under the overhang, squaring the jig ---------
 
 STOP_T = 10.0

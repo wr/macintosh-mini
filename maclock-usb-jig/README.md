@@ -2,13 +2,13 @@
 
 3D-printable guide for cutting the optional USB-A port into the Maclock's back shell with a Dremel in its router base. It puts a 7 × 14mm hole in the top right of the back, 38mm above the USB-C port and in line with it, with straight sides every time. The port is in the [build guide](https://wells.ee/projects/macintosh-mini/).
 
-The router base's round foot slides inside the jig's walls. Pushing it against each wall in turn runs the bit along each side of the hole. A small key under the jig drops into the USB-C slot to hold it in place, a stop against the clock's side squares it up, and a tab on the left gives your thumb somewhere to hold it down.
+The router base's round foot slides inside the jig's walls. Pushing it against each wall in turn runs the bit along each side of the hole. A small key under the jig drops into the USB-C slot to hold it in place. A stop against the clock's side and a post in the corner of the hand-hold keep it from turning, and a tab on the left gives your thumb somewhere to hold it down.
 
 ## Files
 
 | File | Purpose |
 | --- | --- |
-| `maclock-usb-jig.stl` | The jig, its side stop and the USB-C key, on one plate. Print at 0.2mm layers, no supports. |
+| `maclock-usb-jig.stl` | The jig, its side stop, the USB-C key and the post, on one plate. Print at 0.2mm layers, no supports. |
 | `maclock-usb-jig-key.stl` | The key on its own, to reprint it. |
 | `maclock-usb-jig.step` | The same parts as solids, to open and edit in any CAD tool (Fusion, Onshape, FreeCAD). |
 | `params.py`, `jig.py` | The source: every dimension, and how the parts are built from them ([build123d](https://github.com/gumyr/build123d)). |
@@ -20,10 +20,10 @@ The router base's round foot slides inside the jig's walls. Pushing it against e
 
 ## Cutting the port
 
-1. Press the key into the slot-shaped pocket under the jig, with the end that was on the print bed going in first. It should be a snug push fit: sand it if it won't go in, or add a drop of glue if it falls out.
+1. Press the key into the slot-shaped pocket under the jig, and the post into the square pocket near the top, each with the end that was on the print bed going in first. The post's cut-off corner points toward the opening under the bit. Both should be a snug push fit: sand them if they won't go in, or add a drop of glue if they fall out.
 2. Screw the side stop under the two holes on the right, with its holes up against the jig and the raised strip near its bottom facing the middle of the jig, where the clock will be. That strip is the only part that touches the clock. The holes only open at one end and sit nearer the stop's outer side, so it only fits that way. The screws go in from the top and cut their own thread. Drive them until the heads sit just below the floor, so the router base glides over them.
 3. Take the back shell off the clock and lay it face down, with the back facing up.
-4. Set the jig on the back with the key in the USB-C slot, and turn it until the side stop touches the clock's side.
+4. Set the jig on the back with the key in the USB-C slot. The post drops into the hand-hold, against its end and the clock's top, and the side stop rests against the clock's side.
 5. Set the bit to stick out about 6mm below the router base's foot. That's enough to go through the jig's 3mm floor and the 2mm shell.
 6. Hold the jig down with your thumb on the tab on the left, keeping the side stop against the side. Put the base in the jig with the bit over the opening, switch on, and tip the bit down into the shell to start the cut.
 7. Run the foot around the inside of the walls, keeping it pressed against them, until the middle drops out. Keep the Dremel's cord pointing the same way the whole time: if the bit sits a little off-centre in the base, turning the Dremel would make the hole bigger.
