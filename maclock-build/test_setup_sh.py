@@ -126,6 +126,61 @@ class Handoff(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stderr)
 
 
+class FirstBoot(unittest.TestCase):
+    """A card's first start runs apt in the background (cloud-init installs
+    Imager's avahi-daemon), so the installer waits before its own apt steps."""
+
+    def run_fn(self, call, status=None, wait_rc=0):
+        tmp = Path(tempfile.mkdtemp())
+        calls = tmp / 'calls'
+        if status is not None:
+            fake = tmp / 'cloud-init'
+            fake.write_text('#!/bin/sh\n'
+                            f'echo "$*" >> {calls}\n'
+                            f'case "$*" in *--wait*) exit {wait_rc} ;; esac\n'
+                            f'echo "status: {status}"\n')
+            fake.chmod(0o755)
+        script = (function('first_boot_running') + function('wait_for_first_boot')
+                  + f'{call}; echo "rc=$?"\n')
+        r = subprocess.run(['bash', '-euo', 'pipefail', '-c', script], capture_output=True,
+                           text=True, env=dict(os.environ, PATH=f'{tmp}:/usr/bin:/bin'))
+        return r, calls.read_text().splitlines() if calls.exists() else []
+
+    def test_running(self):
+        r, _ = self.run_fn('first_boot_running || echo "rc=1"; true', status='running')
+        self.assertNotIn('rc=1', r.stdout)
+
+    def test_done_disabled_or_absent_is_not_running(self):
+        for status in ('done', 'disabled', None):
+            r, _ = self.run_fn('first_boot_running && echo yes; true', status=status)
+            self.assertNotIn('yes', r.stdout, status)
+
+    def test_waits_while_running(self):
+        r, calls = self.run_fn('wait_for_first_boot', status='running')
+        self.assertIn('rc=0', r.stdout, r.stderr)
+        self.assertIn('status --wait', calls)
+
+    def test_no_wait_once_done(self):
+        _, calls = self.run_fn('wait_for_first_boot', status='done')
+        self.assertNotIn('status --wait', calls)
+
+    def test_cloud_init_error_does_not_stop_the_install(self):
+        r, _ = self.run_fn('wait_for_first_boot', status='running', wait_rc=1)
+        self.assertIn('rc=0', r.stdout, r.stderr)
+
+    def test_waits_before_apt(self):
+        self.assertLess(SETUP.rindex(' wait_for_first_boot\n'),
+                        SETUP.index('run "Updating apt index"'))
+
+    def test_installs_wait_for_dpkg_lock(self):
+        # Anything else holding dpkg (apt-daily, another session) gets waited
+        # out too. apt's lock timeout covers installs, not `apt-get update`.
+        installs = re.findall(r'apt-get\b[^\n]*\binstall\b[^\n]*', SETUP)
+        self.assertTrue(installs)
+        for line in installs:
+            self.assertIn('DPkg::Lock::Timeout', line, line)
+
+
 class Hotspot(unittest.TestCase):
 
     def test_no_dhcp_option_114(self):

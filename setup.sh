@@ -51,7 +51,7 @@ set -euo pipefail
 
 REPO_BRANCH="main"   # --branch: test an unmerged branch on a real Pi
 REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/$REPO_BRANCH"
-VERSION="1.9.0"
+VERSION="1.9.1"
 
 # SheepShaver paths (DISK_IMAGE is auto-discovered or set via --disk)
 DISK_IMAGE=""
@@ -312,13 +312,30 @@ run_long() {
   fi
 }
 
+# --- Pi OS's first start ---------------------------------------------------
+# A freshly flashed card goes on setting itself up after SSH comes up: with a
+# hostname set in Imager, cloud-init runs apt to install avahi-daemon, which
+# holds apt's locks for a few minutes on a Pi Zero 2 W. Our own apt steps would
+# fail with "Could not get lock", so they wait for it.
+first_boot_running() {
+  command -v cloud-init >/dev/null 2>&1 || return 1
+  cloud-init status 2>/dev/null | grep -q '^status: running'
+}
+
+# At most 20 minutes. However cloud-init ends (done, error), the install goes on.
+wait_for_first_boot() {
+  first_boot_running || return 0
+  timeout 1200 cloud-init status --wait >/dev/null 2>&1 || true
+}
+
 # --- Whiptail helpers ------------------------------------------------------
 ensure_whiptail() {
   command -v whiptail >/dev/null 2>&1 && return
   log "Installing whiptail (required for menus)"
   ensure_sudo
+  wait_for_first_boot
   sudo apt-get update -qq
-  sudo apt-get install -y whiptail
+  sudo apt-get -o DPkg::Lock::Timeout=600 install -y whiptail
 }
 
 wt_menu() {
@@ -1154,7 +1171,7 @@ install_prebuilt() {
 }
 
 # Compiling needs these; only Pis that compile install them.
-install_build_tools() { sudo apt-get install -y "${MACEMU_BUILD_PKGS[@]}"; }
+install_build_tools() { sudo apt-get -o DPkg::Lock::Timeout=600 install -y "${MACEMU_BUILD_PKGS[@]}"; }
 
 # Steps to get emulator $1 in place: none when it's current, one to download
 # it, or the compile's six (build tools, fetch, configure, build, install,
@@ -1177,7 +1194,10 @@ checkout_macemu() {
 }
 
 # --- Total step count (for gauge) -----------------------------------------
+FIRST_BOOT_WAIT=0
+first_boot_running && FIRST_BOOT_WAIT=1
 TOTAL_STEPS=4   # apt update, apt install, patch_cmdline, record_install
+[[ $FIRST_BOOT_WAIT -eq 1 ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
 [[ $WIFI_POWERSAVE -eq 0 ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
 [[ -n $NEW_HOSTNAME && $NEW_HOSTNAME != "$CUR_HOSTNAME" ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
 [[ -n $TIMEZONE ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
@@ -1260,8 +1280,11 @@ fi
 if [[ $INSTALL_MACLOCK -eq 1 ]]; then
   APT_PKGS+=(python3-lgpio device-tree-compiler unzip)
 fi
+if [[ $FIRST_BOOT_WAIT -eq 1 ]]; then
+  run_long "Waiting for Pi OS to finish its first start" wait_for_first_boot
+fi
 run "Updating apt index" sudo apt-get update
-run "Installing ${#APT_PKGS[@]} apt packages" sudo apt-get install -y "${APT_PKGS[@]}"
+run "Installing ${#APT_PKGS[@]} apt packages" sudo apt-get -o DPkg::Lock::Timeout=600 install -y "${APT_PKGS[@]}"
 
 # --- Quiet boot -----------------------------------------------------------
 # Ensure each kernel arg is present. Idempotent per-token so re-running on an
