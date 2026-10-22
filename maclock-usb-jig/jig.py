@@ -67,11 +67,16 @@ def side_stop():
     hanging from Z = 0 down to -STOP_H."""
     y0, y1 = p.SIDE_STOP_Y0, p.SIDE_STOP_Y1
     part = box(0, p.STOP_T, y0, y1, -p.STOP_H, 0)
-    # 45-degree cut along the top inside edge, for the clock's rounded edge.
+    # 45-degree cuts along the inside face: one at the bottom edge, and one
+    # ramping the face back from the contact band to FACE_RELIEF above it.
+    yc, yl = (y0 + y1) / 2, y1 - y0 + 2 * AIR
     s = p.EDGE_RELIEF * 2 ** 0.5
-    part -= Pos(0, (y0 + y1) / 2, 0) * Rot(0, 45, 0) * Box(s, y1 - y0 + 2 * AIR, s)
-    band_bottom = -(p.EDGE_RELIEF + p.CONTACT_H)
-    part -= box(-AIR, p.FACE_RELIEF, y0 - AIR, y1 + AIR, -p.STOP_H - AIR, band_bottom)
+    part -= Pos(0, yc, -p.STOP_H) * Rot(0, 45, 0) * Box(s, yl, s)
+    band_top = -(p.STOP_H - p.EDGE_RELIEF - p.CONTACT_H)
+    ramp_top = band_top + p.FACE_RELIEF
+    s = p.FACE_RELIEF * 2 ** 0.5
+    part -= Pos(0, yc, ramp_top) * Rot(0, 45, 0) * Box(s, yl, s)
+    part -= box(-AIR, p.FACE_RELIEF, y0 - AIR, y1 + AIR, ramp_top, AIR)
     for y in p.SIDE_STOP_SCREW_Y:
         part -= rod(p.SCREW_IN, y, p.SCREW_TAP_D, -p.TAP_L, AIR)
         part -= rod(p.SCREW_IN, y, p.SCREW_LOOSE_D, -p.SCREW_HOLE_L, -p.TAP_L)

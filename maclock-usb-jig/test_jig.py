@@ -197,8 +197,8 @@ class TestSideStop(unittest.TestCase):
     def setUpClass(cls):
         cls.j = jig.jig()
         cls.side = jig.side_stop()
-        cls.band_z = -(p.EDGE_RELIEF + p.CONTACT_H / 2)
-        cls.low_z = -(p.EDGE_RELIEF + p.CONTACT_H) - 3
+        cls.band_top = -(p.STOP_H - p.EDGE_RELIEF - p.CONTACT_H)
+        cls.band_z = cls.band_top - p.CONTACT_H / 2
 
     def test_valid_single_solid(self):
         self.assertTrue(self.side.is_valid)
@@ -209,12 +209,22 @@ class TestSideStop(unittest.TestCase):
         self.assertAlmostEqual(bb.max.Z, 0.0, places=6)
         self.assertAlmostEqual(bb.min.Z, -p.STOP_H, places=6)
 
-    def test_touches_the_flat_side_only_in_its_band(self):
+    def test_touches_the_flat_side_only_in_a_band_low_down(self):
+        # Low down is how the first print sat steadiest.
         y = (p.SIDE_STOP_Y0 + p.SIDE_STOP_Y1) / 2
         self.assertAlmostEqual(self.side.bounding_box().min.X, 0.0, places=6)
+        self.assertLess(self.band_top, -15)
         self.assertTrue(solid_at(self.side, EPS, y, self.band_z))
-        self.assertFalse(solid_at(self.side, EPS, y, -EPS))  # clear of the rounded edge
-        self.assertFalse(solid_at(self.side, EPS, y, self.low_z))  # stepped back below
+        for z in (-EPS, -10, self.band_top + p.FACE_RELIEF + EPS):  # stands back above
+            with self.subTest(z=z):
+                self.assertFalse(solid_at(self.side, EPS, y, z))
+        self.assertFalse(solid_at(self.side, EPS, y, -p.STOP_H + EPS))  # chamfered below
+
+    def test_steps_back_on_a_45_degree_ramp_so_it_prints_without_a_ledge(self):
+        y = (p.SIDE_STOP_Y0 + p.SIDE_STOP_Y1) / 2
+        z = self.band_top + p.FACE_RELIEF / 2
+        self.assertTrue(solid_at(self.side, p.FACE_RELIEF / 2 + 0.1, y, z))
+        self.assertFalse(solid_at(self.side, p.FACE_RELIEF / 2 - 0.1, y, z))
 
     def test_sits_at_the_top_far_from_the_key(self):
         self.assertGreater(p.SIDE_STOP_Y0 - p.USBC_Y, 30)

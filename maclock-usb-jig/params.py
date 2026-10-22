@@ -118,13 +118,16 @@ STOP_T = 10.0
 STOP_H = 29.0
 """How far the block hangs below the back."""
 EDGE_RELIEF = 4.0
-"""45-degree cut along the block's top inside edge, clear of the clock's
-rounded edge."""
+"""45-degree cut along the block's bottom inside edge, to slide it down the
+side."""
 CONTACT_H = 6.0
-"""The block touches the side over this band, just below the relief. Below
-it the face steps back by FACE_RELIEF, so a drafted side can't push the jig
-off."""
+"""The block touches the side over this band, just above the bottom cut. The
+first print sat steadiest touching low down like this: fitted the other way
+up, touching near the back, it rocked."""
 FACE_RELIEF = 1.5
+"""Above the band the face stands back by this, clear of the clock's rounded
+edge, and steps out to the band on a 45-degree ramp so it prints without a
+ledge."""
 
 SIDE_STOP_Y0 = -24.0
 SIDE_STOP_Y1 = -6.0

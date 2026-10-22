@@ -20,7 +20,7 @@ The router base's round foot slides inside the jig's walls. Pushing it against e
 ## Cutting the port
 
 1. Press the key into the slot-shaped pocket under the jig, with the end that was on the print bed going in first. It should be a snug push fit: sand it if it won't go in, or add a drop of glue if it falls out.
-2. Screw the side stop under the two holes on the right. It goes on with its angled edge at the top, against the jig, facing the middle of the jig where the clock will be. Its holes only open at that end and sit nearer its outer side, so it only fits that way. The screws go in from the top and cut their own thread. Drive them until the heads sit just below the floor, so the router base glides over them.
+2. Screw the side stop under the two holes on the right, with its holes up against the jig and the raised strip near its bottom facing the middle of the jig, where the clock will be. That strip is the only part that touches the clock. The holes only open at one end and sit nearer the stop's outer side, so it only fits that way. The screws go in from the top and cut their own thread. Drive them until the heads sit just below the floor, so the router base glides over them.
 3. Take the back shell off the clock and lay it face down, with the back facing up.
 4. Set the jig on the back with the key in the USB-C slot, and turn it until the side stop touches the clock's side.
 5. Set the bit to stick out about 6mm below the router base's foot. That's enough to go through the jig's 3mm floor and the 2mm shell.
