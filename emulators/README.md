@@ -16,10 +16,10 @@ sudo apt update
 sudo apt install -y \
   build-essential autoconf automake libtool pkg-config \
   libsdl2-dev libgl1-mesa-dev libxkbcommon-dev libmpfr-dev \
-  labwc wlr-randr seatd alsa-utils git
+  labwc xwayland wlr-randr seatd alsa-utils git
 ```
 
-`libmpfr-dev` is for Basilisk II, which emulates the 68k FPU with MPFR. SheepShaver doesn't need it.
+`libmpfr-dev` is for Basilisk II, which emulates the 68k FPU with MPFR. SheepShaver doesn't need it. `xwayland` is needed because the emulators run as X11 apps inside labwc, and Raspberry Pi OS's labwc no longer brings it in.
 
 Enable the seat manager and add yourself to the graphics groups. The seatd group is `_seatd` on Debian Trixie and `seat` on some older distros; use whichever exists:
 

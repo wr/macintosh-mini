@@ -1247,9 +1247,13 @@ fi
 # --- apt packages ---------------------------------------------------------
 APT_PKGS=(curl git iw qrencode dnsmasq-base)
 if [[ $INSTALL_SHEEPSHAVER -eq 1 || $INSTALL_BASILISK -eq 1 ]]; then
+  # xwayland by name: the launchers run the emulators as X11 clients
+  # (SDL_VIDEODRIVER=x11), and Raspberry Pi's labwc stopped depending on it in
+  # 0.20.2 (2026-09-29). Naming it also marks it manually installed, so
+  # `apt autoremove` can't take it from Pis that got it with an older labwc.
   APT_PKGS+=(
     "${MACEMU_RUNTIME_PKGS[@]}"
-    labwc wlr-randr seatd
+    labwc xwayland wlr-randr seatd
     alsa-utils
   )
 fi
