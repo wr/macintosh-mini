@@ -13,13 +13,14 @@
   @font-face { font-family: "IBM Plex Mono"; font-weight: 500; font-display: block; src: url(https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-mono@5.1.0/files/ibm-plex-mono-latin-500-normal.woff2) format("woff2"); }
 
   @page { size: letter; margin: 0.6in 0.85in; }
-  html, body { margin: 0; background: #fff; color: #111; }
+  :root { --code: #1d4fc4; }   /* typed text and addresses: blue, still dark enough in grayscale */
+  html, body { margin: 0; background: #fff; color: #111; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body { font: 10.5pt/1.5 Inter, "Helvetica Neue", Arial, sans-serif; }
   p { margin: 0 0 0.6em; }
   b { font-weight: 700; }
   .mono { white-space: nowrap; }
-  .mono, code { font-family: "IBM Plex Mono", Menlo, monospace; font-weight: 500; font-size: 0.92em; }
-  pre { font: 500 8.8pt/1.4 "IBM Plex Mono", Menlo, monospace; margin: 0.2em 0 0.7em 1.2em; white-space: pre-wrap; }
+  .mono, code { font-family: "IBM Plex Mono", Menlo, monospace; font-weight: 500; font-size: 0.92em; color: var(--code); }
+  pre { color: var(--code); font: 500 8.8pt/1.4 "IBM Plex Mono", Menlo, monospace; margin: 0.2em 0 0.7em 1.2em; white-space: pre-wrap; }
 
   header { display: flex; align-items: center; gap: 14px; margin-bottom: 0.22in; }
   header svg { width: 0.42in; display: block; fill: #111; }
@@ -95,7 +96,7 @@
 <h2>About the ROM</h2>
 <div class="rom">
   <div>
-    <p>Every Mac needs a ROM: Apple’s built-in startup code. It isn’t included, because Apple still owns it.</p>
+    <p>The Mac emulator needs a ROM file to function. Since these files are copyrighted and owned by Apple, I haven’t included one.</p>
     <p style="margin:0">Redundant Robot’s emulator guide explains which one to use and where to find it. The <b>Performa ROM</b> works best. <span class="mono">redundantrobot.com/sheepshaver</span></p>
   </div>
   <div class="qr"><svg viewBox="0 0 29 29" class="segno"><path class="qrline" stroke="#000" d="M0 0.5h7m1 0h3m1 0h2m4 0h1m3 0h7m-29 1h1m5 0h1m1 0h2m4 0h1m2 0h1m1 0h2m1 0h1m5 0h1m-29 1h1m1 0h3m1 0h1m1 0h1m1 0h1m2 0h4m5 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m2 0h1m3 0h1m3 0h1m4 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m1 0h2m1 0h4m1 0h4m2 0h1m1 0h3m1 0h1m-29 1h1m5 0h1m2 0h3m6 0h1m3 0h1m5 0h1m-29 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-19 1h1m2 0h2m1 0h1m1 0h2m-20 1h1m2 0h7m1 0h2m1 0h4m1 0h3m2 0h1m1 0h3m-28 1h1m2 0h2m1 0h1m2 0h1m1 0h1m1 0h2m1 0h3m1 0h1m1 0h2m1 0h2m-26 1h2m1 0h2m1 0h1m3 0h1m1 0h3m3 0h2m1 0h1m2 0h1m-24 1h1m3 0h1m2 0h2m2 0h1m2 0h1m1 0h2m4 0h1m2 0h1m-25 1h1m1 0h1m1 0h1m6 0h2m3 0h1m1 0h2m4 0h1m-29 1h2m5 0h2m4 0h1m1 0h2m5 0h1m1 0h5m-29 1h1m1 0h7m2 0h2m1 0h3m2 0h2m1 0h2m2 0h1m1 0h1m-29 1h2m1 0h1m7 0h1m2 0h1m1 0h1m1 0h1m1 0h5m1 0h1m1 0h1m-29 1h3m3 0h1m1 0h3m1 0h2m4 0h1m1 0h1m4 0h1m-26 1h2m2 0h1m2 0h2m1 0h1m1 0h1m2 0h1m2 0h3m3 0h1m1 0h2m-28 1h3m2 0h9m1 0h1m3 0h2m1 0h1m2 0h1m2 0h1m-29 1h5m3 0h1m1 0h2m1 0h1m1 0h1m2 0h2m3 0h4m-27 1h3m1 0h5m1 0h1m1 0h1m1 0h2m1 0h1m1 0h9m-20 1h3m4 0h1m2 0h1m1 0h1m3 0h2m-26 1h7m1 0h1m1 0h1m1 0h5m1 0h3m1 0h1m1 0h2m-26 1h1m5 0h1m1 0h2m5 0h1m1 0h1m1 0h2m3 0h1m-25 1h1m1 0h3m1 0h1m1 0h1m1 0h5m1 0h1m2 0h7m1 0h1m-28 1h1m1 0h3m1 0h1m1 0h4m1 0h3m1 0h3m1 0h1m1 0h1m4 0h1m-29 1h1m1 0h3m1 0h1m4 0h1m1 0h1m1 0h1m1 0h1m2 0h1m2 0h2m1 0h3m-29 1h1m5 0h1m5 0h2m7 0h3m1 0h2m1 0h1m-29 1h7m1 0h1m5 0h1m4 0h2m3 0h2"/></svg></div>
