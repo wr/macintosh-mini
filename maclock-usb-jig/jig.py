@@ -49,7 +49,7 @@ def jig():
     part = box(x0 - t, x1 + t, p.JIG_Y0, y1 + t, 0, top)
     part -= box(x0, x1, y0, y1, p.FLOOR_T, top + AIR)
     # Thumb tab, overlapping the left wall by AIR so the union fuses.
-    part += box(x0 - t - p.THUMB_W, x0 - t + AIR, p.JIG_Y0, p.THUMB_Y1, 0, p.FLOOR_T)
+    part += box(x0 - t - p.THUMB_W, x0 - t + AIR, p.THUMB_Y0, p.THUMB_Y1, 0, p.FLOOR_T)
 
     m = p.BIT_WINDOW_MARGIN
     part -= box(p.HOLE_X - p.HOLE_W / 2 - m, p.HOLE_X + p.HOLE_W / 2 + m,

@@ -98,18 +98,30 @@ class TestJig(unittest.TestCase):
     def test_thumb_tab_is_floor_out_past_the_left_wall(self):
         left_wall = p.HOLE_X - p.POCKET_W / 2 - p.WALL_W
         x = left_wall - p.THUMB_W / 2
-        for y in (p.JIG_Y0 + 2, p.THUMB_Y1 - 2):
+        for y in (p.THUMB_Y0 + 2, p.THUMB_Y1 - 2):
             with self.subTest(y=y):
                 self.assertTrue(solid_at(self.j, x, y, p.FLOOR_T - EPS))
                 self.assertFalse(solid_at(self.j, x, y, p.FLOOR_T + EPS))
         # Stops 15 or more below the top: the vents and markings are above.
         self.assertFalse(solid_at(self.j, x, -15, 1))
-        self.assertAlmostEqual(self.j.bounding_box().min.X, left_wall - p.THUMB_W, places=6)
+        bb = self.j.bounding_box()
+        self.assertAlmostEqual(bb.min.X, left_wall - p.THUMB_W, places=6)
+        self.assertAlmostEqual(bb.min.Y, p.THUMB_Y0, places=6)
+
+    def test_thumb_tab_is_twice_the_first_prints(self):
+        # That one was 18 x 44.5; near enough twice is fine.
+        self.assertGreater(p.THUMB_W * (p.THUMB_Y1 - p.THUMB_Y0), 1.75 * 18 * 44.5)
+
+    def test_thumb_tab_stays_on_the_back(self):
+        # Inside the back's left edge and above its lower screw holes.
+        self.assertGreaterEqual(self.j.bounding_box().min.X, -p.BACK_W + 2)
+        self.assertGreaterEqual(p.THUMB_Y0, p.BACK_SCREWS_Y + 3)
 
     def test_reaches_past_the_bottom_of_the_usbc_slot(self):
         slot_bottom = p.USBC_Y - p.USBC_H / 2
-        self.assertAlmostEqual(self.j.bounding_box().min.Y, p.JIG_Y0, places=6)
         self.assertLess(p.JIG_Y0, slot_bottom - 3)
+        self.assertTrue(solid_at(self.j, p.HOLE_X, p.JIG_Y0 + 1, 1))
+        self.assertFalse(solid_at(self.j, p.HOLE_X, p.JIG_Y0 - 1, 1))
 
     def test_key_pocket_under_the_jig_over_the_slot(self):
         w, l = p.KEY_RECESS_W / 2 - EPS, p.KEY_RECESS_L / 2 - EPS

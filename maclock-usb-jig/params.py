@@ -75,12 +75,18 @@ SWITCH_WINDOW_Y0 = -48.0
 SWITCH_WINDOW_Y1 = -30.0
 """Clears the switch, which the first print showed sitting inside this."""
 
-THUMB_W = 18.0
+THUMB_W = 24.5
 """A tab of floor out past the left wall, to hold the jig down with a thumb
-while cutting."""
-THUMB_Y1 = -20.0
-"""The tab runs from the jig's bottom edge up to here, clear of the vents and
-markings at the top left of the back."""
+while cutting. Twice the first print's 18 x 44.5, near enough."""
+THUMB_Y0 = -76.0
+"""Past the jig's bottom edge, short of the back's lower screw holes."""
+THUMB_Y1 = -18.0
+"""Clear of the vents and markings at the top left of the back."""
+
+BACK_W = 73.0
+BACK_SCREWS_Y = -81.0
+"""The back's width, and where its two lower screw holes are: both estimated
+from a photo, so the tab keeps a few mm off them."""
 
 # --- USB-C key: anchors the jig in the USB-C slot -------------------------------
 
