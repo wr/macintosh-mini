@@ -1,0 +1,91 @@
+# What make_transfer.py puts on the Transfer disk. Each [[item]] takes files
+# from an unpacked source (sources.toml): "pick" globs, relative to the
+# unpacked archive, or to the HFS floppy named by "floppy". A folder brings
+# everything below it. "dest" is a folder on the Transfer disk.
+# Each [[file]] is a page from files/, with its Mac name, type and creator.
+
+[[item]]
+source = "imagewriter-option"
+floppy = "*.img"
+pick = ["AppleTalk ImageWriter"]
+dest = "Printing"
+
+# After Dark 2.0's own control panel, with the 2.0 and More After Dark modules
+# together in its After Dark Files (after-dark.md). Not the 2.0 MultiModule: its
+# default needs 256 colours.
+[[item]]
+source = "after-dark-2"
+floppy = "*.img"
+pick = ["After Dark"]
+dest = "After Dark"
+
+[[item]]
+source = "after-dark-2"
+floppy = "*.img"
+pick = ["After Dark Files:Bouncing Ball", "After Dark Files:Can of Worms", "After Dark Files:Clock",
+        "After Dark Files:Doodles", "After Dark Files:Down the Drain", "After Dark Files:FadeAway",
+        "After Dark Files:Fish!", "After Dark Files:Flying Toasters", "After Dark Files:Hard Rain",
+        "After Dark Files:Lissajous", "After Dark Files:Logo", "After Dark Files:Messages",
+        "After Dark Files:NightLines", "After Dark Files:PICS Player", "After Dark Files:Rotating Cube.PICS",
+        "After Dark Files:Picture Frame", "After Dark Files:Puzzle", "After Dark Files:Rainstorm",
+        "After Dark Files:Randomizer", "After Dark Files:Rose", "After Dark Files:Satori",
+        "After Dark Files:Shapes", "After Dark Files:Slide Show", "After Dark Files:Slide Show Folder",
+        "After Dark Files:Spheres", "After Dark Files:Spotlight", "After Dark Files:Starry Skyline",
+        "After Dark Files:String Theory", "After Dark Files:Supernova", "After Dark Files:Vertigo",
+        "After Dark Files:Warp!", "After Dark Files:Zot!"]
+dest = "After Dark:After Dark Files"
+
+# Every More After Dark module; not "MAD Fish!", which is untyped fish data.
+[[item]]
+source = "more-after-dark"
+pick = ["More After Dark modules/More After Dark/[!M]*", "More After Dark modules/More After Dark/M[!A]*"]
+dest = "After Dark:After Dark Files"
+
+[[item]]
+source = "bigmaclock"
+pick = ["BigMaclock"]
+dest = "Big Maclock"
+
+[[item]]
+source = "bigmaclock-ad"
+pick = ["BigMaclock"]
+dest = "After Dark:After Dark Files"
+
+[[item]]
+source = "icab-68k"
+pick = ["iCab", "Plug-ins"]
+dest = "Internet:iCab"
+
+[[item]]
+source = "mr-browser-68k"
+pick = ["MR Browser*"]
+dest = "Internet"
+
+[[item]]
+source = "stuffit-expander"
+pick = ["StuffIt Expander*"]
+dest = "Utilities"
+
+[[item]]
+source = "disk-copy"
+pick = ["Disk Copy*.smi"]
+dest = "Utilities"
+
+[[item]]
+source = "ie-401-68k"
+pick = ["IE 4.01*"]
+dest = "Fallback"
+
+[[file]]
+path = "files/Start Page.html"
+name = "Start Page"
+type = "TEXT"
+creator = "iCAB"
+dest = "Internet"
+
+[[file]]
+path = "files/Big Maclock License.txt"
+name = "Big Maclock License"
+type = "TEXT"
+creator = "ttxt"
+dest = "Big Maclock"

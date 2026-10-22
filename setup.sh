@@ -10,6 +10,7 @@
 #   BasiliskII  (68k, Mac OS 7):     512 KB or 1 MB 68k ROM
 #   SheepShaver (PowerPC, OS 8.1+):  4 MB PPC ROM
 # and a disk image: *.hda, *.dsk, *.img, *.hfv or *.sparsebundle
+# (with no disk image, a new Basilisk II install offers to download ours).
 #
 # Flags (skip prompts):
 #   --all | --all-basilisk | --maclock | --sheepshaver | --basilisk
@@ -17,6 +18,8 @@
 #   --color <mode>      Color | Grayscale | "Black & White"  (also accepts color/grayscale/bw)
 #   --modelid <n>       BasiliskII modelid: 5 (Mac IIci, System 7.0-7.1) or 14 (Quadra, 7.5+/OS 8)
 #   --disk <file>       disk image filename in $HOME (default: auto-discover)
+#   --get-disk          with no disk image in $HOME, download our Mac OS 8.1
+#                       disk for Basilisk II without asking (default: ask)
 #   --rom <file>        ROM filename in $HOME (default: ROM)
 #   --hostname <name>   default: leave unchanged
 #   --perf | --no-perf  enable/disable performance optimizations (default: prompt)
@@ -48,7 +51,7 @@ set -euo pipefail
 
 REPO_BRANCH="main"   # --branch: test an unmerged branch on a real Pi
 REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/$REPO_BRANCH"
-VERSION="1.8.1"
+VERSION="1.9.0"
 
 # SheepShaver paths (DISK_IMAGE is auto-discovered or set via --disk)
 DISK_IMAGE=""
@@ -63,6 +66,12 @@ MACEMU_COMMIT="b9a71d7a4ef109ef3b0a218a37481af37aa2974a"
 # What each installed emulator was built from (see needs_build).
 BASILISK_STAMP=/usr/local/share/macintosh-mini/basilisk.commit
 SHEEPSHAVER_STAMP=/usr/local/share/macintosh-mini/sheepshaver.commit
+# Our clean Mac OS 8.1 disk for Basilisk II (disk-image/ in this repo), offered
+# when $HOME has no disk image. Each version is a new file: pin all four.
+DISK_DL_VERSION="2026.10.1"
+DISK_DL_URL="https://archive.org/download/macos-8.1-basilisk-ii/macos-8.1-basilisk-ii-$DISK_DL_VERSION.zip"
+DISK_DL_SHA256="ce6ee4ba5294182535d20bf6639f64415376e4420b3473167803315e615c97fa"
+DISK_DL_MB=52
 
 # How both emulators are built, on the Pi and by CI: CI reads this block (and
 # MACEMU_REPO/MACEMU_COMMIT above) from this file and builds the same way in
@@ -380,8 +389,8 @@ check_sheepshaver_assets() {
   fi
 }
 
-# Verify a 68k ROM and a disk image exist for BasiliskII. The 68k ROM is
-# 512 KB or 1 MB; reject the 4 MB PPC ROM, which is a common mix-up.
+# Verify a 68k ROM exists for BasiliskII, and the disk passed with --disk. The
+# 68k ROM is 512 KB or 1 MB; reject the 4 MB PPC ROM, a common mix-up.
 check_basilisk_assets() {
   [[ -f "$HOME/.basilisk_ii_prefs" ]] && return 0   # existing install -> update, keep config
   if [[ $HOTSPOT_SETUP -ne 1 ]]; then   # --hotspot-setup: the new owner adds the ROM
@@ -394,10 +403,61 @@ check_basilisk_assets() {
   fi
   if [[ -n $DISK_IMAGE ]]; then
     [[ -e "$HOME/$DISK_IMAGE" ]] || die "Missing $HOME/$DISK_IMAGE (passed via --disk)"
-  else
-    find_disks
-    [[ ${#DISKS[@]} -gt 0 ]] || die "No disk image ($DISK_TYPES) found in $HOME — copy one over before running"
   fi
+  # No disk image is fine: the disk step offers to download ours.
+}
+
+# Download our Mac OS 8.1 disk into $HOME and set DISK_IMAGE. The download and
+# the unzip use hidden names find_disks never picks up, so nothing lands in
+# $HOME unless every check passes. On failure, DISK_DL_ERROR says why.
+get_disk_image() {
+  local hda="macos-8.1-basilisk-ii-$DISK_DL_VERSION.hda"
+  local part="$HOME/.macos-8.1-basilisk-ii.zip.part" tmp free need rc=0
+  rm -rf "$HOME"/.macos-8.1-basilisk-ii.*   # left by an interrupted try
+  need=$(( DISK_DL_MB + 1024 + 100 ))       # the zip, the 1 GB disk, room to spare
+  free=$(df -Pm "$HOME" | awk 'NR == 2 { print $4 }')
+  if [[ -z $free || $free -lt $need ]]; then
+    DISK_DL_ERROR="it needs $need MB free and there's ${free:-?} MB"
+    return 1
+  fi
+  tmp=$(mktemp -d "$HOME/.macos-8.1-basilisk-ii.XXXXXX") || {
+    DISK_DL_ERROR="couldn't make a folder for it in $HOME"; return 1; }
+  # Stopped part-way (Ctrl-C), don't leave up to 1 GB behind in hidden files.
+  # shellcheck disable=SC2064  # expanded now: the paths are this function's locals
+  trap "rm -rf $(printf %q "$tmp") $(printf %q "$part"); exit 130" INT TERM HUP
+  printf 'Downloading Mac OS 8.1 (%s MB)…\n' "$DISK_DL_MB"
+  if ! curl -fL --retry 3 --connect-timeout 20 --speed-limit 1024 --speed-time 60 \
+       --progress-bar -o "$part" "$DISK_DL_URL"; then
+    DISK_DL_ERROR="the download didn't finish"; rc=1
+  elif ! echo "$DISK_DL_SHA256  $part" | sha256sum -c --status -; then
+    DISK_DL_ERROR="the download is damaged (its checksum doesn't match)"; rc=1
+  elif ! printf 'Unpacking it (a minute or two)…\n' ||
+       ! python3 -m zipfile -e "$part" "$tmp" || [[ ! -f $tmp/$hda ]]; then
+    DISK_DL_ERROR="it didn't unzip"; rc=1
+  elif ! mv "$tmp/$hda" "$HOME/$hda"; then
+    DISK_DL_ERROR="it couldn't be moved into $HOME"; rc=1
+  else
+    DISK_IMAGE=$hda
+  fi
+  rm -rf "$tmp" "$part"
+  trap - INT TERM HUP
+  return $rc
+}
+
+# With no disk image in $HOME: ask (or, with --get-disk, don't) and download
+# ours. Returns non-zero when there's still no disk.
+offer_disk_image() {
+  local msg
+  if [[ $GET_DISK -ne 1 ]]; then
+    msg="There's no disk image in your home folder."
+    msg+=$'\n\n'"Download a ready-to-use Mac OS 8.1 disk? It's a clean install set up for this Mac, with a web browser and After Dark. Version $DISK_DL_VERSION, $DISK_DL_MB MB, from the Internet Archive."
+    msg+=$'\n\n'"Or choose No and copy your own disk image over first."
+    whiptail --backtitle "macintosh-mini" --title "Disk image" \
+      --yes-button "Download" --no-button "No" --yesno "$msg" 14 72 </dev/tty || return 1
+  fi
+  get_disk_image && return 0
+  warn "Couldn't download the disk image: $DISK_DL_ERROR."
+  return 1
 }
 
 # `macintosh` command: boot/reboot the Mac on the display (re-triggers the tty1
@@ -508,6 +568,7 @@ NIGHT_OFF=""       # "" = prompt, "never", or HH:MM to turn the screen off
 TIMEZONE=""        # Area/City to set; the night schedule needs a real one
 NIGHT_CONF=/etc/default/brightness-control
 HOTSPOT_SETUP=0    # 1 = --hotspot-setup: prepare the Mac for phone setup
+GET_DISK=0         # 1 = --get-disk: download our disk without asking
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -520,6 +581,7 @@ while [[ $# -gt 0 ]]; do
     --color)         COLOR_MODE=$2; shift 2 ;;
     --modelid)       MODELID=$2; shift 2 ;;
     --disk)          DISK_IMAGE=$2; shift 2 ;;
+    --get-disk)      GET_DISK=1; shift ;;
     --rom)           ROM_FILE=$2; shift 2 ;;
     --hostname)      NEW_HOSTNAME=$2; shift 2 ;;
     --perf)          PERF=1; shift ;;
@@ -673,7 +735,13 @@ if [[ ($INSTALL_SHEEPSHAVER -eq 1 || $INSTALL_BASILISK -eq 1) && -z $DISK_IMAGE 
   find_disks
   HDA_PATHS=("${DISKS[@]}")
   if [[ ${#HDA_PATHS[@]} -eq 0 ]]; then
-    die "No disk image ($DISK_TYPES) found in $HOME — copy one over before running"
+    # Our disk is Mac OS 8.1 for Basilisk II as a Quadra; SheepShaver doesn't get the offer.
+    if [[ $INSTALL_BASILISK -eq 1 && $INSTALL_SHEEPSHAVER -eq 0 ]] && offer_disk_image; then
+      [[ ${MODELID:-14} -ne 14 ]] && warn "Mac OS 8.1 needs a Quadra: using modelid 14, not $MODELID"
+      MODELID=14
+    else
+      die "No disk image ($DISK_TYPES) found in $HOME — copy one over before running"
+    fi
   elif [[ ${#HDA_PATHS[@]} -eq 1 ]]; then
     DISK_IMAGE=$(basename "${HDA_PATHS[0]}")
   else

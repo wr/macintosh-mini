@@ -13,7 +13,7 @@ SPDX-License-Identifier = "CC-BY-SA-4.0"
 
 # Software.
 [[annotations]]
-path = ["setup.sh", "maclock-build/**", ".github/workflows/**", ".github/scripts/**"]
+path = ["setup.sh", "maclock-build/**", ".github/workflows/**", ".github/scripts/**", "disk-image/**/*.py", "disk-image/*.toml", "disk-image/requirements.txt"]
 SPDX-FileCopyrightText = "2026 Wells Riley"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
@@ -28,6 +28,12 @@ SPDX-License-Identifier = "CERN-OHL-S-2.0"
 path = "emulators/chimes/*.wav"
 SPDX-FileCopyrightText = "Apple Computer, Inc."
 SPDX-License-Identifier = "LicenseRef-Third-Party"
+
+# Big Maclock's licence, shipped on the disk image beside the app.
+[[annotations]]
+path = "disk-image/files/Big Maclock License.txt"
+SPDX-FileCopyrightText = "2026 Retro-Theory"
+SPDX-License-Identifier = "MIT"
 
 # 3D models from LCSC's EasyEDA library, used only for renders.
 [[annotations]]

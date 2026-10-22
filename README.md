@@ -37,11 +37,11 @@ You can [buy a DIY kit or a finished build](https://shop.wells.ee/products/macin
 
 **You will need:**
 - A Mac ROM file (`064DC91D` is a common one to search for)
-- A Mac OS disk image with System 7.0 to 8.5. The [BlueSCSI image library](https://bluescsi.com/docs/BlueSCSI-Images) has ready-made ones
+- A Mac OS disk image with System 7.0 to 8.5. The [BlueSCSI image library](https://bluescsi.com/docs/BlueSCSI-Images) has ready-made ones, or skip it: the installer offers [our Mac OS 8.1 disk](https://archive.org/details/macos-8.1-basilisk-ii)
 
 **Prepare the MicroSD card**
 1. Flash **Raspberry Pi OS Lite (64-bit)** to a microSD card with [Raspberry Pi Imager](https://www.raspberrypi.com/software/). Set your Wi-Fi network and turn on SSH in its settings.
-2. Rename your Mac ROM file to `ROM`, and copy it and a disk image to the Pi's home folder:
+2. Rename your Mac ROM file to `ROM`, and copy it and your disk image, if you have one, to the Pi's home folder:
 
    ```bash
    scp ROM yourdisk.hda <user>@<pi_ip>:~/
