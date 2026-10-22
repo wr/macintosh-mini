@@ -13,7 +13,7 @@ SPDX-License-Identifier = "CC-BY-SA-4.0"
 
 # Software.
 [[annotations]]
-path = ["setup.sh", "maclock-build/**", ".github/workflows/**", ".github/scripts/**", "disk-image/**/*.py", "disk-image/*.toml", "disk-image/requirements.txt"]
+path = ["setup.sh", "maclock-build/**", ".github/workflows/**", ".github/scripts/**", "disk-image/**/*.py", "disk-image/*.toml", "disk-image/requirements.txt", "docs/setup-guide/*.py", "docs/setup-guide/*.sh"]
 SPDX-FileCopyrightText = "2026 Wells Riley"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
@@ -46,4 +46,10 @@ SPDX-License-Identifier = "LicenseRef-Third-Party"
 [[annotations]]
 path = "maclock-build/waveshare-28dpi-3b-4b-notouch.dts"
 SPDX-FileCopyrightText = "Waveshare"
+SPDX-License-Identifier = "LicenseRef-Third-Party"
+
+# App icons in the setup guide, copied from the apps on our Mac OS 8.1 disk.
+[[annotations]]
+path = "docs/setup-guide/icons/*.png"
+SPDX-FileCopyrightText = "Each app's maker"
 SPDX-License-Identifier = "LicenseRef-Third-Party"
