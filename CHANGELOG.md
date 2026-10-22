@@ -3,6 +3,9 @@
 Notable changes to the macintosh-mini installer (`setup.sh`). Re-running on an
 existing Pi shows the entries added since the installed version.
 
+## [1.8.1] - 2026-10-21
+- The Mac starts again where XWayland, which the emulators draw through, had gone missing. Raspberry Pi OS's labwc stopped installing it at the end of September, so new installs since then didn't get it, and `apt autoremove` could remove it from older ones. The installer now installs it itself and keeps it.
+
 ## [1.8.0] - 2026-10-21
 - AppleTalk printers and file sharing work on your network alongside the internet, so the Chooser can find an AirWriter, say, while the browser stays online. New installs have it on; on an existing Mac, turn on AppleTalk in Edit settings.
 - Basilisk II is replaced once, with fixes to its AppleTalk tunnel. Macs running SheepShaver get a new one too, since it shares that network code.
