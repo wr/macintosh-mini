@@ -257,7 +257,12 @@ class TestKey(unittest.TestCase):
         bb = self.key.bounding_box()
         self.assertAlmostEqual(bb.min.Z, -p.KEY_PROUD, places=6)
         self.assertAlmostEqual(bb.max.Z, p.KEY_SEAT, places=6)
-        self.assertLess(p.KEY_PROUD, p.SHELL_T)
+
+    def test_is_twice_the_first_prints_height_and_reaches_through_the_shell(self):
+        # The 4 mm first print jumped out of the slot. At 8 it goes right
+        # through the shell, so the jig has to lift well clear to lose it.
+        self.assertAlmostEqual(self.key.bounding_box().size.Z, 8.0, places=6)
+        self.assertGreater(p.KEY_PROUD, p.SHELL_T + 2)
 
     def test_fits_its_pocket_in_the_jig(self):
         self.assertAlmostEqual(overlap(jig.jig(), self.key), 0.0, places=6)

@@ -94,8 +94,9 @@ KEY_W = 3.1
 KEY_L = 8.9
 """0.1 inside the slot all round: holds the jig to a tenth either way, and to
 about half a degree of turn."""
-KEY_PROUD = 2.0
-"""How far the key drops into the slot, short of the shell's thickness."""
+KEY_PROUD = 6.0
+"""How far the key drops into the slot: through the shell and on into the
+empty space behind it. At 2 (a 4 tall key) it jumped out of the slot."""
 KEY_SEAT = 2.0
 """How far it presses up into the jig. Leaves 1 of floor over it where the
 slot's top end runs under the router's floor."""

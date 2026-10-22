@@ -9,6 +9,7 @@ The router base's round foot slides inside the jig's walls. Pushing it against e
 | File | Purpose |
 | --- | --- |
 | `maclock-usb-jig.stl` | The jig, its side stop and the USB-C key, on one plate. Print at 0.2mm layers, no supports. |
+| `maclock-usb-jig-key.stl` | The key on its own, to reprint it. |
 | `maclock-usb-jig.step` | The same parts as solids, to open and edit in any CAD tool (Fusion, Onshape, FreeCAD). |
 | `params.py`, `jig.py` | The source: every dimension, and how the parts are built from them ([build123d](https://github.com/gumyr/build123d)). |
 
