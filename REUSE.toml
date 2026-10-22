@@ -47,3 +47,9 @@ SPDX-License-Identifier = "LicenseRef-Third-Party"
 path = "maclock-build/waveshare-28dpi-3b-4b-notouch.dts"
 SPDX-FileCopyrightText = "Waveshare"
 SPDX-License-Identifier = "LicenseRef-Third-Party"
+
+# App icons in the setup guide, copied from the apps on our Mac OS 8.1 disk.
+[[annotations]]
+path = "docs/setup-guide/icons/*.png"
+SPDX-FileCopyrightText = "Each app's maker"
+SPDX-License-Identifier = "LicenseRef-Third-Party"

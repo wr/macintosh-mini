@@ -12,7 +12,7 @@
   @font-face { font-family: Inter; font-weight: 800; font-display: block; src: url(https://cdn.jsdelivr.net/npm/@fontsource/inter@5.1.0/files/inter-latin-800-normal.woff2) format("woff2"); }
   @font-face { font-family: "IBM Plex Mono"; font-weight: 500; font-display: block; src: url(https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-mono@5.1.0/files/ibm-plex-mono-latin-500-normal.woff2) format("woff2"); }
 
-  @page { size: letter; margin: 0.6in 0.85in; }
+  @page { size: letter; margin: 0.5in 0.85in; }
   :root { --code: #1d4fc4; }   /* typed text and addresses: blue, still dark enough in grayscale */
   html, body { margin: 0; background: #fff; color: #111; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body { font: 10.5pt/1.5 Inter, "Helvetica Neue", Arial, sans-serif; }
@@ -22,15 +22,15 @@
   .mono, code { font-family: "IBM Plex Mono", Menlo, monospace; font-weight: 500; font-size: 0.92em; color: var(--code); }
   pre { color: var(--code); font: 500 8.8pt/1.4 "IBM Plex Mono", Menlo, monospace; margin: 0.2em 0 0.7em 1.2em; white-space: pre-wrap; }
 
-  header { display: flex; align-items: center; gap: 14px; margin-bottom: 0.22in; }
+  header { display: flex; align-items: center; gap: 14px; margin-bottom: 0.16in; }
   header svg { width: 0.42in; display: block; fill: #111; }
   h1 { margin: 0; font-size: 24pt; line-height: 1.05; font-weight: 800; letter-spacing: -0.02em; }
   header .sub { font-size: 11pt; margin-top: 2px; }
   .lead { font-size: 11.5pt; line-height: 1.5; margin-bottom: 0.12in; }
 
-  h2 { font-size: 13pt; font-weight: 800; margin: 0.24in 0 0.06in; letter-spacing: -0.01em; }
+  h2 { font-size: 13pt; font-weight: 800; margin: 0.22in 0 0.05in; letter-spacing: -0.01em; }
   h2 .n { display: inline-block; width: 1.4em; }
-  .step .body { margin-left: 18pt; display: grid; grid-template-columns: 1fr 2.15in; gap: 0.3in; align-items: start; }
+  .step .body { margin-left: 18pt; display: grid; grid-template-columns: 1fr 1.95in; gap: 0.3in; align-items: start; }
   .step .body.one { display: block; }
   .shot { margin-top: 0.04in; }
   .shot img { display: block; width: 100%; }
@@ -42,13 +42,19 @@
   .qr svg { display: block; width: 100%; }
   .qr path { stroke: #111; }
 
-  .p2 { break-before: page; }
+  table.apps { border-collapse: collapse; width: 100%; margin: 0.04in 0 0.1in; }
+  table.apps td, table.apps th { padding: 2px 0; vertical-align: middle; border-bottom: 0.5pt solid #bbb; text-align: left; }
+  table.apps tr:last-child td, table.apps tr:last-child th { border-bottom: 0; }
+  table.apps td:first-child { width: 0.42in; }
+  table.apps img { display: block; width: 0.27in; image-rendering: pixelated; }
+  table.apps th { width: 1.3in; font-weight: 700; }
+  .p2 { break-before: page; font-size: 10pt; }
   .p2 > h2:first-child { margin-top: 0; }
   .p2 p { margin-bottom: 0.45em; }
-  .small { font-size: 9.5pt; }
-  hr { border: 0; border-top: 1px solid #111; margin: 0.2in 0 0.14in; }
+  .small { font-size: 9.3pt; }
+  hr { border: 0; border-top: 1px solid #111; margin: 0.16in 0 0.12in; }
   footer { display: flex; gap: 0.25in; align-items: center; font-size: 9pt; }
-  footer .qr { width: 0.7in; flex: none; }
+  footer .qr { width: 0.62in; flex: none; }
   footer .meta { margin-left: auto; text-align: right; font-size: 8pt; }
 </style>
 </head>
@@ -102,38 +108,47 @@
   <div class="qr"><svg viewBox="0 0 29 29" class="segno"><path class="qrline" stroke="#000" d="M0 0.5h7m1 0h3m1 0h2m4 0h1m3 0h7m-29 1h1m5 0h1m1 0h2m4 0h1m2 0h1m1 0h2m1 0h1m5 0h1m-29 1h1m1 0h3m1 0h1m1 0h1m1 0h1m2 0h4m5 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m2 0h1m3 0h1m3 0h1m4 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m1 0h2m1 0h4m1 0h4m2 0h1m1 0h3m1 0h1m-29 1h1m5 0h1m2 0h3m6 0h1m3 0h1m5 0h1m-29 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-19 1h1m2 0h2m1 0h1m1 0h2m-20 1h1m2 0h7m1 0h2m1 0h4m1 0h3m2 0h1m1 0h3m-28 1h1m2 0h2m1 0h1m2 0h1m1 0h1m1 0h2m1 0h3m1 0h1m1 0h2m1 0h2m-26 1h2m1 0h2m1 0h1m3 0h1m1 0h3m3 0h2m1 0h1m2 0h1m-24 1h1m3 0h1m2 0h2m2 0h1m2 0h1m1 0h2m4 0h1m2 0h1m-25 1h1m1 0h1m1 0h1m6 0h2m3 0h1m1 0h2m4 0h1m-29 1h2m5 0h2m4 0h1m1 0h2m5 0h1m1 0h5m-29 1h1m1 0h7m2 0h2m1 0h3m2 0h2m1 0h2m2 0h1m1 0h1m-29 1h2m1 0h1m7 0h1m2 0h1m1 0h1m1 0h1m1 0h5m1 0h1m1 0h1m-29 1h3m3 0h1m1 0h3m1 0h2m4 0h1m1 0h1m4 0h1m-26 1h2m2 0h1m2 0h2m1 0h1m1 0h1m2 0h1m2 0h3m3 0h1m1 0h2m-28 1h3m2 0h9m1 0h1m3 0h2m1 0h1m2 0h1m2 0h1m-29 1h5m3 0h1m1 0h2m1 0h1m1 0h1m2 0h2m3 0h4m-27 1h3m1 0h5m1 0h1m1 0h1m1 0h2m1 0h1m1 0h9m-20 1h3m4 0h1m2 0h1m1 0h1m3 0h2m-26 1h7m1 0h1m1 0h1m1 0h5m1 0h3m1 0h1m1 0h2m-26 1h1m5 0h1m1 0h2m5 0h1m1 0h1m1 0h2m3 0h1m-25 1h1m1 0h3m1 0h1m1 0h1m1 0h5m1 0h1m2 0h7m1 0h1m-28 1h1m1 0h3m1 0h1m1 0h4m1 0h3m1 0h3m1 0h1m1 0h1m4 0h1m-29 1h1m1 0h3m1 0h1m4 0h1m1 0h1m1 0h1m1 0h1m2 0h1m2 0h2m1 0h3m-29 1h1m5 0h1m5 0h2m7 0h3m1 0h2m1 0h1m-29 1h7m1 0h1m5 0h1m4 0h2m3 0h2"/></svg></div>
 </div>
 
+<hr>
+<footer>
+  <div class="qr"><svg viewBox="0 0 33 33" class="segno"><path class="qrline" stroke="#000" d="M0 0.5h7m1 0h1m3 0h2m2 0h1m1 0h4m1 0h2m1 0h7m-33 1h1m5 0h1m1 0h3m2 0h1m2 0h1m1 0h1m1 0h5m1 0h1m5 0h1m-33 1h1m1 0h3m1 0h1m2 0h1m1 0h2m2 0h2m1 0h1m3 0h2m2 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m1 0h3m3 0h4m1 0h1m4 0h1m1 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m3 0h5m2 0h3m1 0h2m1 0h1m1 0h1m1 0h3m1 0h1m-33 1h1m5 0h1m2 0h1m2 0h2m4 0h4m2 0h1m1 0h1m5 0h1m-33 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-25 1h1m2 0h1m5 0h2m4 0h2m-25 1h1m1 0h2m1 0h3m1 0h1m4 0h1m1 0h3m2 0h1m2 0h1m1 0h1m2 0h1m1 0h2m-33 1h1m7 0h2m2 0h1m3 0h1m1 0h3m2 0h1m2 0h2m1 0h4m-30 1h2m1 0h2m1 0h1m1 0h2m1 0h1m1 0h3m3 0h2m1 0h1m1 0h3m1 0h2m-33 1h2m1 0h1m4 0h1m4 0h2m1 0h1m1 0h1m1 0h1m3 0h4m1 0h1m2 0h1m-32 1h1m1 0h4m3 0h2m3 0h1m1 0h1m1 0h1m2 0h4m1 0h3m1 0h2m-33 1h4m4 0h1m2 0h3m2 0h2m1 0h2m1 0h1m1 0h1m2 0h1m1 0h1m1 0h1m-32 1h1m3 0h1m1 0h1m2 0h1m5 0h3m1 0h1m6 0h5m-31 1h2m1 0h2m3 0h1m2 0h2m3 0h1m4 0h10m-31 1h1m1 0h1m1 0h1m1 0h1m4 0h1m1 0h1m1 0h1m2 0h1m1 0h4m1 0h2m1 0h3m-28 1h2m2 0h2m1 0h1m1 0h4m1 0h2m1 0h1m1 0h3m1 0h1m1 0h2m1 0h2m-32 1h1m2 0h1m1 0h1m1 0h1m2 0h1m3 0h2m1 0h1m5 0h1m1 0h3m1 0h2m-31 1h1m2 0h1m3 0h3m1 0h1m3 0h5m1 0h5m1 0h1m3 0h1m-33 1h3m3 0h2m5 0h9m1 0h3m3 0h2m-31 1h1m1 0h1m6 0h1m2 0h1m1 0h2m2 0h4m1 0h1m2 0h1m5 0h1m-31 1h1m2 0h4m2 0h4m2 0h2m3 0h6m1 0h1m1 0h2m-32 1h1m1 0h1m1 0h1m1 0h4m3 0h1m1 0h1m2 0h2m2 0h2m1 0h2m-28 1h1m2 0h1m2 0h8m1 0h1m1 0h1m2 0h1m2 0h6m3 0h1m-25 1h1m2 0h1m2 0h6m3 0h2m3 0h2m1 0h1m-32 1h7m1 0h3m1 0h2m4 0h2m3 0h2m1 0h1m1 0h1m-29 1h1m5 0h1m1 0h1m1 0h2m1 0h2m1 0h1m1 0h1m2 0h4m3 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m3 0h2m1 0h1m1 0h1m2 0h1m2 0h8m1 0h2m-32 1h1m1 0h3m1 0h1m1 0h1m1 0h4m2 0h1m3 0h2m1 0h1m3 0h1m1 0h2m1 0h1m-33 1h1m1 0h3m1 0h1m1 0h1m1 0h3m1 0h5m3 0h3m1 0h2m1 0h2m-31 1h1m5 0h1m2 0h1m1 0h2m3 0h3m3 0h1m1 0h2m1 0h2m3 0h1m-33 1h7m1 0h3m2 0h1m2 0h2m1 0h3m4 0h1m1 0h1m1 0h1"/></svg></div>
+  <div><b>Build guide and help</b><br><span class="mono">wells.ee/projects/macintosh-mini</span><br>Questions: <span class="mono">github.com/wr/macintosh-mini/issues</span></div>
+  <div class="meta">Macintosh Mini by Wells Workshop<br>Setup guide, October 2026<br>CC BY-SA 4.0</div>
+</footer>
+
 <section class="p2">
   <h2>Everyday use</h2>
   <p><b>Turning it off.</b> Press the right button, wait about 20 seconds, then pull out the floppy.</p>
   <p><b>Restarting.</b> Press the left button. It’s also the fix if Mac OS ever freezes.</p>
   <p><b>Brightness.</b> Turn the dial. The screen also dims after sunset and turns off late at night. Turn the dial to wake it.</p>
-  <p><b>Charging.</b> Plug in a USB-C cable. The Mini runs on its battery or plugged in.</p>
+  <p><b>Charging.</b> Plug in a USB-C cable. The Mini has a very small internal battery, but I recommend using a reliable USB-C charging brick instead.</p>
   <p><b>New Wi-Fi.</b> If you move, or change your Wi-Fi, hold the left button for 10 seconds and do step 2 again.</p>
   <p><b>Keyboard and mouse.</b> On its own, the Mini is a desk clock and screen saver. To use Mac OS, plug a USB keyboard and mouse into the port on the back, if yours has one.</p>
 
   <h2>What’s on it</h2>
-  <p>Mac OS 8.1, set up and ready. It has iCab and MR Browser for the web, and iCab opens a page of sites that still work on old Macs. After Dark’s flying toasters appear after 5 minutes. There’s also Big Maclock, a desk clock, plus StuffIt Expander and Disk Copy for old Mac downloads. It can print to an AppleTalk ImageWriter, like an AirWriter.</p>
+  <p>Mac OS 8.1 from 1998, set up and ready, with:</p>
+  <table class="apps">
+    <tr><td><img src="icons/icab.png" alt=""></td><th>iCab</th><td>Web browser. It opens a page of sites that still work on old Macs.</td></tr>
+    <tr><td><img src="icons/mr-browser.png" alt=""></td><th>MR Browser</th><td>Finds and downloads old Mac software from Macintosh Repository.</td></tr>
+    <tr><td><img src="icons/after-dark.png" alt=""></td><th>After Dark</th><td>Screen saver: flying toasters and friends after 5 minutes.</td></tr>
+    <tr><td><img src="icons/big-maclock.png" alt=""></td><th>Big Maclock</th><td>A big desk clock.</td></tr>
+    <tr><td><img src="icons/stuffit-expander.png" alt=""></td><th>StuffIt Expander</th><td>Opens .sit files and other compressed downloads.</td></tr>
+    <tr><td><img src="icons/disk-copy.png" alt=""></td><th>Disk Copy</th><td>Opens old Mac disk image files.</td></tr>
+    <tr><td><img src="icons/imagewriter.png" alt=""></td><th>ImageWriter</th><td>Prints to an AppleTalk ImageWriter, like an AirWriter.</td></tr>
+  </table>
 
   <div class="small">
     <h2>Going further</h2>
-    <p>You don’t need any of this day to day. Underneath Mac OS, the Mini runs Raspberry Pi OS. You can reach it from a computer on the same Wi-Fi.</p>
-    <p><b>Its name</b> is <span class="mono">macintosh-mini-</span> plus the four letters and numbers from its Wi-Fi network, in lower case (like <span class="mono">macintosh-mini-4e2a</span>). The username is <b>mac</b>, and the password is the one you chose in step 2. If the name doesn’t work, use the address from step 3.</p>
+    <p>None of this is needed day to day. Under Mac OS, the Mini runs Raspberry Pi OS, which you can reach from a computer on the same Wi-Fi.</p>
+    <p><b>Its name</b> is <span class="mono">macintosh-mini-</span> plus the four letters and numbers from its Wi-Fi network, in lower case (like <span class="mono">macintosh-mini-4e2a</span>). The username is <b>mac</b>, and the password is the one you chose in step 2. If the name doesn’t work (some routers block names ending in .local), use the address from step 3, or look for <span class="mono">macintosh-mini</span> in your router’s list of devices.</p>
     <p><b>Log in</b> from Terminal, or PowerShell on Windows:</p>
     <pre>ssh mac@macintosh-mini-4e2a.local</pre>
     <p><b>Copy files</b> with an app like Cyberduck or FileZilla. Choose SFTP (not FTP), and use the same name, username and password.</p>
     <p><b>Use a different disk image</b> by copying it into the home folder and deleting the old one, then pressing the left button. Disks with System 7.5 to Mac OS 8.1 work (.hda, .dsk, .img or .hfv). The original is at <span class="mono">archive.org/details/macos-8.1-basilisk-ii</span>.</p>
     <p><b>Get updates</b> by logging in and running:</p>
     <pre>curl -fsSL https://raw.githubusercontent.com/wr/macintosh-mini/main/setup.sh | bash</pre>
-    <p><b>Can’t find it by name?</b> Some routers block names ending in .local. Use its address, or look for <span class="mono">macintosh-mini</span> in your router’s list of devices.</p>
     <p><b>A soft hum on battery</b> is normal for this board, and quieter with the brightness turned down.</p>
   </div>
 
-  <hr>
-  <footer>
-    <div class="qr"><svg viewBox="0 0 33 33" class="segno"><path class="qrline" stroke="#000" d="M0 0.5h7m1 0h1m3 0h2m2 0h1m1 0h4m1 0h2m1 0h7m-33 1h1m5 0h1m1 0h3m2 0h1m2 0h1m1 0h1m1 0h5m1 0h1m5 0h1m-33 1h1m1 0h3m1 0h1m2 0h1m1 0h2m2 0h2m1 0h1m3 0h2m2 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m1 0h3m3 0h4m1 0h1m4 0h1m1 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m3 0h5m2 0h3m1 0h2m1 0h1m1 0h1m1 0h3m1 0h1m-33 1h1m5 0h1m2 0h1m2 0h2m4 0h4m2 0h1m1 0h1m5 0h1m-33 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-25 1h1m2 0h1m5 0h2m4 0h2m-25 1h1m1 0h2m1 0h3m1 0h1m4 0h1m1 0h3m2 0h1m2 0h1m1 0h1m2 0h1m1 0h2m-33 1h1m7 0h2m2 0h1m3 0h1m1 0h3m2 0h1m2 0h2m1 0h4m-30 1h2m1 0h2m1 0h1m1 0h2m1 0h1m1 0h3m3 0h2m1 0h1m1 0h3m1 0h2m-33 1h2m1 0h1m4 0h1m4 0h2m1 0h1m1 0h1m1 0h1m3 0h4m1 0h1m2 0h1m-32 1h1m1 0h4m3 0h2m3 0h1m1 0h1m1 0h1m2 0h4m1 0h3m1 0h2m-33 1h4m4 0h1m2 0h3m2 0h2m1 0h2m1 0h1m1 0h1m2 0h1m1 0h1m1 0h1m-32 1h1m3 0h1m1 0h1m2 0h1m5 0h3m1 0h1m6 0h5m-31 1h2m1 0h2m3 0h1m2 0h2m3 0h1m4 0h10m-31 1h1m1 0h1m1 0h1m1 0h1m4 0h1m1 0h1m1 0h1m2 0h1m1 0h4m1 0h2m1 0h3m-28 1h2m2 0h2m1 0h1m1 0h4m1 0h2m1 0h1m1 0h3m1 0h1m1 0h2m1 0h2m-32 1h1m2 0h1m1 0h1m1 0h1m2 0h1m3 0h2m1 0h1m5 0h1m1 0h3m1 0h2m-31 1h1m2 0h1m3 0h3m1 0h1m3 0h5m1 0h5m1 0h1m3 0h1m-33 1h3m3 0h2m5 0h9m1 0h3m3 0h2m-31 1h1m1 0h1m6 0h1m2 0h1m1 0h2m2 0h4m1 0h1m2 0h1m5 0h1m-31 1h1m2 0h4m2 0h4m2 0h2m3 0h6m1 0h1m1 0h2m-32 1h1m1 0h1m1 0h1m1 0h4m3 0h1m1 0h1m2 0h2m2 0h2m1 0h2m-28 1h1m2 0h1m2 0h8m1 0h1m1 0h1m2 0h1m2 0h6m3 0h1m-25 1h1m2 0h1m2 0h6m3 0h2m3 0h2m1 0h1m-32 1h7m1 0h3m1 0h2m4 0h2m3 0h2m1 0h1m1 0h1m-29 1h1m5 0h1m1 0h1m1 0h2m1 0h2m1 0h1m1 0h1m2 0h4m3 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m3 0h2m1 0h1m1 0h1m2 0h1m2 0h8m1 0h2m-32 1h1m1 0h3m1 0h1m1 0h1m1 0h4m2 0h1m3 0h2m1 0h1m3 0h1m1 0h2m1 0h1m-33 1h1m1 0h3m1 0h1m1 0h1m1 0h3m1 0h5m3 0h3m1 0h2m1 0h2m-31 1h1m5 0h1m2 0h1m1 0h2m3 0h3m3 0h1m1 0h2m1 0h2m3 0h1m-33 1h7m1 0h3m2 0h1m2 0h2m1 0h3m4 0h1m1 0h1m1 0h1"/></svg></div>
-    <div><b>Build guide and help</b><br><span class="mono">wells.ee/projects/macintosh-mini</span><br>Questions: <span class="mono">github.com/wr/macintosh-mini/issues</span></div>
-    <div class="meta">Macintosh Mini by Wells Workshop<br>Setup guide, October 2026<br>CC BY-SA 4.0</div>
-  </footer>
 </section>
 
 </body>
