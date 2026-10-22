@@ -19,7 +19,7 @@ The router base's round foot slides inside the jig's walls. Pushing it against e
 
 ## Cutting the port
 
-1. Screw the long stop under the two holes that run up and down, and the short stop under the two side by side near the top. The screws go in from the top and cut their own thread. Drive them until the heads sit just below the floor, so the router base glides over them. The stops only fit one way round.
+1. Screw the long stop under the two holes that run up and down, and the short stop under the two side by side near the top. Each stop goes on with the end that was on the print bed against the jig's underside, and its angled edge facing the middle of the jig, where the clock will be. Its holes sit nearer its outer side, so it only lines up that way round. The screws go in from the top and cut their own thread. Drive them until the heads sit just below the floor, so the router base glides over them.
 2. Take the back shell off the clock and lay it face down, with the back facing up.
 3. Set the jig on the back. The long stop goes against the clock's side nearest the ports, and the short stop goes into the hand-hold on top. Push the jig into the corner until both stops touch.
 4. Set the bit to stick out about 6mm below the router base's foot. That's enough to go through the jig's 3mm floor and the 2mm shell.
