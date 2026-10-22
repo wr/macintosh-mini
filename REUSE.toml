@@ -17,9 +17,9 @@ path = ["setup.sh", "maclock-build/**", ".github/workflows/**", ".github/scripts
 SPDX-FileCopyrightText = "2026 Wells Riley"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
-# Hardware: the boards and the bezel.
+# Hardware: the boards, the bezel and the USB jig.
 [[annotations]]
-path = ["maclock-pcb/**", "maclock-interposer/**", "maclock-screen-bezel/**"]
+path = ["maclock-pcb/**", "maclock-interposer/**", "maclock-screen-bezel/**", "maclock-usb-jig/**"]
 SPDX-FileCopyrightText = "2026 Wells Riley"
 SPDX-License-Identifier = "CERN-OHL-S-2.0"
 
