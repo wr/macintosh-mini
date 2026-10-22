@@ -11,233 +11,123 @@
   @font-face { font-family: Inter; font-weight: 700; font-display: block; src: url(https://cdn.jsdelivr.net/npm/@fontsource/inter@5.1.0/files/inter-latin-700-normal.woff2) format("woff2"); }
   @font-face { font-family: Inter; font-weight: 800; font-display: block; src: url(https://cdn.jsdelivr.net/npm/@fontsource/inter@5.1.0/files/inter-latin-800-normal.woff2) format("woff2"); }
   @font-face { font-family: "IBM Plex Mono"; font-weight: 500; font-display: block; src: url(https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-mono@5.1.0/files/ibm-plex-mono-latin-500-normal.woff2) format("woff2"); }
-  @font-face { font-family: "IBM Plex Mono"; font-weight: 600; font-display: block; src: url(https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-mono@5.1.0/files/ibm-plex-mono-latin-600-normal.woff2) format("woff2"); }
-  @page { size: letter; margin: 0.5in; }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; background: #fff; color: #111; }
-  body { font: 9.3pt/1.36 Inter, "Helvetica Neue", Arial, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .page { width: 7.5in; height: 10in; position: relative; display: flex; flex-direction: column; break-after: page; overflow: hidden; }
-  .page:last-child { break-after: auto; }
-  .page > * { flex-shrink: 0; }
-  p { margin: 0 0 0.5em; }
-  b, strong { font-weight: 700; }
-  code, .mono { font-family: "IBM Plex Mono", Menlo, monospace; font-weight: 500; font-size: 0.94em; }
-  code { white-space: nowrap; }
-  pre { font-family: "IBM Plex Mono", Menlo, monospace; font-size: 7.9pt; line-height: 1.35; margin: 0.25em 0 0.5em;
-        padding: 5px 7px; border: 1px solid #111; background: #fff; white-space: pre-wrap; }
-  .dither { background: repeating-conic-gradient(#000 0 25%, #fff 0 50%) 0 0 / 2px 2px; }
 
-  /* Header */
-  header { display: flex; align-items: center; gap: 0.2in; padding-bottom: 0.12in; }
-  header .mac { width: 0.62in; flex: none; }
-  header .mac svg { display: block; width: 100%; fill: #111; }
-  header h1 { margin: 0; font-size: 28pt; line-height: 1; font-weight: 800; letter-spacing: -0.02em; }
-  header .sub { font-family: "IBM Plex Mono", monospace; font-weight: 600; font-size: 10.5pt; margin-top: 4px; letter-spacing: 0.02em; }
-  header .lead { margin-left: auto; max-width: 2.9in; font-size: 10pt; line-height: 1.4; text-align: right; }
-  .band { height: 8px; margin-bottom: 0.16in; border-top: 1.5px solid #111; border-bottom: 1.5px solid #111; }
+  @page { size: letter; margin: 0.6in 0.85in; }
+  html, body { margin: 0; background: #fff; color: #111; }
+  body { font: 10.5pt/1.5 Inter, "Helvetica Neue", Arial, sans-serif; }
+  p { margin: 0 0 0.6em; }
+  b { font-weight: 700; }
+  .mono { white-space: nowrap; }
+  .mono, code { font-family: "IBM Plex Mono", Menlo, monospace; font-weight: 500; font-size: 0.92em; }
+  pre { font: 500 8.8pt/1.4 "IBM Plex Mono", Menlo, monospace; margin: 0.2em 0 0.7em 1.2em; white-space: pre-wrap; }
 
-  /* Classic Mac windows */
-  .win { border: 1.5px solid #111; box-shadow: 3px 3px 0 #111; background: #fff; margin: 0 3px 0.15in 0; }
-  .bar { position: relative; height: 22px; border-bottom: 1.5px solid #111; text-align: center; }
-  .bar::before { content: ""; position: absolute; left: 4px; right: 4px; top: 5px; bottom: 5px;
-                 background: repeating-linear-gradient(to bottom, #111 0 1px, transparent 1px 2.4px); }
-  .bar .close { position: absolute; left: 12px; top: 4.5px; width: 12px; height: 12px; border: 1.5px solid #111; background: #fff; }
-  .bar span { position: relative; top: 2px; background: #fff; padding: 0 9px; font: 600 10pt/18px "IBM Plex Mono", monospace; }
-  .win .in { padding: 11px 14px 10px; }
-  .win h2 { margin: 0 0 6px; font-size: 13pt; font-weight: 800; letter-spacing: -0.01em; }
-  .win h3 { margin: 9px 0 3px; font-size: 9.6pt; font-weight: 700; }
-  .win h3:first-child { margin-top: 0; }
+  header { display: flex; align-items: center; gap: 14px; margin-bottom: 0.22in; }
+  header svg { width: 0.42in; display: block; fill: #111; }
+  h1 { margin: 0; font-size: 24pt; line-height: 1.05; font-weight: 800; letter-spacing: -0.02em; }
+  header .sub { font-size: 11pt; margin-top: 2px; }
+  .lead { font-size: 11.5pt; line-height: 1.5; margin-bottom: 0.12in; }
 
-  /* Before you start */
-  .need { display: grid; grid-template-columns: 1fr 1.5fr; gap: 16px; }
-  .need .left { display: grid; gap: 7px; align-content: start; }
-  .need .left > div, .need .rom > div:first-child { padding-left: 10px; border-left: 3px solid #111; }
-  .need .rom { display: grid; grid-template-columns: 1fr 0.72in; gap: 12px; align-items: center; }
-  .need .t { display: block; }
+  h2 { font-size: 13pt; font-weight: 800; margin: 0.24in 0 0.06in; letter-spacing: -0.01em; }
+  h2 .n { display: inline-block; width: 1.4em; }
+  .step .body { margin-left: 18pt; display: grid; grid-template-columns: 1fr 2.15in; gap: 0.3in; align-items: start; }
+  .step .body.one { display: block; }
+  .shot { margin-top: 0.04in; }
+  .shot img { display: block; width: 100%; }
+  .shot .cap { font-size: 8pt; text-align: center; margin-top: 3px; }
+  .aside { font-size: 9.5pt; }
 
-  /* Steps */
-  .step { display: grid; grid-template-columns: 2.3in 1fr; gap: 16px; align-items: start; }
-  .shot img { display: block; width: 100%; border: 1px solid #111; }
-  .shot .cap { font-size: 7.6pt; margin-top: 3px; text-align: center; }
-  ol.n { list-style: none; counter-reset: n; margin: 0; padding: 0; }
-  ol.n > li { counter-increment: n; position: relative; padding-left: 26px; margin-bottom: 5px; }
-  ol.n > li::before { content: counter(n); position: absolute; left: 0; top: -1px; width: 18px; height: 18px; border-radius: 50%;
-                      background: #111; color: #fff; font: 700 8.6pt/18px Inter, sans-serif; text-align: center; }
-  .note { font-size: 8.6pt; padding: 5px 8px; border: 1px dashed #111; margin-top: 4px; }
-  .rombox { display: grid; grid-template-columns: 1fr 0.66in; gap: 8px; align-items: center; margin-top: 10px; padding: 7px 8px; border: 1.5px solid #111; font-size: 8.6pt; line-height: 1.32; }
-  .rombox p { margin: 0; }
+  .rom { display: flex; gap: 0.3in; align-items: center; }
+  .rom .qr { width: 0.8in; flex: none; }
   .qr svg { display: block; width: 100%; }
   .qr path { stroke: #111; }
 
-  /* Fill-in card */
-  .card { display: grid; grid-template-columns: auto 1fr auto 1fr; gap: 9px 12px; align-items: end; padding: 10px 14px 12px; }
-  .card .k { font-weight: 700; white-space: nowrap; }
-  .card .v { border-bottom: 1px solid #111; min-height: 18px; font-family: "IBM Plex Mono", monospace; font-size: 9.5pt; padding-left: 2px; }
-  .card .hint { grid-column: 1 / -1; font-size: 8pt; margin-top: -2px; }
-  .card .v .pre { color: #111; }
-
-  /* Page 2 */
-  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 0.22in; flex: 1; align-items: start; }
-  dl.ctl { margin: 0; display: grid; grid-template-columns: 0.95in 1fr; gap: 5px 10px; }
-  dl.ctl dt { font-weight: 700; }
-  dl.ctl dd { margin: 0; }
-  ul.tight { margin: 0; padding-left: 15px; }
-  ul.tight li { margin-bottom: 4px; }
-  .fix p { margin-bottom: 5px; }
-
-  footer { display: flex; align-items: center; gap: 12px; border-top: 1.5px solid #111; padding-top: 9px; margin-top: auto; font-size: 8.6pt; }
-  footer .qr { width: 0.62in; flex: none; }
-  footer .meta { margin-left: auto; text-align: right; font-size: 7.4pt; line-height: 1.4; }
+  .p2 { break-before: page; }
+  .p2 > h2:first-child { margin-top: 0; }
+  .p2 p { margin-bottom: 0.45em; }
+  .small { font-size: 9.5pt; }
+  hr { border: 0; border-top: 1px solid #111; margin: 0.2in 0 0.14in; }
+  footer { display: flex; gap: 0.25in; align-items: center; font-size: 9pt; }
+  footer .qr { width: 0.7in; flex: none; }
+  footer .meta { margin-left: auto; text-align: right; font-size: 8pt; }
 </style>
 </head>
 <body>
 
-<!-- Page 1: setting it up -->
-<section class="page">
-  <header>
-    <div class="mac"><svg viewBox="0 0 22 23" shape-rendering="crispEdges"><rect x="1" y="0" width="20" height="1"/><rect x="0" y="1" width="1" height="1"/><rect x="21" y="1" width="1" height="1"/><rect x="0" y="2" width="1" height="1"/><rect x="3" y="2" width="16" height="1"/><rect x="21" y="2" width="1" height="1"/><rect x="0" y="3" width="1" height="1"/><rect x="3" y="3" width="1" height="1"/><rect x="18" y="3" width="1" height="1"/><rect x="21" y="3" width="1" height="1"/><rect x="0" y="4" width="1" height="1"/><rect x="3" y="4" width="1" height="1"/><rect x="18" y="4" width="1" height="1"/><rect x="21" y="4" width="1" height="1"/><rect x="0" y="5" width="1" height="1"/><rect x="3" y="5" width="1" height="1"/><rect x="8" y="5" width="1" height="1"/><rect x="13" y="5" width="1" height="1"/><rect x="18" y="5" width="1" height="1"/><rect x="21" y="5" width="1" height="1"/><rect x="0" y="6" width="1" height="1"/><rect x="3" y="6" width="1" height="1"/><rect x="8" y="6" width="1" height="1"/><rect x="13" y="6" width="1" height="1"/><rect x="18" y="6" width="1" height="1"/><rect x="21" y="6" width="1" height="1"/><rect x="0" y="7" width="1" height="1"/><rect x="3" y="7" width="1" height="1"/><rect x="14" y="7" width="1" height="1"/><rect x="18" y="7" width="1" height="1"/><rect x="21" y="7" width="1" height="1"/><rect x="0" y="8" width="1" height="1"/><rect x="3" y="8" width="1" height="1"/><rect x="14" y="8" width="1" height="1"/><rect x="18" y="8" width="1" height="1"/><rect x="21" y="8" width="1" height="1"/><rect x="0" y="9" width="1" height="1"/><rect x="3" y="9" width="1" height="1"/><rect x="13" y="9" width="2" height="1"/><rect x="18" y="9" width="1" height="1"/><rect x="21" y="9" width="1" height="1"/><rect x="0" y="10" width="1" height="1"/><rect x="3" y="10" width="1" height="1"/><rect x="18" y="10" width="1" height="1"/><rect x="21" y="10" width="1" height="1"/><rect x="0" y="11" width="1" height="1"/><rect x="3" y="11" width="1" height="1"/><rect x="8" y="11" width="1" height="1"/><rect x="14" y="11" width="1" height="1"/><rect x="18" y="11" width="1" height="1"/><rect x="21" y="11" width="1" height="1"/><rect x="0" y="12" width="1" height="1"/><rect x="3" y="12" width="1" height="1"/><rect x="9" y="12" width="5" height="1"/><rect x="18" y="12" width="1" height="1"/><rect x="21" y="12" width="1" height="1"/><rect x="0" y="13" width="1" height="1"/><rect x="3" y="13" width="1" height="1"/><rect x="18" y="13" width="1" height="1"/><rect x="21" y="13" width="1" height="1"/><rect x="0" y="14" width="1" height="1"/><rect x="3" y="14" width="16" height="1"/><rect x="21" y="14" width="1" height="1"/><rect x="0" y="15" width="1" height="1"/><rect x="21" y="15" width="1" height="1"/><rect x="0" y="16" width="1" height="1"/><rect x="21" y="16" width="1" height="1"/><rect x="0" y="17" width="1" height="1"/><rect x="4" y="17" width="2" height="1"/><rect x="11" y="17" width="7" height="1"/><rect x="21" y="17" width="1" height="1"/><rect x="0" y="18" width="1" height="1"/><rect x="21" y="18" width="1" height="1"/><rect x="0" y="19" width="1" height="1"/><rect x="21" y="19" width="1" height="1"/><rect x="1" y="20" width="20" height="1"/><rect x="1" y="21" width="1" height="1"/><rect x="20" y="21" width="1" height="1"/><rect x="1" y="22" width="20" height="1"/></svg></div>
+<header>
+  <svg viewBox="0 0 22 23" shape-rendering="crispEdges"><rect x="1" y="0" width="20" height="1"/><rect x="0" y="1" width="1" height="1"/><rect x="21" y="1" width="1" height="1"/><rect x="0" y="2" width="1" height="1"/><rect x="3" y="2" width="16" height="1"/><rect x="21" y="2" width="1" height="1"/><rect x="0" y="3" width="1" height="1"/><rect x="3" y="3" width="1" height="1"/><rect x="18" y="3" width="1" height="1"/><rect x="21" y="3" width="1" height="1"/><rect x="0" y="4" width="1" height="1"/><rect x="3" y="4" width="1" height="1"/><rect x="18" y="4" width="1" height="1"/><rect x="21" y="4" width="1" height="1"/><rect x="0" y="5" width="1" height="1"/><rect x="3" y="5" width="1" height="1"/><rect x="8" y="5" width="1" height="1"/><rect x="13" y="5" width="1" height="1"/><rect x="18" y="5" width="1" height="1"/><rect x="21" y="5" width="1" height="1"/><rect x="0" y="6" width="1" height="1"/><rect x="3" y="6" width="1" height="1"/><rect x="8" y="6" width="1" height="1"/><rect x="13" y="6" width="1" height="1"/><rect x="18" y="6" width="1" height="1"/><rect x="21" y="6" width="1" height="1"/><rect x="0" y="7" width="1" height="1"/><rect x="3" y="7" width="1" height="1"/><rect x="14" y="7" width="1" height="1"/><rect x="18" y="7" width="1" height="1"/><rect x="21" y="7" width="1" height="1"/><rect x="0" y="8" width="1" height="1"/><rect x="3" y="8" width="1" height="1"/><rect x="14" y="8" width="1" height="1"/><rect x="18" y="8" width="1" height="1"/><rect x="21" y="8" width="1" height="1"/><rect x="0" y="9" width="1" height="1"/><rect x="3" y="9" width="1" height="1"/><rect x="13" y="9" width="2" height="1"/><rect x="18" y="9" width="1" height="1"/><rect x="21" y="9" width="1" height="1"/><rect x="0" y="10" width="1" height="1"/><rect x="3" y="10" width="1" height="1"/><rect x="18" y="10" width="1" height="1"/><rect x="21" y="10" width="1" height="1"/><rect x="0" y="11" width="1" height="1"/><rect x="3" y="11" width="1" height="1"/><rect x="8" y="11" width="1" height="1"/><rect x="14" y="11" width="1" height="1"/><rect x="18" y="11" width="1" height="1"/><rect x="21" y="11" width="1" height="1"/><rect x="0" y="12" width="1" height="1"/><rect x="3" y="12" width="1" height="1"/><rect x="9" y="12" width="5" height="1"/><rect x="18" y="12" width="1" height="1"/><rect x="21" y="12" width="1" height="1"/><rect x="0" y="13" width="1" height="1"/><rect x="3" y="13" width="1" height="1"/><rect x="18" y="13" width="1" height="1"/><rect x="21" y="13" width="1" height="1"/><rect x="0" y="14" width="1" height="1"/><rect x="3" y="14" width="16" height="1"/><rect x="21" y="14" width="1" height="1"/><rect x="0" y="15" width="1" height="1"/><rect x="21" y="15" width="1" height="1"/><rect x="0" y="16" width="1" height="1"/><rect x="21" y="16" width="1" height="1"/><rect x="0" y="17" width="1" height="1"/><rect x="4" y="17" width="2" height="1"/><rect x="11" y="17" width="7" height="1"/><rect x="21" y="17" width="1" height="1"/><rect x="0" y="18" width="1" height="1"/><rect x="21" y="18" width="1" height="1"/><rect x="0" y="19" width="1" height="1"/><rect x="21" y="19" width="1" height="1"/><rect x="1" y="20" width="20" height="1"/><rect x="1" y="21" width="1" height="1"/><rect x="20" y="21" width="1" height="1"/><rect x="1" y="22" width="20" height="1"/></svg>
+  <div>
+    <h1>Macintosh Mini</h1>
+    <div class="sub">Setup guide</div>
+  </div>
+</header>
+
+<p class="lead">Your Mini is built and ready. Setting it up takes about ten minutes. You’ll need your phone, your Wi-Fi password and a Mac ROM file (more on that below).</p>
+
+<section class="step">
+  <h2><span class="n">1</span>Turn it on</h2>
+  <div class="body one"><p>Push the floppy disk into its slot. After a moment, the screen shows <b>Set up Wi-Fi</b>.</p></div>
+</section>
+
+<section class="step">
+  <h2><span class="n">2</span>Connect it to Wi-Fi</h2>
+  <div class="body">
     <div>
-      <h1>Macintosh Mini</h1>
-      <div class="sub">Setup guide</div>
+      <p>On your phone, join the Wi-Fi network shown on the screen: <b>Macintosh Mini</b> followed by four letters and numbers. You can also scan the code with your phone’s camera.</p>
+      <p>A setup page opens. Choose your home Wi-Fi, type its password, and pick a password for the Mini. You’ll only need that one for advanced things later. Then tap <b>Connect</b>.</p>
+      <p class="aside">If the page doesn’t open, go to <span class="mono">10.42.0.1</span> in your phone’s browser. If the screen says <b>Couldn’t join</b>, check your Wi-Fi password and try again. The Mini needs 2.4 GHz Wi-Fi, which almost every home router has.</p>
     </div>
-    <div class="lead">Your Mini is built and ready. Setting it up takes about ten minutes, using your phone.</div>
-  </header>
-  <div class="band dither"></div>
-
-  <div class="win">
-    <div class="bar"><i class="close"></i><span>Before you start</span></div>
-    <div class="in need">
-      <div class="left">
-        <div><b class="t">Your Wi-Fi name and password</b>The Mini needs 2.4 GHz Wi-Fi, which almost every home router has.</div>
-        <div><b class="t">Your phone</b>And a computer, if your ROM is on it.</div>
-      </div>
-      <div class="rom">
-        <div><b class="t">A Mac ROM file</b>Every Mac needs Apple’s startup code, its ROM. It isn’t included, because Apple still owns it. Redundant Robot’s emulator guide explains which one to use and where to find it. The <b>Performa ROM</b> works best.<br><span class="mono">redundantrobot.com/sheepshaver</span></div>
-        <div class="qr"><svg viewBox="0 0 29 29" class="segno"><path class="qrline" stroke="#000" d="M0 0.5h7m1 0h3m1 0h2m4 0h1m3 0h7m-29 1h1m5 0h1m1 0h2m4 0h1m2 0h1m1 0h2m1 0h1m5 0h1m-29 1h1m1 0h3m1 0h1m1 0h1m1 0h1m2 0h4m5 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m2 0h1m3 0h1m3 0h1m4 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m1 0h2m1 0h4m1 0h4m2 0h1m1 0h3m1 0h1m-29 1h1m5 0h1m2 0h3m6 0h1m3 0h1m5 0h1m-29 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-19 1h1m2 0h2m1 0h1m1 0h2m-20 1h1m2 0h7m1 0h2m1 0h4m1 0h3m2 0h1m1 0h3m-28 1h1m2 0h2m1 0h1m2 0h1m1 0h1m1 0h2m1 0h3m1 0h1m1 0h2m1 0h2m-26 1h2m1 0h2m1 0h1m3 0h1m1 0h3m3 0h2m1 0h1m2 0h1m-24 1h1m3 0h1m2 0h2m2 0h1m2 0h1m1 0h2m4 0h1m2 0h1m-25 1h1m1 0h1m1 0h1m6 0h2m3 0h1m1 0h2m4 0h1m-29 1h2m5 0h2m4 0h1m1 0h2m5 0h1m1 0h5m-29 1h1m1 0h7m2 0h2m1 0h3m2 0h2m1 0h2m2 0h1m1 0h1m-29 1h2m1 0h1m7 0h1m2 0h1m1 0h1m1 0h1m1 0h5m1 0h1m1 0h1m-29 1h3m3 0h1m1 0h3m1 0h2m4 0h1m1 0h1m4 0h1m-26 1h2m2 0h1m2 0h2m1 0h1m1 0h1m2 0h1m2 0h3m3 0h1m1 0h2m-28 1h3m2 0h9m1 0h1m3 0h2m1 0h1m2 0h1m2 0h1m-29 1h5m3 0h1m1 0h2m1 0h1m1 0h1m2 0h2m3 0h4m-27 1h3m1 0h5m1 0h1m1 0h1m1 0h2m1 0h1m1 0h9m-20 1h3m4 0h1m2 0h1m1 0h1m3 0h2m-26 1h7m1 0h1m1 0h1m1 0h5m1 0h3m1 0h1m1 0h2m-26 1h1m5 0h1m1 0h2m5 0h1m1 0h1m1 0h2m3 0h1m-25 1h1m1 0h3m1 0h1m1 0h1m1 0h5m1 0h1m2 0h7m1 0h1m-28 1h1m1 0h3m1 0h1m1 0h4m1 0h3m1 0h3m1 0h1m1 0h1m4 0h1m-29 1h1m1 0h3m1 0h1m4 0h1m1 0h1m1 0h1m1 0h1m2 0h1m2 0h2m1 0h3m-29 1h1m5 0h1m5 0h2m7 0h3m1 0h2m1 0h1m-29 1h7m1 0h1m5 0h1m4 0h2m3 0h2"/></svg></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="win">
-    <div class="bar"><i class="close"></i><span>Step 1 of 2</span></div>
-    <div class="in step">
-      <div class="shot"><img src="screen-wifi.png" alt="The Mini's Set up Wi-Fi screen"><div class="cap">What the Mini shows</div></div>
-      <div>
-        <h2>Wi-Fi, from your phone</h2>
-        <ol class="n">
-          <li>Push the floppy disk into its slot to turn the Mini on. After a moment it shows <b>Set up Wi-Fi</b>.</li>
-          <li>On your phone, join the Wi-Fi network it names, <b>Macintosh Mini</b> and four letters and numbers, or scan its code with your phone’s camera.</li>
-          <li>A setup page opens by itself. If it doesn’t, open <b class="mono">10.42.0.1</b> in your browser.</li>
-          <li>Choose your Wi-Fi network and type its password.</li>
-          <li>Choose a password for the Mini and type it twice. You’ll only need it for advanced things, like copying files onto it. Write it in the box below.</li>
-          <li>Tap <b>Connect</b>. The Mini joins your Wi-Fi, and your phone goes back to it.</li>
-        </ol>
-        <div class="note">If the Mini says <b>Couldn’t join</b>, check the Wi-Fi password, then join Macintosh Mini again and have another go.</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="win">
-    <div class="bar"><i class="close"></i><span>Step 2 of 2</span></div>
-    <div class="in step">
-      <div class="shot"><img src="screen-rom.png" alt="The Mini's Add a ROM screen"><div class="cap">Your address will be different</div>
-      </div>
-      <div>
-        <h2>Add a ROM</h2>
-        <ol class="n">
-          <li>Scan the code on the Mini’s screen with your phone, or type the address it shows into a browser on a computer on the same Wi-Fi.</li>
-          <li>Upload your ROM file (or the .zip it came in), or paste its download link.</li>
-          <li>The Mini checks it and starts Mac OS. Listen for the chime!</li>
-        </ol>
-        <div class="note">If the Mini comes back to <b>Add a ROM</b>, that ROM didn’t work. Reload the page and try another.</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="win" style="margin-bottom:0">
-    <div class="bar"><i class="close"></i><span>Your Mini</span></div>
-    <div class="card">
-      <div class="k">Name</div><div class="v"><span class="pre">macintosh-mini-</span></div>
-      <div class="k">Username</div><div class="v">mac</div>
-      <div class="k">Address</div><div class="v"></div>
-      <div class="k">Password</div><div class="v"></div>
-      <div class="hint">The name ends in the four letters and numbers from its Wi-Fi network, in lower case. The address is the one on the Add a ROM screen.</div>
-    </div>
+    <div class="shot"><img src="screen-wifi.png" alt="The Mini's Set up Wi-Fi screen"></div>
   </div>
 </section>
 
-<!-- Page 2: using it -->
-<section class="page">
-  <header style="padding-bottom:0.1in">
-    <div class="mac" style="width:0.4in"><svg viewBox="0 0 22 23" shape-rendering="crispEdges"><rect x="1" y="0" width="20" height="1"/><rect x="0" y="1" width="1" height="1"/><rect x="21" y="1" width="1" height="1"/><rect x="0" y="2" width="1" height="1"/><rect x="3" y="2" width="16" height="1"/><rect x="21" y="2" width="1" height="1"/><rect x="0" y="3" width="1" height="1"/><rect x="3" y="3" width="1" height="1"/><rect x="18" y="3" width="1" height="1"/><rect x="21" y="3" width="1" height="1"/><rect x="0" y="4" width="1" height="1"/><rect x="3" y="4" width="1" height="1"/><rect x="18" y="4" width="1" height="1"/><rect x="21" y="4" width="1" height="1"/><rect x="0" y="5" width="1" height="1"/><rect x="3" y="5" width="1" height="1"/><rect x="8" y="5" width="1" height="1"/><rect x="13" y="5" width="1" height="1"/><rect x="18" y="5" width="1" height="1"/><rect x="21" y="5" width="1" height="1"/><rect x="0" y="6" width="1" height="1"/><rect x="3" y="6" width="1" height="1"/><rect x="8" y="6" width="1" height="1"/><rect x="13" y="6" width="1" height="1"/><rect x="18" y="6" width="1" height="1"/><rect x="21" y="6" width="1" height="1"/><rect x="0" y="7" width="1" height="1"/><rect x="3" y="7" width="1" height="1"/><rect x="14" y="7" width="1" height="1"/><rect x="18" y="7" width="1" height="1"/><rect x="21" y="7" width="1" height="1"/><rect x="0" y="8" width="1" height="1"/><rect x="3" y="8" width="1" height="1"/><rect x="14" y="8" width="1" height="1"/><rect x="18" y="8" width="1" height="1"/><rect x="21" y="8" width="1" height="1"/><rect x="0" y="9" width="1" height="1"/><rect x="3" y="9" width="1" height="1"/><rect x="13" y="9" width="2" height="1"/><rect x="18" y="9" width="1" height="1"/><rect x="21" y="9" width="1" height="1"/><rect x="0" y="10" width="1" height="1"/><rect x="3" y="10" width="1" height="1"/><rect x="18" y="10" width="1" height="1"/><rect x="21" y="10" width="1" height="1"/><rect x="0" y="11" width="1" height="1"/><rect x="3" y="11" width="1" height="1"/><rect x="8" y="11" width="1" height="1"/><rect x="14" y="11" width="1" height="1"/><rect x="18" y="11" width="1" height="1"/><rect x="21" y="11" width="1" height="1"/><rect x="0" y="12" width="1" height="1"/><rect x="3" y="12" width="1" height="1"/><rect x="9" y="12" width="5" height="1"/><rect x="18" y="12" width="1" height="1"/><rect x="21" y="12" width="1" height="1"/><rect x="0" y="13" width="1" height="1"/><rect x="3" y="13" width="1" height="1"/><rect x="18" y="13" width="1" height="1"/><rect x="21" y="13" width="1" height="1"/><rect x="0" y="14" width="1" height="1"/><rect x="3" y="14" width="16" height="1"/><rect x="21" y="14" width="1" height="1"/><rect x="0" y="15" width="1" height="1"/><rect x="21" y="15" width="1" height="1"/><rect x="0" y="16" width="1" height="1"/><rect x="21" y="16" width="1" height="1"/><rect x="0" y="17" width="1" height="1"/><rect x="4" y="17" width="2" height="1"/><rect x="11" y="17" width="7" height="1"/><rect x="21" y="17" width="1" height="1"/><rect x="0" y="18" width="1" height="1"/><rect x="21" y="18" width="1" height="1"/><rect x="0" y="19" width="1" height="1"/><rect x="21" y="19" width="1" height="1"/><rect x="1" y="20" width="20" height="1"/><rect x="1" y="21" width="1" height="1"/><rect x="20" y="21" width="1" height="1"/><rect x="1" y="22" width="20" height="1"/></svg></div>
-    <div><h1 style="font-size:19pt">Using your Mini</h1></div>
-  </header>
-  <div class="band dither"></div>
-
-  <div class="cols">
+<section class="step">
+  <h2><span class="n">3</span>Add a ROM</h2>
+  <div class="body">
     <div>
-      <div class="win">
-        <div class="bar"><i class="close"></i><span>Everyday use</span></div>
-        <div class="in">
-          <dl class="ctl">
-            <dt>Floppy disk</dt><dd>Push it in to turn the Mini on. Pull it out to turn it off, once it has shut down.</dd>
-            <dt>Right button</dt><dd>Shuts down. Give it about 20 seconds, then pull out the floppy.</dd>
-            <dt>Left button</dt><dd>Press to restart Mac OS. Hold for 10 seconds to join a different Wi-Fi network (step 1 again; press it once more to cancel).</dd>
-            <dt>Dial</dt><dd>Brightness.</dd>
-            <dt>USB-C</dt><dd>Charges the battery. The Mini runs on battery or plugged in.</dd>
-          </dl>
-          <h3>At night</h3>
-          <p>The screen dims after sunset and turns off late at night. Turn the dial to wake it.</p>
-          <h3>Keyboard and mouse</h3>
-          <p style="margin:0">The Mini works as a desk clock and screen saver on its own. To use Mac OS, plug a USB keyboard and mouse into the port on the back, if yours has one. A small USB hub lets you use both.</p>
-        </div>
-      </div>
-
-      <div class="win">
-        <div class="bar"><i class="close"></i><span>What’s on it</span></div>
-        <div class="in">
-          <p>Mac OS 8.1 from 1998, set up and ready:</p>
-          <ul class="tight">
-            <li><b>iCab</b> and <b>MR Browser</b> for the web. Most of today’s sites are too much for a ’90s Mac, so iCab opens a page of ones that work: FrogFind, 68k.news and Macintosh Repository.</li>
-            <li><b>After Dark</b>: flying toasters and friends after 5 minutes.</li>
-            <li><b>Big Maclock</b>: a big desk clock.</li>
-            <li><b>StuffIt Expander</b> and <b>Disk Copy</b>, to open old Mac downloads.</li>
-            <li>Printing to an AppleTalk ImageWriter, like an AirWriter.</li>
-          </ul>
-        </div>
-      </div>
+      <p>Once it’s on your Wi-Fi, the screen shows a code and an address. Scan the code with your phone, or type the address into a browser on your computer.</p>
+      <p>Upload your ROM file (a .zip is fine), or paste its download link. The Mini checks it and starts Mac OS. Listen for the chime!</p>
+      <p class="aside">If it comes back to this screen, that ROM didn’t work. Reload the page and try another.</p>
     </div>
+    <div class="shot"><img src="screen-rom.png" alt="The Mini's Add a ROM screen"><div class="cap">Your address will be different.</div></div>
+  </div>
+</section>
 
-    <div>
-      <div class="win">
-        <div class="bar"><i class="close"></i><span>From a computer</span></div>
-        <div class="in">
-          <p>Under Mac OS, the Mini runs Raspberry Pi OS. You can reach it from a computer on the same Wi-Fi with the name, username and password from page 1. If the name doesn’t work, use the address.</p>
-          <h3>Log in (SSH)</h3>
-          <p>In Terminal (PowerShell on Windows), type this with your Mini’s name:</p>
-          <pre>ssh mac@macintosh-mini-xxxx.local</pre>
-          <h3>Copy files (SFTP)</h3>
-          <p>Use an app like Cyberduck, FileZilla or Transmit. Choose <b>SFTP</b>, not FTP, then enter the Mini’s name, the username <b>mac</b> and your password. Your files are in its home folder.</p>
-          <h3>Use a different disk image</h3>
-          <p>Copy it into the home folder, then delete the old one. (Copy the old one to your computer first if there’s anything on it you want to keep.) Press the left button and the Mini starts from the new disk. It takes .hda, .dsk, .img and .hfv disks with System 7.5 to Mac OS 8.1. The original is at<br><span class="mono">archive.org/details/macos-8.1-basilisk-ii</span></p>
-          <h3>Get updates</h3>
-          <p style="margin-bottom:2px">Log in and run the installer. It keeps your Wi-Fi, ROM and disk:</p>
-          <pre style="margin-bottom:0">curl -fsSL https://raw.githubusercontent.com/<wbr>wr/macintosh-mini/main/setup.sh | bash</pre>
-        </div>
-      </div>
+<h2>About the ROM</h2>
+<div class="rom">
+  <div>
+    <p>Every Mac needs a ROM: Apple’s built-in startup code. It isn’t included, because Apple still owns it.</p>
+    <p style="margin:0">Redundant Robot’s emulator guide explains which one to use and where to find it. The <b>Performa ROM</b> works best. <span class="mono">redundantrobot.com/sheepshaver</span></p>
+  </div>
+  <div class="qr"><svg viewBox="0 0 29 29" class="segno"><path class="qrline" stroke="#000" d="M0 0.5h7m1 0h3m1 0h2m4 0h1m3 0h7m-29 1h1m5 0h1m1 0h2m4 0h1m2 0h1m1 0h2m1 0h1m5 0h1m-29 1h1m1 0h3m1 0h1m1 0h1m1 0h1m2 0h4m5 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m2 0h1m3 0h1m3 0h1m4 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m1 0h2m1 0h4m1 0h4m2 0h1m1 0h3m1 0h1m-29 1h1m5 0h1m2 0h3m6 0h1m3 0h1m5 0h1m-29 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-19 1h1m2 0h2m1 0h1m1 0h2m-20 1h1m2 0h7m1 0h2m1 0h4m1 0h3m2 0h1m1 0h3m-28 1h1m2 0h2m1 0h1m2 0h1m1 0h1m1 0h2m1 0h3m1 0h1m1 0h2m1 0h2m-26 1h2m1 0h2m1 0h1m3 0h1m1 0h3m3 0h2m1 0h1m2 0h1m-24 1h1m3 0h1m2 0h2m2 0h1m2 0h1m1 0h2m4 0h1m2 0h1m-25 1h1m1 0h1m1 0h1m6 0h2m3 0h1m1 0h2m4 0h1m-29 1h2m5 0h2m4 0h1m1 0h2m5 0h1m1 0h5m-29 1h1m1 0h7m2 0h2m1 0h3m2 0h2m1 0h2m2 0h1m1 0h1m-29 1h2m1 0h1m7 0h1m2 0h1m1 0h1m1 0h1m1 0h5m1 0h1m1 0h1m-29 1h3m3 0h1m1 0h3m1 0h2m4 0h1m1 0h1m4 0h1m-26 1h2m2 0h1m2 0h2m1 0h1m1 0h1m2 0h1m2 0h3m3 0h1m1 0h2m-28 1h3m2 0h9m1 0h1m3 0h2m1 0h1m2 0h1m2 0h1m-29 1h5m3 0h1m1 0h2m1 0h1m1 0h1m2 0h2m3 0h4m-27 1h3m1 0h5m1 0h1m1 0h1m1 0h2m1 0h1m1 0h9m-20 1h3m4 0h1m2 0h1m1 0h1m3 0h2m-26 1h7m1 0h1m1 0h1m1 0h5m1 0h3m1 0h1m1 0h2m-26 1h1m5 0h1m1 0h2m5 0h1m1 0h1m1 0h2m3 0h1m-25 1h1m1 0h3m1 0h1m1 0h1m1 0h5m1 0h1m2 0h7m1 0h1m-28 1h1m1 0h3m1 0h1m1 0h4m1 0h3m1 0h3m1 0h1m1 0h1m4 0h1m-29 1h1m1 0h3m1 0h1m4 0h1m1 0h1m1 0h1m1 0h1m2 0h1m2 0h2m1 0h3m-29 1h1m5 0h1m5 0h2m7 0h3m1 0h2m1 0h1m-29 1h7m1 0h1m5 0h1m4 0h2m3 0h2"/></svg></div>
+</div>
 
-      <div class="win">
-        <div class="bar"><i class="close"></i><span>Something not right?</span></div>
-        <div class="in fix">
-          <p><b>Moved, or got new Wi-Fi?</b> Hold the left button for 10 seconds and do step 1 again. The Mini remembers your old network too.</p>
-          <p><b>Mac OS froze?</b> Press the left button to restart it.</p>
-          <p><b>Can’t find the Mini by name?</b> Some routers block names ending in .local. Use its address, or look for <span class="mono">macintosh-mini</span> in your router’s list of devices.</p>
-          <p style="margin:0"><b>A soft hum on battery?</b> That’s normal for this board, and quieter with the brightness turned down.</p>
-        </div>
-      </div>
-    </div>
+<section class="p2">
+  <h2>Everyday use</h2>
+  <p><b>Turning it off.</b> Press the right button, wait about 20 seconds, then pull out the floppy.</p>
+  <p><b>Restarting.</b> Press the left button. It’s also the fix if Mac OS ever freezes.</p>
+  <p><b>Brightness.</b> Turn the dial. The screen also dims after sunset and turns off late at night. Turn the dial to wake it.</p>
+  <p><b>Charging.</b> Plug in a USB-C cable. The Mini runs on its battery or plugged in.</p>
+  <p><b>New Wi-Fi.</b> If you move, or change your Wi-Fi, hold the left button for 10 seconds and do step 2 again.</p>
+  <p><b>Keyboard and mouse.</b> On its own, the Mini is a desk clock and screen saver. To use Mac OS, plug a USB keyboard and mouse into the port on the back, if yours has one.</p>
+
+  <h2>What’s on it</h2>
+  <p>Mac OS 8.1, set up and ready. It has iCab and MR Browser for the web, and iCab opens a page of sites that still work on old Macs. After Dark’s flying toasters appear after 5 minutes. There’s also Big Maclock, a desk clock, plus StuffIt Expander and Disk Copy for old Mac downloads. It can print to an AppleTalk ImageWriter, like an AirWriter.</p>
+
+  <div class="small">
+    <h2>Going further</h2>
+    <p>You don’t need any of this day to day. Underneath Mac OS, the Mini runs Raspberry Pi OS. You can reach it from a computer on the same Wi-Fi.</p>
+    <p><b>Its name</b> is <span class="mono">macintosh-mini-</span> plus the four letters and numbers from its Wi-Fi network, in lower case (like <span class="mono">macintosh-mini-4e2a</span>). The username is <b>mac</b>, and the password is the one you chose in step 2. If the name doesn’t work, use the address from step 3.</p>
+    <p><b>Log in</b> from Terminal, or PowerShell on Windows:</p>
+    <pre>ssh mac@macintosh-mini-4e2a.local</pre>
+    <p><b>Copy files</b> with an app like Cyberduck or FileZilla. Choose SFTP (not FTP), and use the same name, username and password.</p>
+    <p><b>Use a different disk image</b> by copying it into the home folder and deleting the old one, then pressing the left button. Disks with System 7.5 to Mac OS 8.1 work (.hda, .dsk, .img or .hfv). The original is at <span class="mono">archive.org/details/macos-8.1-basilisk-ii</span>.</p>
+    <p><b>Get updates</b> by logging in and running:</p>
+    <pre>curl -fsSL https://raw.githubusercontent.com/wr/macintosh-mini/main/setup.sh | bash</pre>
+    <p><b>Can’t find it by name?</b> Some routers block names ending in .local. Use its address, or look for <span class="mono">macintosh-mini</span> in your router’s list of devices.</p>
+    <p><b>A soft hum on battery</b> is normal for this board, and quieter with the brightness turned down.</p>
   </div>
 
+  <hr>
   <footer>
     <div class="qr"><svg viewBox="0 0 33 33" class="segno"><path class="qrline" stroke="#000" d="M0 0.5h7m1 0h1m3 0h2m2 0h1m1 0h4m1 0h2m1 0h7m-33 1h1m5 0h1m1 0h3m2 0h1m2 0h1m1 0h1m1 0h5m1 0h1m5 0h1m-33 1h1m1 0h3m1 0h1m2 0h1m1 0h2m2 0h2m1 0h1m3 0h2m2 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m1 0h3m3 0h4m1 0h1m4 0h1m1 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m3 0h5m2 0h3m1 0h2m1 0h1m1 0h1m1 0h3m1 0h1m-33 1h1m5 0h1m2 0h1m2 0h2m4 0h4m2 0h1m1 0h1m5 0h1m-33 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-25 1h1m2 0h1m5 0h2m4 0h2m-25 1h1m1 0h2m1 0h3m1 0h1m4 0h1m1 0h3m2 0h1m2 0h1m1 0h1m2 0h1m1 0h2m-33 1h1m7 0h2m2 0h1m3 0h1m1 0h3m2 0h1m2 0h2m1 0h4m-30 1h2m1 0h2m1 0h1m1 0h2m1 0h1m1 0h3m3 0h2m1 0h1m1 0h3m1 0h2m-33 1h2m1 0h1m4 0h1m4 0h2m1 0h1m1 0h1m1 0h1m3 0h4m1 0h1m2 0h1m-32 1h1m1 0h4m3 0h2m3 0h1m1 0h1m1 0h1m2 0h4m1 0h3m1 0h2m-33 1h4m4 0h1m2 0h3m2 0h2m1 0h2m1 0h1m1 0h1m2 0h1m1 0h1m1 0h1m-32 1h1m3 0h1m1 0h1m2 0h1m5 0h3m1 0h1m6 0h5m-31 1h2m1 0h2m3 0h1m2 0h2m3 0h1m4 0h10m-31 1h1m1 0h1m1 0h1m1 0h1m4 0h1m1 0h1m1 0h1m2 0h1m1 0h4m1 0h2m1 0h3m-28 1h2m2 0h2m1 0h1m1 0h4m1 0h2m1 0h1m1 0h3m1 0h1m1 0h2m1 0h2m-32 1h1m2 0h1m1 0h1m1 0h1m2 0h1m3 0h2m1 0h1m5 0h1m1 0h3m1 0h2m-31 1h1m2 0h1m3 0h3m1 0h1m3 0h5m1 0h5m1 0h1m3 0h1m-33 1h3m3 0h2m5 0h9m1 0h3m3 0h2m-31 1h1m1 0h1m6 0h1m2 0h1m1 0h2m2 0h4m1 0h1m2 0h1m5 0h1m-31 1h1m2 0h4m2 0h4m2 0h2m3 0h6m1 0h1m1 0h2m-32 1h1m1 0h1m1 0h1m1 0h4m3 0h1m1 0h1m2 0h2m2 0h2m1 0h2m-28 1h1m2 0h1m2 0h8m1 0h1m1 0h1m2 0h1m2 0h6m3 0h1m-25 1h1m2 0h1m2 0h6m3 0h2m3 0h2m1 0h1m-32 1h7m1 0h3m1 0h2m4 0h2m3 0h2m1 0h1m1 0h1m-29 1h1m5 0h1m1 0h1m1 0h2m1 0h2m1 0h1m1 0h1m2 0h4m3 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m3 0h2m1 0h1m1 0h1m2 0h1m2 0h8m1 0h2m-32 1h1m1 0h3m1 0h1m1 0h1m1 0h4m2 0h1m3 0h2m1 0h1m3 0h1m1 0h2m1 0h1m-33 1h1m1 0h3m1 0h1m1 0h1m1 0h3m1 0h5m3 0h3m1 0h2m1 0h2m-31 1h1m5 0h1m2 0h1m1 0h2m3 0h3m3 0h1m1 0h2m1 0h2m3 0h1m-33 1h7m1 0h3m2 0h1m2 0h2m1 0h3m4 0h1m1 0h1m1 0h1"/></svg></div>
     <div><b>Build guide and help</b><br><span class="mono">wells.ee/projects/macintosh-mini</span><br>Questions: <span class="mono">github.com/wr/macintosh-mini/issues</span></div>
