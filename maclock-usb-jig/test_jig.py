@@ -1,7 +1,7 @@
 import itertools
 import unittest
 
-from build123d import Vector
+from build123d import Axis, Vector
 
 import jig
 import params as p
@@ -24,6 +24,7 @@ def overlap(part, probe):
 class TestHole(unittest.TestCase):
     def test_hole_is_in_line_with_the_usbc_slot_and_38_above_it(self):
         self.assertAlmostEqual(p.HOLE_X, -10.15, places=3)
+        self.assertAlmostEqual(p.USBC_Y, -56.045, places=3)
         self.assertAlmostEqual(p.HOLE_Y, -18.045, places=3)
 
     def test_floor_and_shell_fit_inside_the_cutting_head(self):
@@ -94,19 +95,50 @@ class TestJig(unittest.TestCase):
     def test_switch_is_shorter_than_the_floor(self):
         self.assertLess(p.SWITCH_PROUD, p.FLOOR_T)
 
+    def test_thumb_tab_is_floor_out_past_the_left_wall(self):
+        left_wall = p.HOLE_X - p.POCKET_W / 2 - p.WALL_W
+        x = left_wall - p.THUMB_W / 2
+        for y in (p.JIG_Y0 + 2, p.THUMB_Y1 - 2):
+            with self.subTest(y=y):
+                self.assertTrue(solid_at(self.j, x, y, p.FLOOR_T - EPS))
+                self.assertFalse(solid_at(self.j, x, y, p.FLOOR_T + EPS))
+        # Stops 15 or more below the top: the vents and markings are above.
+        self.assertFalse(solid_at(self.j, x, -15, 1))
+        self.assertAlmostEqual(self.j.bounding_box().min.X, left_wall - p.THUMB_W, places=6)
+
+    def test_reaches_past_the_bottom_of_the_usbc_slot(self):
+        slot_bottom = p.USBC_Y - p.USBC_H / 2
+        self.assertAlmostEqual(self.j.bounding_box().min.Y, p.JIG_Y0, places=6)
+        self.assertLess(p.JIG_Y0, slot_bottom - 3)
+
+    def test_key_pocket_under_the_jig_over_the_slot(self):
+        w, l = p.KEY_RECESS_W / 2 - EPS, p.KEY_RECESS_L / 2 - EPS
+        pocket = jig.box(p.HOLE_X - w + 1.5, p.HOLE_X + w - 1.5,  # straight part
+                         p.USBC_Y - l + 1.6, p.USBC_Y + l - 1.6, 0, p.KEY_SEAT - EPS)
+        self.assertAlmostEqual(overlap(self.j, pocket), 0.0, places=6)
+        for y in (p.USBC_Y - l, p.USBC_Y + l):  # both rounded ends open
+            self.assertFalse(solid_at(self.j, p.HOLE_X, y, 1))
+        self.assertTrue(solid_at(self.j, p.HOLE_X, p.USBC_Y, p.KEY_SEAT + EPS))
+        self.assertTrue(solid_at(self.j, p.HOLE_X + p.KEY_RECESS_W / 2 + EPS, p.USBC_Y, 1))
+
+    def test_floor_over_the_key_is_at_least_1(self):
+        # The slot's top end runs under the router's floor, not the wall.
+        slot_top = p.USBC_Y + p.USBC_H / 2
+        wall_inside = p.HOLE_Y - p.POCKET_H / 2
+        self.assertGreater(slot_top, wall_inside)
+        self.assertGreaterEqual(p.FLOOR_T - p.KEY_SEAT, 1.0)
+
 
 def screws():
     """(x, y) of every stop screw, in the clock's coordinates."""
-    side = [(p.SCREW_IN, y) for y in p.SIDE_STOP_SCREW_Y]
-    top = [(x, p.SCREW_IN) for x in p.TOP_STOP_SCREW_X]
-    return side + top
+    return [(p.SCREW_IN, y) for y in p.SIDE_STOP_SCREW_Y]
 
 
 class TestScrews(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.j = jig.jig()
-        cls.stops = [jig.side_stop(), jig.top_stop()]
+        cls.stop = jig.side_stop()
 
     def test_clearance_hole_through_the_floor(self):
         r = p.SCREW_CLEAR_D / 2
@@ -125,71 +157,100 @@ class TestScrews(unittest.TestCase):
                 self.assertFalse(solid_at(self.j, x + r - 2 * EPS, y, p.FLOOR_T - EPS))
                 self.assertTrue(solid_at(self.j, x + r + EPS, y, p.FLOOR_T - EPS))
 
-    def test_screw_taps_into_a_stop_and_ends_inside_it(self):
+    def test_router_floor_has_two_windows_and_two_screw_holes(self):
+        at_floor = [f for f in self.j.faces() if abs(f.center().Z - p.FLOOR_T) < 1e-6]
+        router_floor = max(at_floor, key=lambda f: f.area)
+        self.assertEqual(len(router_floor.inner_wires()), 4)
+
+    def test_screw_taps_into_the_stop_and_ends_inside_it(self):
         r = p.SCREW_TAP_D / 2
-        for (x, y), stop in zip(screws(), [self.stops[0]] * 2 + [self.stops[1]] * 2):
+        loose = p.SCREW_LOOSE_D / 2
+        for x, y in screws():
             with self.subTest(x=x, y=y):
-                self.assertFalse(solid_at(stop, x + r - EPS, y, -1))
-                self.assertTrue(solid_at(stop, x + r + EPS, y, -1))
-                self.assertFalse(solid_at(stop, x + p.SCREW_LOOSE_D / 2 - EPS, y, -p.STOP_H + 1))
-                self.assertTrue(solid_at(stop, x + p.SCREW_LOOSE_D / 2 + EPS, y, -p.STOP_H + 1))
+                self.assertFalse(solid_at(self.stop, x + r - EPS, y, -1))
+                self.assertTrue(solid_at(self.stop, x + r + EPS, y, -1))
+                self.assertFalse(solid_at(self.stop, x + loose - EPS, y, -p.SCREW_HOLE_L + 1))
+                self.assertTrue(solid_at(self.stop, x + loose + EPS, y, -p.SCREW_HOLE_L + 1))
         tip = p.FLOOR_T - p.SCREW_L
-        self.assertGreater(tip, -p.STOP_H)
+        self.assertGreater(tip, -p.SCREW_HOLE_L)
+
+    def test_holes_stop_short_of_the_bottom_so_it_only_goes_on_one_way_up(self):
+        for x, y in screws():
+            with self.subTest(x=x, y=y):
+                self.assertTrue(solid_at(self.stop, x, y, -p.STOP_H + EPS))
 
 
-class TestStops(unittest.TestCase):
+class TestSideStop(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.j = jig.jig()
         cls.side = jig.side_stop()
-        cls.top = jig.top_stop()
         cls.band_z = -(p.EDGE_RELIEF + p.CONTACT_H / 2)
         cls.low_z = -(p.EDGE_RELIEF + p.CONTACT_H) - 3
 
-    def test_valid_single_solids(self):
-        for stop in (self.side, self.top):
-            self.assertTrue(stop.is_valid)
-            self.assertEqual(len(stop.solids()), 1)
+    def test_valid_single_solid(self):
+        self.assertTrue(self.side.is_valid)
+        self.assertEqual(len(self.side.solids()), 1)
 
-    def test_hang_below_the_back(self):
-        for stop in (self.side, self.top):
-            bb = stop.bounding_box()
-            self.assertAlmostEqual(bb.max.Z, 0.0, places=6)
-            self.assertAlmostEqual(bb.min.Z, -p.STOP_H, places=6)
+    def test_hangs_below_the_back(self):
+        bb = self.side.bounding_box()
+        self.assertAlmostEqual(bb.max.Z, 0.0, places=6)
+        self.assertAlmostEqual(bb.min.Z, -p.STOP_H, places=6)
 
-    def test_side_stop_touches_the_flat_side_only_in_its_band(self):
+    def test_touches_the_flat_side_only_in_its_band(self):
         y = (p.SIDE_STOP_Y0 + p.SIDE_STOP_Y1) / 2
         self.assertAlmostEqual(self.side.bounding_box().min.X, 0.0, places=6)
         self.assertTrue(solid_at(self.side, EPS, y, self.band_z))
         self.assertFalse(solid_at(self.side, EPS, y, -EPS))  # clear of the rounded edge
         self.assertFalse(solid_at(self.side, EPS, y, self.low_z))  # stepped back below
 
-    def test_top_stop_touches_the_flat_top_only_in_its_band(self):
-        x = (p.TOP_STOP_X0 + p.TOP_STOP_X1) / 2
-        self.assertAlmostEqual(self.top.bounding_box().min.Y, 0.0, places=6)
-        self.assertTrue(solid_at(self.top, x, EPS, self.band_z))
-        self.assertFalse(solid_at(self.top, x, EPS, -EPS))
-        self.assertFalse(solid_at(self.top, x, EPS, self.low_z))
+    def test_sits_at_the_top_far_from_the_key(self):
+        self.assertGreater(p.SIDE_STOP_Y0 - p.USBC_Y, 30)
 
-    def test_top_stop_sits_inside_the_hand_hold(self):
-        bb = self.top.bounding_box()
-        self.assertGreaterEqual(bb.min.X, -(p.HANDHOLD_IN + p.HANDHOLD_W))
-        self.assertLessEqual(bb.max.X, -p.HANDHOLD_IN)
+    def test_is_under_solid_floor(self):
+        bb = self.side.bounding_box()
+        for x, y in itertools.product((bb.min.X + 0.5, bb.max.X - 0.5),
+                                      (bb.min.Y + 0.5, bb.max.Y - 0.5)):
+            with self.subTest(x=x, y=y):
+                self.assertTrue(solid_at(self.j, x, y, EPS))
 
-    def test_stops_are_under_solid_floor(self):
-        # Every corner of each stop's top face has the jig's floor above it.
-        for stop in (self.side, self.top):
-            bb = stop.bounding_box()
-            for x, y in itertools.product((bb.min.X + 0.5, bb.max.X - 0.5),
-                                          (bb.min.Y + 0.5, bb.max.Y - 0.5)):
-                with self.subTest(x=x, y=y):
-                    self.assertTrue(solid_at(self.j, x, y, EPS))
+
+class TestKey(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.key = jig.key()
+
+    def test_valid_single_solid(self):
+        self.assertTrue(self.key.is_valid)
+        self.assertEqual(len(self.key.solids()), 1)
+
+    def test_fits_the_slot_with_a_tenth_all_round(self):
+        bb = self.key.bounding_box()
+        self.assertAlmostEqual(bb.size.X, p.USBC_W - 0.2, places=3)
+        self.assertAlmostEqual(bb.size.Y, p.USBC_H - 0.19, places=3)
+        self.assertAlmostEqual(bb.center().X, p.HOLE_X, places=6)
+        self.assertAlmostEqual(bb.center().Y, p.USBC_Y, places=6)
+
+    def test_drops_into_the_slot_and_presses_into_the_jig(self):
+        bb = self.key.bounding_box()
+        self.assertAlmostEqual(bb.min.Z, -p.KEY_PROUD, places=6)
+        self.assertAlmostEqual(bb.max.Z, p.KEY_SEAT, places=6)
+        self.assertLess(p.KEY_PROUD, p.SHELL_T)
+
+    def test_fits_its_pocket_in_the_jig(self):
+        self.assertAlmostEqual(overlap(jig.jig(), self.key), 0.0, places=6)
+
+    def test_slot_end_is_chamfered_to_find_the_slot(self):
+        # At least 0.3: a probe 0.15 in from the edge, 0.05 up, is clear.
+        x = p.HOLE_X + p.KEY_W / 2 - 0.15
+        self.assertFalse(solid_at(self.key, x, p.USBC_Y, -p.KEY_PROUD + 0.05))
+        self.assertTrue(solid_at(self.key, x, p.USBC_Y, 0))
 
 
 class TestPlate(unittest.TestCase):
     def test_parts_lie_on_the_bed_apart(self):
         placed = jig.plate_parts()
-        self.assertEqual(len(placed), 3)
+        self.assertEqual(set(placed), {"jig", "side stop", "key"})
         boxes = [part.bounding_box() for part in placed.values()]
         for bb in boxes:
             self.assertAlmostEqual(bb.min.Z, 0.0, places=6)
@@ -198,10 +259,20 @@ class TestPlate(unittest.TestCase):
                      a.max.Y <= b.min.Y or b.max.Y <= a.min.Y)
             self.assertTrue(apart)
 
-    def test_printed_stops_keep_their_volume(self):
+    def test_printed_parts_keep_their_volume(self):
         placed = jig.plate_parts()
         self.assertAlmostEqual(placed["side stop"].volume, jig.side_stop().volume, places=3)
-        self.assertAlmostEqual(placed["top stop"].volume, jig.top_stop().volume, places=3)
+        self.assertAlmostEqual(placed["key"].volume, jig.key().volume, places=3)
+
+    def test_stop_and_key_print_with_the_jig_end_on_the_bed(self):
+        # Flipped, so the stop's holes open on the bed with the blind end up,
+        # and the key's chamfered end is up.
+        placed = jig.plate_parts()
+        faces = placed["side stop"].faces().sort_by(Axis.Z)
+        self.assertEqual(len(faces[0].inner_wires()), 2)
+        self.assertEqual(len(faces[-1].inner_wires()), 0)
+        faces = placed["key"].faces().sort_by(Axis.Z)
+        self.assertGreater(faces[0].area, faces[-1].area)
 
 
 if __name__ == "__main__":
