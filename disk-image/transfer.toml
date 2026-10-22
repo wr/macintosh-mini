@@ -42,6 +42,16 @@ pick = ["More After Dark modules/More After Dark/[!M]*", "More After Dark module
 dest = "After Dark:After Dark Files"
 
 [[item]]
+source = "bigmaclock"
+pick = ["BigMaclock"]
+dest = "Big Maclock"
+
+[[item]]
+source = "bigmaclock-ad"
+pick = ["BigMaclock"]
+dest = "After Dark:After Dark Files"
+
+[[item]]
 source = "icab-68k"
 pick = ["iCab", "Plug-ins"]
 dest = "Internet:iCab"
@@ -72,3 +82,10 @@ name = "Start Page"
 type = "TEXT"
 creator = "iCAB"
 dest = "Internet"
+
+[[file]]
+path = "files/Big Maclock License.txt"
+name = "Big Maclock License"
+type = "TEXT"
+creator = "ttxt"
+dest = "Big Maclock"

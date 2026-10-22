@@ -44,6 +44,7 @@ freely licensed; Wells has accepted that, as is common practice.
 | SimpleText | ships with 8.1 | Desktop alias. |
 | MR Browser | latest 68K build (not the sys6 build) | Macintosh Repository's own client. Desktop alias. It asks for a sign-in PIN when opened (not at startup); kept at Wells's request. |
 | FrogFind | — | Linked from the start page. Wells removed the desktop shortcut (2026-10-21). |
+| Big Maclock | 1.01, and its After Dark module | Wells's request (2026-10-22): RetroTheory's desk clock, MIT, licence shipped beside it. In `Applications`, with a desktop alias; the module joins the Randomizer. |
 | StuffIt Expander | 5.5 | So downloads open. |
 | Disk Copy | 6.3.3 | So downloaded disk images open. |
 

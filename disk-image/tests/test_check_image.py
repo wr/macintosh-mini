@@ -17,6 +17,7 @@ EXPECTED = {
     "printer_driver": "System Folder:Extensions:AppleTalk ImageWriter",
     "empty": ["Trash"],
     "absent": ["System Folder:Preferences:Display Preferences"],
+    "alias_names_absent": ["SE/30"],
 }
 
 
@@ -112,6 +113,19 @@ class CheckImageTest(unittest.TestCase):
         problems = check_image(volume(trash={"ImageWriter II"}), EXPECTED)
         self.assertEqual(len(problems), 1)
         self.assertIn("Trash", problems[0])
+
+    def test_reports_alias_holding_the_build_macs_name(self):
+        v = machfs.Volume()
+        v.read(volume())
+        f = machfs.File()
+        f.type, f.creator = b"adrp", b"MACS"
+        f.rsrc = bytearray(fork_with(b"alis", 0, bytes(33) + b"\x05SE/30" + bytes(26)))
+        v["Desktop Folder"]["Chooser"] = f
+        v.name = "Macintosh HD"   # machfs doesn't read the name back
+        problems = check_image(v.write(size=SIZE, desktopdb=False, bootable=False), EXPECTED)
+        self.assertEqual(len(problems), 1)
+        self.assertIn("SE/30", problems[0])
+        self.assertIn("Chooser", problems[0])
 
     def test_reports_file_that_must_be_absent(self):
         problems = check_image(volume(extra=[("System Folder", "Preferences", "Display Preferences")]), EXPECTED)

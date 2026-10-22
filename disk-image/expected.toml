@@ -17,6 +17,9 @@ required = [
   "Internet:MR Browser 68K v0.39",
   "Utilities:Disk Copy",
   "Utilities:StuffIt Expander™",
+  "Applications:Big Maclock:BigMaclock",
+  "Applications:Big Maclock:Big Maclock License",
+  "System Folder:Control Panels:After Dark Files:BigMaclock",
 ]
 
 # Its chosen printer must be blank: each AirWriter has its own name, so the user picks it once.
@@ -34,6 +37,10 @@ absent = [
   "System Folder:Preferences:After Dark Preferences",
 ]
 
+# The Mac that ran the Mac OS installer: its Sharing Setup names end up in the
+# aliases the installer makes (scrub_aliases.py blanks them).
+alias_names_absent = ["SE/30", "Wells"]
+
 [[desktop]]
 name = "iCab"
 alias = true
@@ -44,4 +51,8 @@ alias = true
 
 [[desktop]]
 name = "MR Browser"
+alias = true
+
+[[desktop]]
+name = "BigMaclock"
 alias = true

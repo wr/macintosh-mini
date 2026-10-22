@@ -4,7 +4,7 @@ Notable changes to the macintosh-mini installer (`setup.sh`). Re-running on an
 existing Pi shows the entries added since the installed version.
 
 ## [1.9.0] - 2026-10-21
-- No disk image? A new Basilisk II install offers to download ours: a clean Mac OS 8.1 install with a web browser, After Dark and the AppleTalk ImageWriter driver, checked before it's used. `--get-disk` downloads it without asking.
+- No disk image? A new Basilisk II install offers to download ours: a clean Mac OS 8.1 install with a web browser, After Dark, Big Maclock and the AppleTalk ImageWriter driver, checked before it's used. `--get-disk` downloads it without asking.
 
 ## [1.8.1] - 2026-10-21
 - The Mac starts again where XWayland, which the emulators draw through, had gone missing. Raspberry Pi OS's labwc stopped installing it at the end of September, so new installs since then didn't get it, and `apt autoremove` could remove it from older ones. The installer now installs it itself and keeps it.

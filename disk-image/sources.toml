@@ -34,6 +34,23 @@ url = "https://old.mac.gdn/apps/more_after_dark_modules.sit"
 sha256 = "3982f4b42f34a09f575050d59664da0880a86d9ce7080e93c049965b4b68f99f"
 note = "macintoshgarden.org/apps/after-dark-more-after-dark: the More After Dark add-on's 27 modules, loose, in 'More After Dark modules/More After Dark'."
 
+# Big Maclock, RetroTheory's clock app and its After Dark module (MIT; the licence
+# ships beside them, from files/Big Maclock License.txt).
+
+[[source]]
+id = "bigmaclock"
+file = "BigMaclock-1.01.zip"
+url = "https://github.com/retrotheory/BigMaclock/releases/download/Release1.01/BigMaclock.zip"
+sha256 = "6f465c4b1e1a159a9ddff0d06d4e6f2a96e7d3491a793c43e7ee870750907491"
+note = "github.com/retrotheory/BigMaclock release 1.01: 'BigMaclock' (APPL), as a MacBinary inside the zip."
+
+[[source]]
+id = "bigmaclock-ad"
+file = "BigMaclockAD.bin"
+url = "https://github.com/retrotheory/BigMaclockAD/releases/download/Release/BigMaclock.bin"
+sha256 = "89ba214dd86dceca1f0f8c8b4a4df544f1ae0d192bce0a23572fd52b6da3c100"
+note = "github.com/retrotheory/BigMaclockAD release: the After Dark module 'BigMaclock' (ADgm/ADrk), MacBinary."
+
 [[source]]
 id = "icab-68k"
 file = "iCab_Pre2.99b_English_68k.sit"

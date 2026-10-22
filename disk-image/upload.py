@@ -37,6 +37,22 @@ def ia_args(meta: dict, files: list[str]) -> list[str]:
     return args + ["--retries=10"]
 
 
+def metadata_args(meta: dict) -> list[str]:
+    """The ia metadata command that brings an existing item's title,
+    description and other fields in line with ia-metadata.toml (ia upload
+    only applies them when it creates the item)."""
+    args = ["ia", "metadata", meta["identifier"]]
+    for key, value in meta.items():
+        if key in ("identifier", "collection", "mediatype"):
+            continue
+        if key == "description":
+            value = description_html(value)
+        if isinstance(value, list):
+            value = ";".join(value)
+        args.append(f"--modify={key}:{value}")
+    return args
+
+
 def already_there(files: list[str], listed: str) -> list[str]:
     """Which of files the item already has, from `ia list`'s output. Installers
     pin each version's checksum, so a file once uploaded is never replaced."""
@@ -64,7 +80,10 @@ def main() -> int:
         print(f"already on the archive, never replaced: {', '.join(clash)}. "
               "Package a new version (e.g. 2026.10.1) instead.", file=sys.stderr)
         return 1
-    return subprocess.run(ia_args(meta, files)).returncode
+    rc = subprocess.run(ia_args(meta, files)).returncode
+    if rc == 0 and listed.stdout.strip():   # an existing item keeps its old text otherwise
+        rc = subprocess.run(metadata_args(meta)).returncode
+    return rc
 
 
 if __name__ == "__main__":

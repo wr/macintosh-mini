@@ -102,6 +102,12 @@ Basilisk II build: macemu b9a71d7a (the installer's prebuilt-binaries branch).
 | Tunnel | ✓ | ✓ | |
 | Virex-D | ✓ | ✓ | A mock virus scan of the disks (an ad for Virex). |
 
+## Big Maclock
+
+| Module | 16-bit | 8-bit | Notes |
+|---|---|---|---|
+| BigMaclock | ✓ | — | RetroTheory's clock face (MIT), the After Dark module of the Big Maclock app. Checked on a real idle start at 16-bit; set to 12-hour and MM.DD to match the app. Black and white, so 8-bit isn't expected to differ. |
+
 `MAD Fish!` in the add-on isn't a module: it's extra fish data with no file type, which nothing
 loads. It isn't installed.
 

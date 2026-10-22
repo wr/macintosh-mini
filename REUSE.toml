@@ -29,6 +29,12 @@ path = "emulators/chimes/*.wav"
 SPDX-FileCopyrightText = "Apple Computer, Inc."
 SPDX-License-Identifier = "LicenseRef-Third-Party"
 
+# Big Maclock's licence, shipped on the disk image beside the app.
+[[annotations]]
+path = "disk-image/files/Big Maclock License.txt"
+SPDX-FileCopyrightText = "2026 Retro-Theory"
+SPDX-License-Identifier = "MIT"
+
 # 3D models from LCSC's EasyEDA library, used only for renders.
 [[annotations]]
 path = "maclock-pcb/lcsc.3dshapes/**"

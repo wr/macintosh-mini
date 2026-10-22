@@ -21,11 +21,12 @@ Finder: no setup assistant, no registration screens.
 <li>StuffIt Expander 5.5 and Disk Copy 6.3.3</li>
 <li>The AppleTalk ImageWriter driver, so the Chooser can find an AppleTalk ImageWriter on your network</li>
 <li>After Dark 2.0 with More After Dark: a random module every 5 minutes after 5 minutes idle, sound off</li>
+<li>Big Maclock, RetroTheory's full-screen desk clock, and its After Dark module (MIT licence, included)</li>
 </ul>
 
 <b>Settings</b>: TCP/IP on Ethernet with DHCP, AppleTalk on Ethernet, computer name
-"Macintosh", File Sharing off, no printer chosen. Desktop aliases for iCab, SimpleText and
-MR Browser.
+"Macintosh", File Sharing off, no printer chosen. Desktop aliases for iCab, SimpleText,
+MR Browser and Big Maclock.
 
 <b>Known-working Basilisk II settings</b>: modelid 14 (Quadra), 128 MB RAM, 640×480 at 8-bit or
 16-bit colour, ether slirp. Seven After Dark modules need 256 colours and sit out their turn
@@ -35,8 +36,10 @@ udpappletalkonly.
 
 Built by Wells Workshop from pinned downloads; the steps and checks are at
 https://github.com/wr/macintosh-mini/tree/main/disk-image. Software from Apple, Berkeley
-Systems, Alexander Clauss (iCab), Macintosh Repository and Aladdin Systems, found via
+Systems, Alexander Clauss (iCab), Macintosh Repository, Aladdin Systems and RetroTheory, found via
 Macintosh Garden, Macintosh Repository and the Internet Archive.
+
+Each version is its own file, named by date; use the newest.
 
 Mac OS 8.1 and the included software are © their owners.
 """

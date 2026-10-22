@@ -5,6 +5,8 @@ import struct
 
 import machfs
 
+from .scrub import _alias_records
+
 ALIAS = 0x8000   # Finder flag isAlias
 
 
@@ -77,4 +79,11 @@ def check_image(image: bytes, expected: dict) -> list[str]:
     for path in expected.get("absent", []):
         if _lookup(v, path) is not None:
             problems.append(f"shouldn't be on the image: {path}")
+    banned = [bytes([len(n)]) + n.encode("mac_roman") for n in expected.get("alias_names_absent", [])]
+    for path, f in v.iter_paths():
+        if isinstance(f, machfs.File) and banned:
+            for record in _alias_records(bytes(f.rsrc)):
+                for name, field in zip(expected["alias_names_absent"], banned):
+                    if field in record:
+                        problems.append(f"the alias {':'.join(path)} holds {name!r} (run scrub_aliases.py)")
     return problems

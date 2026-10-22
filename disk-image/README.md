@@ -83,6 +83,9 @@ ramsize 134217728
    - `Utilities:StuffIt Expander™` into Macintosh HD's `Utilities`. Open
      `Utilities:Disk Copy 6.3.3.smi` from the Transfer disk, copy the Disk Copy app from the disk
      it mounts into `Utilities`, and eject that disk.
+   - The `Big Maclock` folder into Macintosh HD's `Applications`, and
+     `After Dark:After Dark Files:BigMaclock` (its After Dark module) into
+     `System Folder:Control Panels:After Dark Files` if it isn't there already.
    - `Fallback` holds Internet Explorer 4.01, used only if iCab stops working.
 
    Restart.
@@ -100,8 +103,13 @@ ramsize 134217728
    Untick File ▸ Offline Mode, then quit iCab.
 8. **Desktop**: Command-Option-drag iCab, `Applications:SimpleText` and
    `Internet:MR Browser 68K v0.39` to the desktop to make aliases; rename the last one
-   `MR Browser`. Throw away the Mac OS Info Center alias the installer left. Line up SimpleText,
-   iCab and MR Browser in the right-hand column under the disks.
+   `MR Browser`, and `Applications:Big Maclock:BigMaclock`. Throw away the Mac OS Info Center alias
+   the installer left. Line up SimpleText, iCab, MR Browser and BigMaclock in the right-hand column
+   under the disks.
+
+   Open BigMaclock, move the mouse to the top of the screen for its menu bar, and in
+   Apple ▸ Preferences choose **12 Hour** and **MM.DD**; quit with Q. It keeps these in
+   `BigMaclock Prefs` beside the app.
 9. **Wells's preferences**:
    - Desktop Pictures ▸ Pattern: **Gray** (pattern 24 of 47) ▸ Set Desktop.
    - General Controls: untick **Warn me if computer was shut down improperly** (a Pi can lose
@@ -113,6 +121,7 @@ ramsize 134217728
     - Select **Randomizer** in the list: Order Random, Duration 5 min (the last step before
       "1 module"), tick **Clear Screen** (otherwise a module can start on the last one's
       leftovers), Choose… ▸ All ▸ OK.
+    - Select **BigMaclock**: untick 24 Hour, tick US Date (MM.DD), to match the app.
     - When: Sleep in 5 minutes (the default); tick **No sleep corners**.
     - Leave the speaker beside Demo at its lowest setting (no sound waves), which is sound off.
 11. Clean up what using the apps left behind: the items inside
@@ -129,8 +138,14 @@ get; Desktop Printing then won't let it be thrown away. Test printing on a copy 
 ## 4. Check
 
 ```bash
+.venv/bin/python scrub_aliases.py out/macos-8.1.hda "SE/30" Wells
 .venv/bin/python check_image.py out/macos-8.1.hda
 ```
+
+The Mac OS installer copies the Sharing Setup names of the Mac that ran it (here an SE/30 disk
+owned by Wells) into the aliases it makes. `scrub_aliases.py` blanks them in place; use the
+names of whichever Mac ran your installer, and keep `alias_names_absent` in `expected.toml` in
+step.
 
 It checks the volume's name and size, the files and desktop items listed in `expected.toml`, that
 no printer is chosen, that the Trash is empty, and that nothing listed as absent (such as
@@ -150,12 +165,13 @@ gets a new file, so a checksum pinned in `setup.sh` never goes stale. `upload.py
 replace a file that's already on the archive.
 
 ```bash
-./package.sh out/macos-8.1.hda 2026.10
-cd out && ../.venv/bin/python ../upload.py macos-8.1-basilisk-ii-2026.10.zip
+./package.sh out/macos-8.1.hda 2026.10.1
+cd out && ../.venv/bin/python ../upload.py macos-8.1-basilisk-ii-2026.10.1.zip
 ```
 
 `package.sh` writes `out/macos-8.1-basilisk-ii-<version>.zip`, holding the image under that name,
 and its `.sha256`. `upload.py` sends both to the Internet Archive item `macos-8.1-basilisk-ii` with
-the title and description in `ia-metadata.toml`; it needs the `ia` tool
+the title and description in `ia-metadata.toml` (and refreshes them on an existing item); it
+needs the `ia` tool
 (`brew install internetarchive`), signed in once with `ia configure`. Then download the zip from
 `https://archive.org/download/macos-8.1-basilisk-ii/` and check its SHA-256 matches.

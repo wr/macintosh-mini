@@ -68,9 +68,9 @@ BASILISK_STAMP=/usr/local/share/macintosh-mini/basilisk.commit
 SHEEPSHAVER_STAMP=/usr/local/share/macintosh-mini/sheepshaver.commit
 # Our clean Mac OS 8.1 disk for Basilisk II (disk-image/ in this repo), offered
 # when $HOME has no disk image. Each version is a new file: pin all four.
-DISK_DL_VERSION="2026.10"
+DISK_DL_VERSION="2026.10.1"
 DISK_DL_URL="https://archive.org/download/macos-8.1-basilisk-ii/macos-8.1-basilisk-ii-$DISK_DL_VERSION.zip"
-DISK_DL_SHA256="ae16ea985bd3da7cf36c7f7ff092a04653fa2b20b9e2b5a794c1cf73216f2e8f"
+DISK_DL_SHA256="ce6ee4ba5294182535d20bf6639f64415376e4420b3473167803315e615c97fa"
 DISK_DL_MB=52
 
 # How both emulators are built, on the Pi and by CI: CI reads this block (and
