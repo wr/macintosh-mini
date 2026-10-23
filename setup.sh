@@ -46,6 +46,9 @@
 #                       page for Wi-Fi, a password and a ROM. Flash the card with
 #                       the username "mac" first: the new owner keeps it.
 #   --debug             show all command output instead of capturing to log
+#   --skip-pi-check     run on something that isn't a Raspberry Pi. Without it
+#                       the installer stops there before changing anything,
+#                       since it changes the system it runs on.
 
 set -euo pipefail
 
@@ -537,6 +540,16 @@ PREFLIGHT
   sudo chmod 755 /usr/local/bin/mac-preflight
 }
 
+# The Pi's model ("Raspberry Pi Zero 2 W Rev 1.0"), or fail on anything that
+# isn't a Raspberry Pi running Linux. $1: the model file, for the tests.
+pi_model() {
+  local m f=${1:-/proc/device-tree/model}
+  [[ $(uname -s) == Linux && -r $f ]] || return 1
+  m=$(tr -d '\0' < "$f") || return 1
+  [[ $m == "Raspberry Pi"* ]] || return 1
+  printf '%s' "$m"
+}
+
 # Four hex digits from the Pi's serial number: the end of the hostname
 # --hotspot-setup picks and of the setup hotspot's name. mac_setup.py works it
 # out the same way. Not the Wi-Fi MAC: NetworkManager randomises that while
@@ -589,6 +602,7 @@ TIMEZONE=""        # Area/City to set; the night schedule needs a real one
 NIGHT_CONF=/etc/default/brightness-control
 HOTSPOT_SETUP=0    # 1 = --hotspot-setup: prepare the Mac for phone setup
 GET_DISK=0         # 1 = --get-disk: download our disk without asking
+SKIP_PI_CHECK=0    # 1 = --skip-pi-check: run on something that isn't a Pi
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -617,6 +631,7 @@ while [[ $# -gt 0 ]]; do
     --hotspot-setup) HOTSPOT_SETUP=1; shift ;;
     --branch)        REPO_BRANCH=$2; REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/$REPO_BRANCH"; shift 2 ;;
     --debug)         DEBUG=1; shift ;;
+    --skip-pi-check) SKIP_PI_CHECK=1; shift ;;
     *) die "Unknown option: $1" ;;
   esac
 done
@@ -631,6 +646,13 @@ fi
 # --- Header ---------------------------------------------------------------
 printf '\033[1;35m╔═ macintosh-mini installer v%s ═╗\033[0m\n' "$VERSION"
 printf '  log: %s%s\n' "$LOG_FILE" "$([[ $DEBUG -eq 1 ]] && echo '  [debug mode: verbose]' || echo '')"
+
+# Everything from here on changes the machine it runs on (sudo, boot config,
+# services, emulator prefs), so it has to be the Pi. Run in a Mac's terminal by
+# mistake, it would make that Mac's sudo passwordless and edit its own Basilisk
+# II prefs.
+[[ $SKIP_PI_CHECK -eq 1 ]] || pi_model >/dev/null \
+  || die "This isn't a Raspberry Pi ($(uname -s) $(uname -m)). Run the installer on the Pi itself, over SSH. To run it here anyway, add --skip-pi-check."
 
 [[ "$(uname -m)" == "aarch64" ]] || warn "Not aarch64 ($(uname -m)) — guide is tested on Pi Zero 2 W aarch64"
 

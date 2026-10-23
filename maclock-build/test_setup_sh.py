@@ -195,6 +195,43 @@ class Theme(unittest.TestCase):
         self.assertEqual(c['button'], f'{bg},{fg}')
 
 
+class PiCheck(unittest.TestCase):
+    """Run anywhere but a Pi (a Mac in the wrong terminal tab), the installer
+    would change that machine: it stops first unless told otherwise."""
+
+    def run_fn(self, kernel, model=None):
+        tmp = Path(tempfile.mkdtemp())
+        uname = tmp / 'uname'
+        uname.write_text(f'#!/bin/sh\necho {kernel}\n')
+        uname.chmod(0o755)
+        model_file = tmp / 'model'
+        if model is not None:
+            model_file.write_bytes(model.encode() + b'\0')
+        script = function('pi_model') + f'pi_model {model_file} && echo " yes" || echo no\n'
+        r = subprocess.run(['bash', '-euo', 'pipefail', '-c', script], capture_output=True,
+                           text=True, env=dict(os.environ, PATH=f'{tmp}:/usr/bin:/bin'))
+        return r.stdout.strip()
+
+    def test_pi(self):
+        self.assertEqual(self.run_fn('Linux', 'Raspberry Pi Zero 2 W Rev 1.0'),
+                         'Raspberry Pi Zero 2 W Rev 1.0 yes')
+
+    def test_mac(self):
+        self.assertEqual(self.run_fn('Darwin', 'Raspberry Pi Zero 2 W Rev 1.0'), 'no')
+
+    def test_linux_without_a_model(self):
+        self.assertEqual(self.run_fn('Linux'), 'no')
+
+    def test_other_board(self):
+        self.assertEqual(self.run_fn('Linux', 'Radxa ZERO 3W'), 'no')
+
+    def test_checked_before_anything_changes(self):
+        check = SETUP.index('[[ $SKIP_PI_CHECK -eq 1 ]] || pi_model')
+        self.assertLess(check, SETUP.index('\nensure_sudo\n'))
+        self.assertLess(check, SETUP.index('check_basilisk_assets\n'))
+        self.assertIn('--skip-pi-check) SKIP_PI_CHECK=1', SETUP)
+
+
 class Hotspot(unittest.TestCase):
 
     def test_no_dhcp_option_114(self):
