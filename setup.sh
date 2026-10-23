@@ -166,7 +166,10 @@ DEBUG=0
 # Black-and-white, after the System 7 Installer: gray desktop, white windows
 # with black borders and titles, black-on-white buttons that invert when
 # focused, a solid black progress bar. NEWT_COLORS wants colon-separated
-# element=fg,bg pairs from newt's 16 named colors.
+# element=fg,bg pairs from newt's 16 named colors. whiptail's buttons are
+# newt's compact ones (<Ok>): newt draws them in compactbutton and the focused
+# one in button, so button is the inverted pair (actbutton is for full-size
+# buttons, which whiptail doesn't use).
 NEWT_THEME=(
   root=black,lightgray
   roottext=black,lightgray
@@ -186,7 +189,7 @@ NEWT_THEME=(
   actlistbox=white,black
   sellistbox=white,black
   actsellistbox=white,black
-  button=black,white
+  button=white,black
   actbutton=white,black
   compactbutton=black,white
   emptyscale=black,lightgray

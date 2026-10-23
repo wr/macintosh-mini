@@ -181,6 +181,20 @@ class FirstBoot(unittest.TestCase):
             self.assertIn('DPkg::Lock::Timeout', line, line)
 
 
+class Theme(unittest.TestCase):
+    """whiptail's buttons are newt's compact ones (<Ok>): newt draws them in
+    `compactbutton`, and the focused one in `button`, not `actbutton`."""
+
+    def colors(self):
+        m = re.search(r'^NEWT_THEME=\((.*?)^\)', SETUP, re.S | re.M)
+        return dict(line.split('=') for line in m.group(1).split())
+
+    def test_focused_button_inverts(self):
+        c = self.colors()
+        fg, bg = c['compactbutton'].split(',')
+        self.assertEqual(c['button'], f'{bg},{fg}')
+
+
 class Hotspot(unittest.TestCase):
 
     def test_no_dhcp_option_114(self):
