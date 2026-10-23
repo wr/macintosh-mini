@@ -41,10 +41,12 @@
 #                       a phone instead of a network saved on the card. Installs
 #                       without a ROM and names the Mac macintosh-mini-xxxx, then
 #                       erases its saved Wi-Fi, SSH keys, login password and ROM
-#                       and shuts down. On its next start it offers an open
-#                       "Macintosh Mini XXXX" Wi-Fi network; joining it opens a
-#                       page for Wi-Fi, a password and a ROM. Flash the card with
-#                       the username "mac" first: the new owner keeps it.
+#                       and restarts into setup, so you can check its screen
+#                       before boxing it (the right button shuts it down). It
+#                       offers an open "Macintosh Mini XXXX" Wi-Fi network;
+#                       joining it opens a page for Wi-Fi, a password and a ROM.
+#                       Flash the card with the username "mac" first: the new
+#                       owner keeps it.
 #   --debug             show all command output instead of capturing to log
 
 set -euo pipefail
@@ -644,7 +646,7 @@ ensure_whiptail
 
 if [[ $HOTSPOT_SETUP -eq 1 ]]; then
   ho_msg="This prepares the Mac for someone else to set up from their phone."
-  ho_msg+=$'\n\n'"When it's done it erases this Mac's saved Wi-Fi, SSH keys, login password and ROM, then shuts down. You can't log in again until it has been set up from a phone."
+  ho_msg+=$'\n\n'"When it's done it erases this Mac's saved Wi-Fi, SSH keys, login password and ROM, then restarts into setup so you can check its screen. You can't log in again until it has been set up from a phone."
   if [[ $USER != mac ]]; then
     ho_msg+=$'\n\n'"Your username is \"$USER\", and the new owner will keep it. Flash the card with the username \"mac\" to avoid that."
   fi
@@ -2121,8 +2123,9 @@ emit_gauge 100 "Done"
 sleep 1
 stop_gauge
 
-# --hotspot-setup: erase what belongs to whoever ran this, then shut down. It
-# runs detached, because forgetting the Wi-Fi ends this SSH session.
+# --hotspot-setup: erase what belongs to whoever ran this, then restart into
+# setup, so they can check the setup screen before boxing the Mac. It runs
+# detached, because forgetting the Wi-Fi ends this SSH session.
 if [[ $HOTSPOT_SETUP -eq 1 ]]; then
   ho_rom=$(installed_rom_path)
   sudo tee /run/mac-setup-handoff.sh >/dev/null <<'HANDOFF'
@@ -2175,10 +2178,11 @@ rm -f "$home/.bash_history"
 journalctl --rotate >/dev/null 2>&1
 journalctl --vacuum-time=1s >/dev/null 2>&1
 sync
-poweroff
+reboot
 HANDOFF
-  printf '\n\033[1;32m✓ Setup complete.\033[0m  Erasing this Mac'"'"'s Wi-Fi, keys and password, then shutting down…\n'
-  printf '  When it next starts, it offers the Wi-Fi network "Macintosh Mini %s".\n\n' "$(setup_suffix | tr a-f A-F)"
+  printf '\n\033[1;32m✓ Setup complete.\033[0m  Erasing this Mac'"'"'s Wi-Fi, keys and password, then restarting…\n'
+  printf '  It restarts into setup, offering the Wi-Fi network "Macintosh Mini %s".\n' "$(setup_suffix | tr a-f A-F)"
+  printf '  Check the screen without joining it, then press the right button to shut down.\n\n'
   sudo systemd-run --unit=mac-setup-handoff --collect /bin/bash /run/mac-setup-handoff.sh \
     "$USER" "$HOME" "$LOG_FILE" "$ho_rom" >/dev/null
   exit 0

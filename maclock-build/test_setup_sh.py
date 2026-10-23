@@ -121,6 +121,11 @@ class Handoff(unittest.TestCase):
     def test_rom_path_read_safely(self):
         self.assertIn('ho_rom=$(installed_rom_path)', SETUP)
 
+    def test_restarts_for_a_check(self):
+        # Whoever prepared it sees the setup screen before boxing it.
+        self.assertEqual(self.HANDOFF.split()[-1], 'reboot')
+        self.assertNotIn('poweroff', self.HANDOFF)
+
     def test_handoff_is_valid_bash(self):
         r = subprocess.run(['bash', '-n'], input=self.HANDOFF, text=True, capture_output=True)
         self.assertEqual(r.returncode, 0, r.stderr)
