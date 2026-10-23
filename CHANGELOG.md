@@ -3,6 +3,9 @@
 Notable changes to the macintosh-mini installer (`setup.sh`). Re-running on an
 existing Pi shows the entries added since the installed version.
 
+## [1.9.1] - 2026-10-22
+- A freshly flashed card no longer stops at "Installing apt packages" when the installer starts within a few minutes of the Pi's first start. When a hostname is set in Raspberry Pi Imager, Pi OS is still installing a package of its own then; the installer now waits for it to finish.
+
 ## [1.9.0] - 2026-10-21
 - No disk image? A new Basilisk II install offers to download ours: a clean Mac OS 8.1 install with a web browser, After Dark, Big Maclock and the AppleTalk ImageWriter driver, checked before it's used. `--get-disk` downloads it without asking.
 
