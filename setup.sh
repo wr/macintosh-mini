@@ -56,7 +56,7 @@ set -euo pipefail
 
 REPO_BRANCH="main"   # --branch: test an unmerged branch on a real Pi
 REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/$REPO_BRANCH"
-VERSION="1.9.1"
+VERSION="1.10.0"
 
 # SheepShaver paths (DISK_IMAGE is auto-discovered or set via --disk)
 DISK_IMAGE=""
@@ -1228,7 +1228,7 @@ TOTAL_STEPS=4   # apt update, apt install, patch_cmdline, record_install
 [[ $WIFI_POWERSAVE -eq 0 ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
 [[ -n $NEW_HOSTNAME && $NEW_HOSTNAME != "$CUR_HOSTNAME" ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
 [[ -n $TIMEZONE ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
-[[ $INSTALL_MACLOCK -eq 1 ]] && TOTAL_STEPS=$((TOTAL_STEPS+7))
+[[ $INSTALL_MACLOCK -eq 1 ]] && TOTAL_STEPS=$((TOTAL_STEPS+8))
 if [[ $INSTALL_SHEEPSHAVER -eq 1 ]]; then
   TOTAL_STEPS=$((TOTAL_STEPS + 8 + $(emu_steps SheepShaver /usr/local/bin/SheepShaver "$SHEEPSHAVER_STAMP")))
 fi
@@ -1306,6 +1306,9 @@ if [[ $INSTALL_SHEEPSHAVER -eq 1 || $INSTALL_BASILISK -eq 1 ]]; then
 fi
 if [[ $INSTALL_MACLOCK -eq 1 ]]; then
   APT_PKGS+=(python3-lgpio device-tree-compiler unzip)
+  # The audio gate's ALSA plugin is built on the Pi. Pi OS Lite already has
+  # the compiler; only the ALSA headers are new.
+  APT_PKGS+=(gcc libc6-dev libasound2-dev)
 fi
 if [[ $FIRST_BOOT_WAIT -eq 1 ]]; then
   run_long "Waiting for Pi OS to finish its first start" wait_for_first_boot
@@ -1656,6 +1659,42 @@ QUIT
     sudo chmod 755 /usr/local/bin/sheepshaver-restart.sh /usr/local/bin/macintosh-quit.sh
   }
   run "[maclock] Installing reset-button wrappers" install_restart_wrapper
+
+  # The audio PWM on GPIO 19 runs even when nothing plays, carrying the Pi's
+  # supply noise into the speaker: hiss, a burble on battery, ticking while
+  # the setup hotspot is up. audio_gate.py lets go of the pin between sounds.
+  # The ALSA plugin built here tells it when a player has sound, ahead of the
+  # speaker. See maclock-build/README.md.
+  install_audio_gate() {
+    # A hand-made asound.conf (for a USB DAC, say) is the owner's. The gate
+    # needs its own, so leave both alone.
+    if [[ -e /etc/asound.conf ]] && ! grep -q audiogate /etc/asound.conf; then
+      echo "Keeping your own /etc/asound.conf; the audio gate stays off"
+      return 0
+    fi
+    local f tmp; tmp=$(mktemp -d)
+    for f in audio_gate_plugin.c audio_gate.py audio-gate.socket audio-gate.service asound.conf; do
+      curl -fL --retry 3 -o "$tmp/$f" "$REPO_RAW/maclock-build/$f" || return $?
+    done
+    cc -O2 -fPIC -DPIC -shared -o "$tmp/libasound_module_pcm_audiogate.so" \
+      "$tmp/audio_gate_plugin.c" -lasound || return $?
+    # install replaces the file rather than writing into it, so a running
+    # emulator keeps the copy it loaded.
+    sudo install -D -m644 "$tmp/libasound_module_pcm_audiogate.so" \
+      /usr/local/lib/alsa-lib/libasound_module_pcm_audiogate.so || return $?
+    sudo install -m755 "$tmp/audio_gate.py" /usr/local/bin/audio_gate.py || return $?
+    sudo install -m644 "$tmp/audio-gate.socket" "$tmp/audio-gate.service" \
+      /etc/systemd/system/ || return $?
+    sudo systemctl daemon-reload
+    sudo systemctl enable audio-gate.socket audio-gate.service
+    # restart, not start: on an update the old script is still running
+    sudo systemctl start audio-gate.socket
+    sudo systemctl restart audio-gate.service
+    # Last: from here every player goes through the plugin.
+    sudo install -m644 "$tmp/asound.conf" /etc/asound.conf || return $?
+    rm -rf "$tmp"
+  }
+  run "[maclock] Installing the audio gate" install_audio_gate
 
   # Full-scale PWM audio (~3.3 Vpp) through the breakout amp's 2.6x gain asks
   # for more swing than the amp can put across 8 ohms from the clock's ~4 V
