@@ -56,7 +56,7 @@ set -euo pipefail
 
 REPO_BRANCH="main"   # --branch: test an unmerged branch on a real Pi
 REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/$REPO_BRANCH"
-VERSION="1.9.1"
+VERSION="1.9.2"
 
 # SheepShaver paths (DISK_IMAGE is auto-discovered or set via --disk)
 DISK_IMAGE=""
@@ -1661,13 +1661,39 @@ QUIT
   # for more swing than the amp can put across 8 ohms from the clock's ~4 V
   # battery supply, and every chime peaks at 0 dBFS, so the loudest notes
   # crackle. 4 dB of headroom keeps them clean; alsa-restore brings the stored
-  # level back on every boot.
+  # level back on every boot. A fresh card has no Headphones card until
+  # audremap-pin19 turns it on at the reboot, so the level goes straight into
+  # the stored state for that boot to restore: -400, as the volume counts in
+  # 0.01 dB. alsactl store keeps a missing card's state, and both of the
+  # card's controls are there so restore doesn't run its init script first.
+  # $1: the state file, for the tests.
   set_audio_level() {
-    if ! amixer -q -c Headphones sset PCM -- -4dB; then
-      echo "No Headphones card yet; audio level left at its default"
-      return 0
+    local f=${1:-/var/lib/alsa/asound.state} kept=""
+    if amixer -q -c Headphones sset PCM -- -4dB; then
+      sudo alsactl store
+      return
     fi
-    sudo alsactl store
+    echo "No Headphones card until the reboot; storing -4 dB for it"
+    # Every other card's state stays; an old Headphones level goes.
+    [[ -f $f ]] && kept=$(awk '/^state\.Headphones \{/ { skip = 1 }
+      !skip; skip && /^\}/ { skip = 0 }' "$f")
+    sudo mkdir -p "${f%/*}" || return $?
+    { [[ -n $kept ]] && printf '%s\n' "$kept"
+      cat <<'STATE'
+state.Headphones {
+	control.1 {
+		iface MIXER
+		name 'PCM Playback Volume'
+		value -400
+	}
+	control.2 {
+		iface MIXER
+		name 'PCM Playback Switch'
+		value true
+	}
+}
+STATE
+    } | sudo tee "$f" >/dev/null
   }
   run "[maclock] Setting audio level to -4 dB" set_audio_level
 fi
