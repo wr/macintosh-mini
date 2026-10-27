@@ -698,7 +698,7 @@ fi
 # is the source of truth. Best-effort: prints nothing if offline, missing, or
 # unparseable, so the caller just shows the menu without a what's-new section.
 changelog_since() {
-  local from=${1:-} md v versions show=()
+  local from=${1:-} md v versions show=() gap=""
   md=$(curl -fsSL --retry 2 "$REPO_RAW/CHANGELOG.md" 2>/dev/null) || return 0
   [[ -n $md ]] || return 0
   versions=$(printf '%s\n' "$md" | sed -n 's/^## \[\([0-9][0-9.]*\)\].*/\1/p')
@@ -716,7 +716,8 @@ changelog_since() {
   done <<< "$versions"
   [[ ${#show[@]} -gt 0 ]] || return 0
   for v in "${show[@]}"; do
-    printf 'New in %s:\n' "$v"
+    printf '%sNew in %s:\n' "$gap" "$v"
+    gap=$'\n'   # a blank line between versions
     printf '%s\n' "$md" | awk -v ver="$v" '
       $0 ~ "^## \\[" ver "\\]" {p=1; next}
       p && /^## \[/ {exit}

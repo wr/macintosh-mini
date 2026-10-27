@@ -4,8 +4,8 @@ Notable changes to the macintosh-mini installer (`setup.sh`). Re-running on an
 existing Pi shows the entries added since the installed version.
 
 ## [1.10.0] - 2026-10-27
-- The speaker goes quiet between sounds. On rev 2026.09 boards it hissed, burbled on battery and ticked during Wi-Fi setup even with nothing playing. The installer now disconnects the speaker's audio pin while the Mac is silent, and connects it again just before the next sound, so nothing gets cut off. You may hear a faint click about 3 seconds after a sound ends. A Pi with its own `/etc/asound.conf`, for a USB DAC say, is left as it is.
-- The startup chime no longer crackles on a new install. Since 1.6.1 the installer has turned the Pi's audio down 4 dB, but on a freshly flashed card the speaker output only appears after the installer restarts the Pi, so the setting was skipped and the audio stayed at full volume. It's now saved for that first start. Updating fixes a Mac installed that way.
+- Quieter speaker: no hiss, burble or ticking while the Mac is silent. A faint click about 3 s after a sound is normal.
+- The startup chime no longer crackles on Macs set up from a fresh card.
 
 ## [1.9.1] - 2026-10-22
 - A freshly flashed card no longer stops at "Installing apt packages" when the installer starts within a few minutes of the Pi's first start. When a hostname is set in Raspberry Pi Imager, Pi OS is still installing a package of its own then; the installer now waits for it to finish.

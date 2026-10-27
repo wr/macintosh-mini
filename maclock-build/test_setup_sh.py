@@ -299,6 +299,25 @@ class AudioLevel(unittest.TestCase):
         self.assertNotIn('value 0', state.replace(self.HDMI, ''))
 
 
+class WhatsNew(unittest.TestCase):
+    """The update menu lists the changelog entries since the installed version."""
+
+    MD = ("# Changelog\n\n## [1.11.0] - 2026-11-01\n- later\n\n"
+          "## [1.10.0] - 2026-10-27\n- one\n- two\n\n"
+          "## [1.9.1] - 2026-10-22\n- three\n\n## [1.9.0] - 2026-10-21\n- four\n")
+
+    def test_versions_since_the_installed_one_with_a_blank_line_between(self):
+        tmp = Path(tempfile.mkdtemp())
+        (tmp / 'CHANGELOG.md').write_text(self.MD)
+        (tmp / 'curl').write_text(f'#!/bin/sh\ncat {tmp}/CHANGELOG.md\n')
+        (tmp / 'curl').chmod(0o755)
+        script = function('changelog_since') + 'VERSION=1.10.0 REPO_RAW=x\nchangelog_since 1.9.0\n'
+        r = subprocess.run(['bash', '-euo', 'pipefail', '-c', script], capture_output=True,
+                           text=True, env=dict(os.environ, PATH=f'{tmp}:/usr/bin:/bin'))
+        self.assertEqual(r.stdout, 'New in 1.10.0:\n- one\n- two\n\nNew in 1.9.1:\n- three\n',
+                         r.stderr)
+
+
 class Hotspot(unittest.TestCase):
 
     def test_no_dhcp_option_114(self):
