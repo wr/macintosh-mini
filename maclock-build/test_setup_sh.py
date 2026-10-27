@@ -19,7 +19,8 @@ SETUP = (Path(__file__).resolve().parent.parent / 'setup.sh').read_text()
 
 
 def function(name):
-    m = re.search(rf'^{name}\(\) \{{\n.*?^\}}\n', SETUP, re.S | re.M)
+    # Top level, or nested in an if block: it closes at the indent it opened at.
+    m = re.search(rf'^([ \t]*){name}\(\) \{{\n.*?^\1\}}\n', SETUP, re.S | re.M)
     if not m:
         raise AssertionError(f'{name}() not found in setup.sh')
     return m.group(0)
@@ -235,6 +236,86 @@ class PiCheck(unittest.TestCase):
         self.assertLess(check, SETUP.index('\nensure_sudo\n'))
         self.assertLess(check, SETUP.index('check_basilisk_assets\n'))
         self.assertIn('--skip-pi-check) SKIP_PI_CHECK=1', SETUP)
+
+
+class AudioLevel(unittest.TestCase):
+    """Chimes crackle through the breakout's amp at full scale, so the Pi's
+    audio goes 4 dB down. On a fresh card the Headphones card only appears
+    after the reboot, so the level goes into ALSA's saved state for then."""
+
+    HDMI = ("state.vc4hdmi {\n\tcontrol.1 {\n\t\tiface CARD\n\t\tname 'HDMI Jack'\n"
+            "\t\tvalue false\n\t}\n}\n")
+    OLD_HEADPHONES = ("state.Headphones {\n\tcontrol.1 {\n\t\tiface MIXER\n"
+                      "\t\tname 'PCM Playback Volume'\n\t\tvalue 0\n\t\tcomment {\n"
+                      "\t\t\tdbvalue.0 0\n\t\t}\n\t}\n}\n")
+
+    def run_fn(self, card, state=None):
+        tmp = Path(tempfile.mkdtemp())
+        calls = tmp / 'calls'
+        for name, body in (('amixer', f'exit {0 if card else 1}'),
+                           ('alsactl', f'echo "$*" >> {calls}'),
+                           ('sudo', 'exec "$@"')):
+            (tmp / name).write_text(f'#!/bin/sh\n{body}\n')
+            (tmp / name).chmod(0o755)
+        f = tmp / 'alsa' / 'asound.state'
+        if state is not None:
+            f.parent.mkdir()
+            f.write_text(state)
+        script = function('set_audio_level') + f'set_audio_level {f}; echo "rc=$?"\n'
+        r = subprocess.run(['bash', '-euo', 'pipefail', '-c', script], capture_output=True,
+                           text=True, env=dict(os.environ, PATH=f'{tmp}:/usr/bin:/bin'))
+        self.assertIn('rc=0', r.stdout, r.stderr)
+        return (calls.read_text().splitlines() if calls.exists() else [],
+                f.read_text() if f.exists() else None)
+
+    def headphones(self, state):
+        return re.findall(r'^state\.Headphones \{\n.*?^\}\n', state, re.S | re.M)
+
+    def test_card_present_saves_the_live_level(self):
+        calls, state = self.run_fn(card=True)
+        self.assertEqual(calls, ['store'])
+        self.assertIsNone(state)
+
+    def test_fresh_card_saves_minus_4_db_for_the_first_boot(self):
+        calls, state = self.run_fn(card=False)
+        self.assertEqual(calls, [])
+        [block] = self.headphones(state)
+        # The volume counts in 0.01 dB. Both of the card's controls, or
+        # alsactl restore falls back to its init script first.
+        self.assertIn("name 'PCM Playback Volume'\n\t\tvalue -400\n", block)
+        self.assertIn("name 'PCM Playback Switch'\n\t\tvalue true\n", block)
+
+    def test_other_cards_kept_and_an_old_level_replaced(self):
+        _, state = self.run_fn(card=False, state=self.HDMI + self.OLD_HEADPHONES)
+        self.assertTrue(state.startswith(self.HDMI), state)
+        [block] = self.headphones(state)
+        self.assertIn('value -400', block)
+        self.assertNotIn('value 0', block)
+
+    def test_old_level_replaced_before_other_cards(self):
+        _, state = self.run_fn(card=False, state=self.OLD_HEADPHONES + self.HDMI)
+        self.assertIn(self.HDMI, state)
+        self.assertEqual(len(self.headphones(state)), 1)
+        self.assertNotIn('value 0', state.replace(self.HDMI, ''))
+
+
+class WhatsNew(unittest.TestCase):
+    """The update menu lists the changelog entries since the installed version."""
+
+    MD = ("# Changelog\n\n## [1.11.0] - 2026-11-01\n- later\n\n"
+          "## [1.10.0] - 2026-10-27\n- one\n- two\n\n"
+          "## [1.9.1] - 2026-10-22\n- three\n\n## [1.9.0] - 2026-10-21\n- four\n")
+
+    def test_versions_since_the_installed_one_with_a_blank_line_between(self):
+        tmp = Path(tempfile.mkdtemp())
+        (tmp / 'CHANGELOG.md').write_text(self.MD)
+        (tmp / 'curl').write_text(f'#!/bin/sh\ncat {tmp}/CHANGELOG.md\n')
+        (tmp / 'curl').chmod(0o755)
+        script = function('changelog_since') + 'VERSION=1.10.0 REPO_RAW=x\nchangelog_since 1.9.0\n'
+        r = subprocess.run(['bash', '-euo', 'pipefail', '-c', script], capture_output=True,
+                           text=True, env=dict(os.environ, PATH=f'{tmp}:/usr/bin:/bin'))
+        self.assertEqual(r.stdout, 'New in 1.10.0:\n- one\n- two\n\nNew in 1.9.1:\n- three\n',
+                         r.stderr)
 
 
 class Hotspot(unittest.TestCase):

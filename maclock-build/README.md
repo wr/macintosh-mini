@@ -178,7 +178,37 @@ Edge cases:
 
 ---
 
-## 4. Keep the Wi-Fi awake
+## 4. Quiet speaker between sounds
+
+The Pi's audio PWM on GPIO 19 runs even when nothing plays. Sitting at half duty, it carries noise from the Pi's own 3.3 V into the amp: hiss, the burble on battery, and a ticking while the Wi-Fi setup hotspot is up. Letting go of the pin (input, no pull) silences all of it. Measured with a mic beside the speaker, the hotspot ticking goes away, and with the emulator busy and silent the background drops 12 to 16 dB. Letting go clicks faintly. Taking the pin back is silent, because the filter after the pin holds its level meanwhile. Driving the pin low instead pops loudly both ways.
+
+Two pieces do it:
+
+- [`audio_gate_plugin.c`](./audio_gate_plugin.c) is an ALSA plugin that every player goes through. It passes sound on untouched, and whenever it's handed something other than silence it sends a byte to `/run/audio-gate.sock`. Players write ahead of the hardware, the emulators by about 0.19 s, so that's before the speaker plays it.
+- [`audio_gate.py`](./audio_gate.py) listens there. It connects the pin within about 10 ms of a byte and lets go 3 seconds after the last one.
+
+Watching the sound as it plays, with ALSA's `file` plugin and no compiled code, is too late: on the Pi it cut up to 60 ms from the start of each sound.
+
+```bash
+sudo apt-get install -y libasound2-dev
+for f in audio_gate_plugin.c audio_gate.py audio-gate.socket audio-gate.service asound.conf; do
+  curl -fL -o $f https://raw.githubusercontent.com/wr/macintosh-mini/main/maclock-build/$f
+done
+cc -O2 -fPIC -DPIC -shared -o libasound_module_pcm_audiogate.so audio_gate_plugin.c -lasound
+
+sudo install -D -m644 libasound_module_pcm_audiogate.so /usr/local/lib/alsa-lib/libasound_module_pcm_audiogate.so
+sudo install -m755 audio_gate.py /usr/local/bin/audio_gate.py
+sudo install -m644 audio-gate.socket audio-gate.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now audio-gate.socket audio-gate.service
+sudo install -m644 asound.conf /etc/asound.conf
+```
+
+Install [`asound.conf`](./asound.conf) last: from then on every player goes through the plugin. If the gate isn't running, the plugin's bytes go nowhere and sound plays as before. Without the plugin in `asound.conf`, the gate never lets go. To turn it off, delete `/etc/asound.conf`, then `sudo systemctl disable --now audio-gate.socket audio-gate.service`.
+
+---
+
+## 5. Keep the Wi-Fi awake
 
 The Pi Zero 2 W ships with Wi-Fi power saving on. The radio parks itself when nothing is talking to it, so the Pi falls off the network while idle and is slow to answer when you come back: SSH hangs for a while before it wakes up. The installer turns power saving off unless you pass `--wifi-powersave`.
 
@@ -226,7 +256,7 @@ Do **not** restart NetworkManager to apply this. It drops the Wi-Fi, which cuts 
 
 ---
 
-## 5. Install the emulator
+## 6. Install the emulator
 
 The Pi side is done. Next, [install the emulator](../emulators/).
 
@@ -282,10 +312,10 @@ If the old name comes back in `/etc/hosts` after a reboot, that is cloud-init's 
 
 The setup script does all of this for you when you give it a hostname.
 
-**Audio buzz at low brightness.** The onboard analogue audio is PWM on a digital pin next to the display's, so it picks up interference. Nothing on the software side fixes it — a USB DAC does.
+**Audio buzz at low brightness.** The onboard analogue audio is PWM on a digital pin next to the display's, so it picks up interference. The audio gate ([step 4](#4-quiet-speaker-between-sounds)) silences it between sounds; under sound it's still there, and a USB DAC fixes that.
 
 **Audio burbles on battery.** On rev 2026.09 boards, running from the internal 18650 puts a constant burble in the speaker. It gets louder as the brightness goes up, and changes when the charge cable is plugged in.
 
 The Maclock's charging board does not boost the cell to 5 V. Its output is the cell itself: about 4.15 V with no load and about 4.00 V with the Pi running, and the same with the charge cable plugged in. The Pi runs from that and makes its own 3.3 V from it with far less margin than it has on 5 V. The PWM audio pin switches between that 3.3 V and ground, so noise on the Pi's 3.3 V rides straight into the amp. Holding GPIO 19 low with the emulator still running (`pinctrl set 19 op dl`; `pinctrl set 19 a5` restores it) drops the burble to the noise floor, so the amp's own supply and ground are clean. The Pi does not flag the low supply either: `vcgencmd get_throttled` reported `0x0` while it ran at 4.00 V.
 
-The next board revision rebuilds the audio signal on the board from its own low-noise 3.0 V regulator, which takes the Pi's supply out of the path. It hasn't been built and tested yet. Until then, turn the brightness down.
+The next board revision rebuilds the audio signal on the board from its own low-noise 3.0 V regulator, which takes the Pi's supply out of the path. It hasn't been built and tested yet. Until then, the audio gate ([step 4](#4-quiet-speaker-between-sounds)) keeps the speaker quiet between sounds, and turning the brightness down helps during them.

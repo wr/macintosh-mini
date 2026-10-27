@@ -56,7 +56,7 @@ set -euo pipefail
 
 REPO_BRANCH="main"   # --branch: test an unmerged branch on a real Pi
 REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/$REPO_BRANCH"
-VERSION="1.9.1"
+VERSION="1.10.0"
 
 # SheepShaver paths (DISK_IMAGE is auto-discovered or set via --disk)
 DISK_IMAGE=""
@@ -698,7 +698,7 @@ fi
 # is the source of truth. Best-effort: prints nothing if offline, missing, or
 # unparseable, so the caller just shows the menu without a what's-new section.
 changelog_since() {
-  local from=${1:-} md v versions show=()
+  local from=${1:-} md v versions show=() gap=""
   md=$(curl -fsSL --retry 2 "$REPO_RAW/CHANGELOG.md" 2>/dev/null) || return 0
   [[ -n $md ]] || return 0
   versions=$(printf '%s\n' "$md" | sed -n 's/^## \[\([0-9][0-9.]*\)\].*/\1/p')
@@ -716,7 +716,8 @@ changelog_since() {
   done <<< "$versions"
   [[ ${#show[@]} -gt 0 ]] || return 0
   for v in "${show[@]}"; do
-    printf 'New in %s:\n' "$v"
+    printf '%sNew in %s:\n' "$gap" "$v"
+    gap=$'\n'   # a blank line between versions
     printf '%s\n' "$md" | awk -v ver="$v" '
       $0 ~ "^## \\[" ver "\\]" {p=1; next}
       p && /^## \[/ {exit}
@@ -1228,7 +1229,7 @@ TOTAL_STEPS=4   # apt update, apt install, patch_cmdline, record_install
 [[ $WIFI_POWERSAVE -eq 0 ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
 [[ -n $NEW_HOSTNAME && $NEW_HOSTNAME != "$CUR_HOSTNAME" ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
 [[ -n $TIMEZONE ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))
-[[ $INSTALL_MACLOCK -eq 1 ]] && TOTAL_STEPS=$((TOTAL_STEPS+7))
+[[ $INSTALL_MACLOCK -eq 1 ]] && TOTAL_STEPS=$((TOTAL_STEPS+8))
 if [[ $INSTALL_SHEEPSHAVER -eq 1 ]]; then
   TOTAL_STEPS=$((TOTAL_STEPS + 8 + $(emu_steps SheepShaver /usr/local/bin/SheepShaver "$SHEEPSHAVER_STAMP")))
 fi
@@ -1306,6 +1307,9 @@ if [[ $INSTALL_SHEEPSHAVER -eq 1 || $INSTALL_BASILISK -eq 1 ]]; then
 fi
 if [[ $INSTALL_MACLOCK -eq 1 ]]; then
   APT_PKGS+=(python3-lgpio device-tree-compiler unzip)
+  # The audio gate's ALSA plugin is built on the Pi. Pi OS Lite already has
+  # the compiler; only the ALSA headers are new.
+  APT_PKGS+=(gcc libc6-dev libasound2-dev)
 fi
 if [[ $FIRST_BOOT_WAIT -eq 1 ]]; then
   run_long "Waiting for Pi OS to finish its first start" wait_for_first_boot
@@ -1657,17 +1661,79 @@ QUIT
   }
   run "[maclock] Installing reset-button wrappers" install_restart_wrapper
 
+  # The audio PWM on GPIO 19 runs even when nothing plays, carrying the Pi's
+  # supply noise into the speaker: hiss, a burble on battery, ticking while
+  # the setup hotspot is up. audio_gate.py lets go of the pin between sounds.
+  # The ALSA plugin built here tells it when a player has sound, ahead of the
+  # speaker. See maclock-build/README.md.
+  install_audio_gate() {
+    # A hand-made asound.conf (for a USB DAC, say) is the owner's. The gate
+    # needs its own, so leave both alone.
+    if [[ -e /etc/asound.conf ]] && ! grep -q audiogate /etc/asound.conf; then
+      echo "Keeping your own /etc/asound.conf; the audio gate stays off"
+      return 0
+    fi
+    local f tmp; tmp=$(mktemp -d)
+    for f in audio_gate_plugin.c audio_gate.py audio-gate.socket audio-gate.service asound.conf; do
+      curl -fL --retry 3 -o "$tmp/$f" "$REPO_RAW/maclock-build/$f" || return $?
+    done
+    cc -O2 -fPIC -DPIC -shared -o "$tmp/libasound_module_pcm_audiogate.so" \
+      "$tmp/audio_gate_plugin.c" -lasound || return $?
+    # install replaces the file rather than writing into it, so a running
+    # emulator keeps the copy it loaded.
+    sudo install -D -m644 "$tmp/libasound_module_pcm_audiogate.so" \
+      /usr/local/lib/alsa-lib/libasound_module_pcm_audiogate.so || return $?
+    sudo install -m755 "$tmp/audio_gate.py" /usr/local/bin/audio_gate.py || return $?
+    sudo install -m644 "$tmp/audio-gate.socket" "$tmp/audio-gate.service" \
+      /etc/systemd/system/ || return $?
+    sudo systemctl daemon-reload
+    sudo systemctl enable audio-gate.socket audio-gate.service
+    # restart, not start: on an update the old script is still running
+    sudo systemctl start audio-gate.socket
+    sudo systemctl restart audio-gate.service
+    # Last: from here every player goes through the plugin.
+    sudo install -m644 "$tmp/asound.conf" /etc/asound.conf || return $?
+    rm -rf "$tmp"
+  }
+  run "[maclock] Installing the audio gate" install_audio_gate
+
   # Full-scale PWM audio (~3.3 Vpp) through the breakout amp's 2.6x gain asks
   # for more swing than the amp can put across 8 ohms from the clock's ~4 V
   # battery supply, and every chime peaks at 0 dBFS, so the loudest notes
   # crackle. 4 dB of headroom keeps them clean; alsa-restore brings the stored
-  # level back on every boot.
+  # level back on every boot. A fresh card has no Headphones card until
+  # audremap-pin19 turns it on at the reboot, so the level goes straight into
+  # the stored state for that boot to restore: -400, as the volume counts in
+  # 0.01 dB. alsactl store keeps a missing card's state, and both of the
+  # card's controls are there so restore doesn't run its init script first.
+  # $1: the state file, for the tests.
   set_audio_level() {
-    if ! amixer -q -c Headphones sset PCM -- -4dB; then
-      echo "No Headphones card yet; audio level left at its default"
-      return 0
+    local f=${1:-/var/lib/alsa/asound.state} kept=""
+    if amixer -q -c Headphones sset PCM -- -4dB; then
+      sudo alsactl store
+      return
     fi
-    sudo alsactl store
+    echo "No Headphones card until the reboot; storing -4 dB for it"
+    # Every other card's state stays; an old Headphones level goes.
+    [[ -f $f ]] && kept=$(awk '/^state\.Headphones \{/ { skip = 1 }
+      !skip; skip && /^\}/ { skip = 0 }' "$f")
+    sudo mkdir -p "${f%/*}" || return $?
+    { [[ -n $kept ]] && printf '%s\n' "$kept"
+      cat <<'STATE'
+state.Headphones {
+	control.1 {
+		iface MIXER
+		name 'PCM Playback Volume'
+		value -400
+	}
+	control.2 {
+		iface MIXER
+		name 'PCM Playback Switch'
+		value true
+	}
+}
+STATE
+    } | sudo tee "$f" >/dev/null
   }
   run "[maclock] Setting audio level to -4 dB" set_audio_level
 fi
