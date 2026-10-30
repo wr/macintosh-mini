@@ -10,8 +10,8 @@ the tiny Mac boots System 7 or Mac OS 8. This repo holds the installer (`setup.s
 ## Source of truth
 - GitHub: github.com/wr/macintosh-mini (public), remote `origin`. Everything committed is public:
   no machine addresses or logins, orders or carts, supplier accounts, customer details or launch
-  plans. Those, and new plans, specs, reviews and build logs, go in Wells's private notes repo
-  (`~/Projects/notes/macintosh-mini/` on his Macs). `docs/superpowers/` holds a few older designs; leave them.
+  plans. Plans, specs, reviews and build logs don't belong here either. `docs/superpowers/` holds a
+  few older designs; leave them.
 - Linear project: Macintosh Mini (id: 1598d0ac-9f10-4eb8-989e-89ffd628cdcd), team Personal
 - Branch prefix: wells/
 - PR mode: ready
@@ -26,7 +26,7 @@ the tiny Mac boots System 7 or Mac OS 8. This repo holds the installer (`setup.s
   `CHANGELOG.md` in the same PR. The update menu shows the entries newer than the installed
   version, so write them for owners, one line each.
 - Merging is not a release. A release (tag `vX.Y.Z` plus GitHub release notes) happens only when
-  Wells asks.
+  a maintainer asks.
 - Emulators: CI (`.github/workflows/emulators.yml`) builds Basilisk II and SheepShaver, plain and
   tuned, for every push that touches `setup.sh` or the emulator scripts, publishes a pre-release
   `emulators-<commit>-<settings hash>`, and a bot commits its checksums into `setup.sh` on the
@@ -44,7 +44,7 @@ the tiny Mac boots System 7 or Mac OS 8. This repo holds the installer (`setup.s
 | | |
 |---|---|
 | `README.md` | Landing page: what it is, build or buy, the install command. Keep it short and scannable; only fix what would confuse a first-time reader. Detail goes in the build guide or the folder READMEs. |
-| Build guide | wells.ee/projects/macintosh-mini/. Its source, drawings included, lives in Wells's private `wr/shop` repo; edit it there, never copy it back here. |
+| Build guide | wells.ee/projects/macintosh-mini/. Its source, drawings included, lives in a separate private repo; edit it there, never copy it back here. |
 | `CHANGELOG.md` | Installer changes, read by the update menu. |
 | `maclock-build/README.md` | Setting up the Pi by hand: what `setup.sh` does, step by step. |
 | `emulators/` | Installing Basilisk II or SheepShaver by hand; the startup chimes. |
@@ -73,7 +73,7 @@ Three tools, three jobs:
   graphics; do those in a `pcbnew` script.
 
 Habits:
-- Edit files on disk with KiCad closed. Wells edits in the GUI between turns, so re-read the board
+- Edit files on disk with KiCad closed. A person may edit in the GUI between turns, so re-read the board
   from disk (and check for `~*.lck`) before every scripted edit.
 - DRC gate: `kicad-cli pcb drc --refill-zones --schematic-parity --severity-all <board>`; treat
   every unconnected item as real. ERC: 0 errors. BOM from the schematic, with `--exclude-dnp`.
@@ -100,7 +100,7 @@ the internet for its fonts). A guide reads
 as a plain document: one column, headings and paragraphs, no window frames, boxes or side-by-side
 columns; the only UI on the page is real screenshots. Typed text is blue as well as monospace.
 One double-sided US Letter sheet: setup looks short on the front, the optional parts go on the
-back under "Going further", help links at the end. Use Wells's wording verbatim where he gives it.
+back under "Going further", help links at the end. Use the maintainer's wording verbatim where given.
 
 ## Licensing
 Hardware folders are CERN-OHL-S-2.0, `setup.sh`, `maclock-build/` and the other scripts are
@@ -110,8 +110,8 @@ same change; never commit a third-party file without a licence. Lint in a scratc
 `pip install 'reuse[charset-normalizer]' && reuse lint` (plain `reuse` fails on macOS).
 
 ## Testing on a real Pi
-- Ask before using a Pi: they're shared with other sessions, and one is Wells's everyday Mac.
-  Addresses and logins are in Wells's private notes. Use the IP; `.local` names may not resolve.
+- Ask before using a Pi: it may be shared with other sessions, or be someone's everyday Mac. Use
+  the IP; `.local` names may not resolve.
 - Run the installer on the Pi itself, detached (`setsid nohup`, in a pty, with `TERM` set): Wi-Fi
   drops SSH under install load and would kill it. Without `TERM`, whiptail fails and `setup.sh`
   exits 0 silently. Keep helper scripts in `~`, not `/tmp`, which the installer's reboot wipes.
@@ -119,7 +119,7 @@ same change; never commit a third-party file without a licence. Lint in a scratc
   Enter once at "Update to version".
 - A failed `ssh` is not "the emulator stopped": act only on an answer from a successful one.
 - A weak charger resets the Pi when the setup hotspot starts; use a good one.
-- Timed listening tests that Wells records on his phone: chat doesn't reach him in time, so play a
+- Timed listening tests that someone records on a phone: chat doesn't reach them in time, so play a
   distinct 1 s ready tone from the speaker, wait 2 s, then the sync beeps and the first state.
 - Leave nothing behind: purge any tool you installed for a test.
 
