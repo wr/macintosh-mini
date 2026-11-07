@@ -108,6 +108,7 @@ POST_CHAMFER = 0.5;
 POST_SEAT = 2;
 POST_PROUD = 5;
 POST_RECESS_CLEAR = PRESS_FIT;
+POST_SURROUND = 2;
 
 // Side stop
 STOP_T = 10;
@@ -151,6 +152,9 @@ POST_X0 = POST_X1 - POST_W;
 POST_Y0 = HANDHOLD_CORNER_Y + POST_CLEAR;
 POST_Y1 = POST_Y0 + POST_W;
 
+// The jig's top edge, at least POST_SURROUND past the post's pocket.
+JIG_Y1 = max(PY1 + WALL_W, POST_Y1 + POST_RECESS_CLEAR + POST_SURROUND);
+
 // The jig's outline, to lay the other parts out beside it.
 JIG_MIN_X = HAS_TAB ? TAB_X0 : LEFT;
 JIG_MAX_X = PX1 + WALL_W;
@@ -176,10 +180,14 @@ module slot(w, l, z0, z1, c = 0) {
     }
 }
 
+// Clearance hole through the floor with a 90-degree countersink at the top.
+// Above the floor it carries on straight up, so it can't nick a wall that a
+// small foot brings close.
 module countersunk(x, y) {
-    top_r = SINK_D / 2 + AIR;
-    depth = top_r - SCREW_CLEAR_D / 2;
-    translate([x, y, FLOOR_T + AIR - depth]) cylinder(h = depth, r1 = SCREW_CLEAR_D / 2, r2 = top_r);
+    r = SINK_D / 2;
+    depth = r - SCREW_CLEAR_D / 2;
+    translate([x, y, FLOOR_T - depth]) cylinder(h = depth, r1 = SCREW_CLEAR_D / 2, r2 = r);
+    rod(x, y, SINK_D, FLOOR_T, FLOOR_T + AIR);
     rod(x, y, SCREW_CLEAR_D, -AIR, FLOOR_T + AIR);
 }
 
@@ -191,7 +199,7 @@ module jig() {
     c = POST_RECESS_CLEAR;
     difference() {
         union() {
-            box(LEFT, JIG_MAX_X, JIG_Y0, PY1 + WALL_W, 0, TOP);
+            box(LEFT, JIG_MAX_X, JIG_Y0, JIG_Y1, 0, TOP);
             // Thumb tab, overlapping the left wall by AIR so the union fuses.
             if (HAS_TAB) box(TAB_X0, LEFT + AIR, THUMB_Y0, THUMB_Y1, 0, FLOOR_T);
         }

@@ -409,6 +409,22 @@ class TestSliders(unittest.TestCase):
                     self.assertTrue(solid_at(parts["jig"], x, y, q.FLOOR_T - EPS))
                     self.assertFalse(solid_at(parts["jig"], x, y, q.FLOOR_T + EPS))
 
+    def test_right_wall_is_whole_beside_the_screws(self):
+        # A small foot brings the wall close to the countersinks.
+        for label, q, parts in self.built:
+            x = q.HOLE_X + q.POCKET_W / 2 + EPS
+            for y in q.SIDE_STOP_SCREW_Y:
+                with self.subTest(label, y=y):
+                    self.assertTrue(solid_at(parts["jig"], x, y, q.FLOOR_T + EPS))
+
+    def test_at_least_2_of_jig_past_the_post_pocket(self):
+        # A small foot or hole brings the top edge down near it.
+        for label, q, parts in self.built:
+            with self.subTest(label):
+                bb = parts["post"].bounding_box()
+                y = bb.max.Y + q.POST_RECESS_CLEAR + 2 - EPS
+                self.assertTrue(solid_at(parts["jig"], bb.center().X, y, 1))
+
     def test_side_stop_is_under_solid_floor(self):
         for label, _, parts in self.built:
             bb = parts["side stop"].bounding_box()

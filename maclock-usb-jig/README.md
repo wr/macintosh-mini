@@ -34,16 +34,16 @@ The router base's round foot slides inside the jig's walls. Pushing it against e
 
 Open `maclock-usb-jig.scad` in [OpenSCAD](https://openscad.org) and set the sliders in its Customizer panel, then render and export an STL:
 
-- **Hole width and height**: the size of the hole in the shell. Printers tend to make inside walls a little tight, so if your first hole comes out small, add a few tenths to both.
-- **Router base foot and bit**: measure across your router base's round foot and your bit. The jig's walls move so the bit still runs along the edges of the hole.
-- **Key and post fit**: the gap around the key and the post where they press into the jig. Make it bigger if they won't go in, smaller if they fall out.
-- **Part to print**: all four parts on one plate, or just one of them, to reprint it.
+- `hole_width` and `hole_height`: the size of the hole in the shell. Printers tend to make inside walls a little tight, so if your first hole comes out small, add a few tenths to both.
+- `foot_diameter` and `bit_diameter`: measure across your router base's round foot and your bit. The jig's walls move so the bit still runs along the edges of the hole.
+- `press_fit`: the gap around the key and the post where they press into the jig. Make it bigger if they won't go in, smaller if they fall out.
+- `part`: all four parts on one plate, or just one of them, to reprint it.
 
 The key, the post and the side stop stay where they are whatever you set, because they're placed by the clock, not the jig.
 
 ## Changing the design
 
-`params.py` and `jig.py` are the source of the STL and STEP. `maclock-usb-jig.scad` builds the same parts again for OpenSCAD, so a change to one goes in the other too. `build.sh` runs the tests, which check both make the same parts at the defaults and with every slider at its ends, then writes the STL and STEP. That check needs OpenSCAD on your `PATH`, and GitHub runs it on every push. build123d doesn't run on Python 3.15 yet, so make the environment with 3.14:
+`params.py` and `jig.py` are the source of the STL and STEP. `maclock-usb-jig.scad` builds the same parts again for OpenSCAD, so a change to one goes in the other too. `build.sh` runs the tests, which check both make the same parts at the defaults and with every slider at its ends, then writes the STL and STEP. That check needs OpenSCAD on your `PATH`, and GitHub runs it on every push that changes this folder. build123d doesn't run on Python 3.15 yet, so make the environment with 3.14:
 
     python3.14 -m venv .venv && .venv/bin/pip install -r requirements.txt
     ./build.sh

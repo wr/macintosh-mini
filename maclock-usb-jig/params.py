@@ -153,6 +153,12 @@ POST_PROUD = 5.0
 back into the corner."""
 POST_RECESS_CLEAR = PRESS_FIT
 """Each side of the pocket over the post."""
+POST_SURROUND = 2.0
+"""Jig beyond the pocket's top side, at least."""
+JIG_Y1 = max(HOLE_Y + POCKET_H / 2 + WALL_W,
+             HANDHOLD_CORNER_Y + POST_CLEAR + POST_W + POST_RECESS_CLEAR + POST_SURROUND)
+"""21.455: the jig's top edge. A small foot or hole would bring the top wall
+down near the post's pocket, and the edge stops POST_SURROUND past it."""
 
 # --- side stop: a block screwed up under the overhang, squaring the jig ---------
 

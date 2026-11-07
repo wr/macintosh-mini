@@ -33,10 +33,12 @@ def screws():
 
 def countersunk(x, y):
     """Clearance hole through the floor with a 90-degree countersink at the
-    top, overshooting both faces by AIR."""
-    top_r = p.SINK_D / 2 + AIR
-    depth = top_r - p.SCREW_CLEAR_D / 2
-    sink = Pos(x, y, p.FLOOR_T + AIR - depth / 2) * Cone(p.SCREW_CLEAR_D / 2, top_r, depth)
+    top, overshooting both faces by AIR. Above the floor it carries on
+    straight up, so it can't nick a wall that a small foot brings close."""
+    r = p.SINK_D / 2
+    depth = r - p.SCREW_CLEAR_D / 2
+    sink = Pos(x, y, p.FLOOR_T - depth / 2) * Cone(p.SCREW_CLEAR_D / 2, r, depth)
+    sink += rod(x, y, p.SINK_D, p.FLOOR_T, p.FLOOR_T + AIR)
     return sink + rod(x, y, p.SCREW_CLEAR_D, -AIR, p.FLOOR_T + AIR)
 
 
@@ -46,7 +48,7 @@ def jig():
     y0, y1 = p.HOLE_Y - h, p.HOLE_Y + h
     t = p.WALL_W
     top = p.FLOOR_T + p.WALL_H
-    part = box(x0 - t, x1 + t, p.JIG_Y0, y1 + t, 0, top)
+    part = box(x0 - t, x1 + t, p.JIG_Y0, p.JIG_Y1, 0, top)
     part -= box(x0, x1, y0, y1, p.FLOOR_T, top + AIR)
     # Thumb tab, overlapping the left wall by AIR so the union fuses.
     tab_x0 = max(x0 - t - p.THUMB_W, p.THUMB_X_MIN)
