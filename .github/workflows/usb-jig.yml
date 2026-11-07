@@ -1,0 +1,33 @@
+# SPDX-FileCopyrightText: 2026 Wells Riley
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Runs the USB jig's tests on every push that touches it, OpenSCAD included,
+# so the customizer's copy (maclock-usb-jig.scad) can't drift from the model
+# the STL and STEP are built from.
+
+name: USB jig
+
+on:
+  push:
+    branches: ['**']
+    paths:
+      - maclock-usb-jig/**
+      - .github/workflows/usb-jig.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Install OpenSCAD
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends openscad
+      - name: Install build123d
+        working-directory: maclock-usb-jig
+        run: python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+      - name: Test
+        working-directory: maclock-usb-jig
+        run: .venv/bin/python -m unittest discover -p 'test_*.py' -v

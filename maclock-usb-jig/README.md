@@ -11,11 +11,12 @@ The router base's round foot slides inside the jig's walls. Pushing it against e
 | `maclock-usb-jig.stl` | The jig, its side stop, the USB-C key and the post, on one plate. Print at 0.2mm layers, no supports. |
 | `maclock-usb-jig-key.stl` | The key on its own, to reprint it. |
 | `maclock-usb-jig.step` | The same parts as solids, to open and edit in any CAD tool (Fusion, Onshape, FreeCAD). |
-| `params.py`, `jig.py` | The source: every dimension, and how the parts are built from them ([build123d](https://github.com/gumyr/build123d)). |
+| `maclock-usb-jig.scad` | The same parts with sliders for your hole, your Dremel and your printer, for OpenSCAD's Customizer. |
+| `params.py`, `jig.py` | The source of the STL and STEP: every dimension, and how the parts are built from them ([build123d](https://github.com/gumyr/build123d)). |
 
 ## You'll need
 
-- A Dremel with its router base (the one with a 60mm round foot) and a 3mm flat-ended cutting bit
+- A Dremel with its router base (the one with a 60mm round foot) and a 3mm flat-ended cutting bit. Other sizes work too: see [Making one for your tools](#making-one-for-your-tools).
 - Two M3 × 30mm countersunk screws
 
 ## Cutting the port
@@ -29,14 +30,23 @@ The router base's round foot slides inside the jig's walls. Pushing it against e
 7. Run the foot around the inside of the walls, keeping it pressed against them, until the middle drops out. Keep the Dremel's cord pointing the same way the whole time: if the bit sits a little off-centre in the base, turning the Dremel would make the hole bigger.
 8. Clean up the edges, then glue the USB-A socket in from the inside.
 
-## Changing it
+## Making one for your tools
 
-Change a number in `params.py`, then rebuild. `build.sh` runs the tests and writes the STL and STEP. build123d doesn't run on Python 3.15 yet, so make the environment with 3.14:
+Open `maclock-usb-jig.scad` in [OpenSCAD](https://openscad.org) and set the sliders in its Customizer panel, then render and export an STL:
+
+- **Hole width and height**: the size of the hole in the shell. Printers tend to make inside walls a little tight, so if your first hole comes out small, add a few tenths to both.
+- **Router base foot and bit**: measure across your router base's round foot and your bit. The jig's walls move so the bit still runs along the edges of the hole.
+- **Key and post fit**: the gap around the key and the post where they press into the jig. Make it bigger if they won't go in, smaller if they fall out.
+- **Part to print**: all four parts on one plate, or just one of them, to reprint it.
+
+The key, the post and the side stop stay where they are whatever you set, because they're placed by the clock, not the jig.
+
+## Changing the design
+
+`params.py` and `jig.py` are the source of the STL and STEP. `maclock-usb-jig.scad` builds the same parts again for OpenSCAD, so a change to one goes in the other too. `build.sh` runs the tests, which check both make the same parts at the defaults and with every slider at its ends, then writes the STL and STEP. That check needs OpenSCAD on your `PATH`, and GitHub runs it on every push. build123d doesn't run on Python 3.15 yet, so make the environment with 3.14:
 
     python3.14 -m venv .venv && .venv/bin/pip install -r requirements.txt
     ./build.sh
-
-The hole's size is `HOLE_W` and `HOLE_H`. Printers tend to make inside walls a little tight, so if the first hole comes out small, add a few tenths to those. If your router base's foot isn't 60mm across, set `FOOT_D` to match and the walls move to suit.
 
 ## License
 

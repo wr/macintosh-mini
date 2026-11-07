@@ -49,13 +49,18 @@ def jig():
     part = box(x0 - t, x1 + t, p.JIG_Y0, y1 + t, 0, top)
     part -= box(x0, x1, y0, y1, p.FLOOR_T, top + AIR)
     # Thumb tab, overlapping the left wall by AIR so the union fuses.
-    part += box(x0 - t - p.THUMB_W, x0 - t + AIR, p.THUMB_Y0, p.THUMB_Y1, 0, p.FLOOR_T)
+    tab_x0 = max(x0 - t - p.THUMB_W, p.THUMB_X_MIN)
+    if tab_x0 < x0 - t:
+        part += box(tab_x0, x0 - t + AIR, p.THUMB_Y0, p.THUMB_Y1, 0, p.FLOOR_T)
 
     m = p.BIT_WINDOW_MARGIN
     part -= box(p.HOLE_X - p.HOLE_W / 2 - m, p.HOLE_X + p.HOLE_W / 2 + m,
                 p.HOLE_Y - p.HOLE_H / 2 - m, p.HOLE_Y + p.HOLE_H / 2 + m, -AIR, top)
+    # Only floor deep: under the router's floor that opens a window, and if a
+    # small foot brings the bottom wall over the switch, it leaves the wall
+    # standing for the foot to run along.
     sw = p.SWITCH_WINDOW_W / 2
-    part -= box(p.HOLE_X - sw, p.HOLE_X + sw, p.SWITCH_WINDOW_Y0, p.SWITCH_WINDOW_Y1, -AIR, top)
+    part -= box(p.HOLE_X - sw, p.HOLE_X + sw, p.SWITCH_WINDOW_Y0, p.SWITCH_WINDOW_Y1, -AIR, p.FLOOR_T)
     part -= slot(p.KEY_RECESS_W, p.KEY_RECESS_L, -AIR, p.KEY_SEAT)
     c = p.POST_RECESS_CLEAR
     px0, px1, py0, py1 = post_xy()

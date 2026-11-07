@@ -5,6 +5,7 @@ from build123d import Axis, Vector
 
 import jig
 import params as p
+import sliders
 
 EPS = 0.02
 """How far either side of a face the probes look."""
@@ -285,10 +286,12 @@ class TestPost(unittest.TestCase):
         cls.bb = cls.post.bounding_box()
 
     def test_mark_is_22_3_in_and_20_65_down_on_the_printed_jig(self):
-        left = p.HOLE_X - p.POCKET_W / 2 - p.WALL_W
-        top = p.HOLE_Y + p.POCKET_H / 2 + p.WALL_W
-        self.assertAlmostEqual(p.HANDHOLD_CORNER_X, left + 22.3, places=6)
-        self.assertAlmostEqual(p.HANDHOLD_CORNER_Y, top - 20.65, places=6)
+        # That jig: a 60 foot, a 3 bit, a 7 x 14 hole and 4 walls.
+        hole_x, hole_y = -10.15, -18.045
+        self.assertAlmostEqual(p.PRINTED_JIG_LEFT, hole_x - (7 + 60 - 3) / 2 - 4, places=6)
+        self.assertAlmostEqual(p.PRINTED_JIG_TOP, hole_y + (14 + 60 - 3) / 2 + 4, places=6)
+        self.assertAlmostEqual(p.HANDHOLD_CORNER_X, p.PRINTED_JIG_LEFT + 22.3, places=6)
+        self.assertAlmostEqual(p.HANDHOLD_CORNER_Y, p.PRINTED_JIG_TOP - 20.65, places=6)
         # At that height the jig's left edge is its main body, not the thumb
         # tab, so the mark is the same on every print.
         self.assertLess(p.THUMB_Y1, p.HANDHOLD_CORNER_Y)
@@ -349,6 +352,92 @@ class TestPlate(unittest.TestCase):
         self.assertEqual(len(faces[-1].inner_wires()), 0)
         faces = placed["key"].faces().sort_by(Axis.Z)
         self.assertGreater(faces[0].area, faces[-1].area)
+
+
+class TestSliders(unittest.TestCase):
+    """The customizer's sliders at their ends still make a jig that cuts the
+    hole it's set to and sits on the clock the same way."""
+
+    @classmethod
+    def setUpClass(cls):
+        # The parts at each setting, built once: (label, params, parts).
+        cls.home = {"key": jig.key(), "post": jig.post()}
+        cls.built = []
+        for label, settings in sliders.settings().items():
+            if settings:
+                with sliders.moved(settings) as q:
+                    parts = {"jig": jig.jig(), "side stop": jig.side_stop(),
+                             "key": jig.key(), "post": jig.post()}
+                cls.built.append((label, q, parts))
+
+    def test_valid_single_solid(self):
+        for label, _, parts in self.built:
+            with self.subTest(label):
+                self.assertTrue(parts["jig"].is_valid)
+                self.assertEqual(len(parts["jig"].solids()), 1)
+
+    def test_foot_against_each_wall_puts_the_bit_on_that_edge_of_the_hole(self):
+        # Probed at the bit's middle and both ends of its run along each edge.
+        for label, q, parts in self.built:
+            reach = q.FOOT_D / 2 - q.BIT_D / 2
+            x0, x1 = q.HOLE_X - q.HOLE_W / 2, q.HOLE_X + q.HOLE_W / 2
+            y0, y1 = q.HOLE_Y - q.HOLE_H / 2, q.HOLE_Y + q.HOLE_H / 2
+            dx, dy = (q.HOLE_W - q.BIT_D) / 2, (q.HOLE_H - q.BIT_D) / 2
+            z = q.FLOOR_T + q.WALL_H / 2
+            for s in (-1, 0, 1):
+                for wall, inside, outside in (
+                    ("left", (x0 - reach + EPS, q.HOLE_Y + s * dy), (x0 - reach - EPS, q.HOLE_Y + s * dy)),
+                    ("right", (x1 + reach - EPS, q.HOLE_Y + s * dy), (x1 + reach + EPS, q.HOLE_Y + s * dy)),
+                    ("bottom", (q.HOLE_X + s * dx, y0 - reach + EPS), (q.HOLE_X + s * dx, y0 - reach - EPS)),
+                    ("top", (q.HOLE_X + s * dx, y1 + reach - EPS), (q.HOLE_X + s * dx, y1 + reach + EPS)),
+                ):
+                    with self.subTest(label, wall=wall, s=s):
+                        self.assertFalse(solid_at(parts["jig"], *inside, z))
+                        self.assertTrue(solid_at(parts["jig"], *outside, z))
+
+    def test_open_under_the_switch(self):
+        for label, q, parts in self.built:
+            with self.subTest(label):
+                y = (q.SWITCH_WINDOW_Y0 + q.SWITCH_WINDOW_Y1) / 2
+                self.assertFalse(solid_at(parts["jig"], q.HOLE_X, y, q.SWITCH_PROUD))
+
+    def test_screw_heads_are_under_the_router_floor(self):
+        for label, q, parts in self.built:
+            for y in q.SIDE_STOP_SCREW_Y:
+                with self.subTest(label, y=y):
+                    x = q.SCREW_IN + q.SINK_D / 2 + EPS
+                    self.assertTrue(solid_at(parts["jig"], x, y, q.FLOOR_T - EPS))
+                    self.assertFalse(solid_at(parts["jig"], x, y, q.FLOOR_T + EPS))
+
+    def test_side_stop_is_under_solid_floor(self):
+        for label, _, parts in self.built:
+            bb = parts["side stop"].bounding_box()
+            for x, y in itertools.product((bb.min.X + 0.5, bb.max.X - 0.5),
+                                          (bb.min.Y + 0.5, bb.max.Y - 0.5)):
+                with self.subTest(label, x=x, y=y):
+                    self.assertTrue(solid_at(parts["jig"], x, y, EPS))
+
+    def test_key_and_post_stay_where_the_clock_is(self):
+        # They locate on the clock, so the sliders mustn't move them.
+        for label, _, parts in self.built:
+            for name, home in self.home.items():
+                with self.subTest(label, part=name):
+                    a, b = parts[name].bounding_box(), home.bounding_box()
+                    self.assertAlmostEqual((a.min - b.min).length, 0.0, places=6)
+                    self.assertAlmostEqual((a.max - b.max).length, 0.0, places=6)
+
+    def test_key_and_post_fit_their_pockets_under_solid_jig(self):
+        for label, q, parts in self.built:
+            for name, seat in (("key", q.KEY_SEAT), ("post", q.POST_SEAT)):
+                with self.subTest(label, part=name):
+                    c = parts[name].bounding_box().center()
+                    self.assertAlmostEqual(overlap(parts["jig"], parts[name]), 0.0, places=6)
+                    self.assertTrue(solid_at(parts["jig"], c.X, c.Y, seat + EPS))
+
+    def test_thumb_tab_stays_on_the_back(self):
+        for label, q, parts in self.built:
+            with self.subTest(label):
+                self.assertGreaterEqual(parts["jig"].bounding_box().min.X, -q.BACK_W + 2 - 1e-6)
 
 
 if __name__ == "__main__":
