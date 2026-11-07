@@ -4,6 +4,10 @@ Coordinates are the clock's, seen from behind with the back shell lying face
 down: X to the right, Y up, Z out of the back. X = 0 is the plane of the
 clock's flat right side and Y = 0 the plane of its flat top, so the clock is
 at X < 0, Y < 0. Z = 0 is the back face the jig sits on, and the print bed.
+
+maclock-usb-jig.scad builds the same parts from the same numbers, for
+OpenSCAD's customizer. test_scad.py checks the two agree: change a number in
+both files.
 """
 
 # --- the clock, measured by Wells on 2026-10-21 -----------------------------
@@ -83,6 +87,11 @@ THUMB_Y0 = -76.0
 THUMB_Y1 = -18.0
 """Clear of the vents and markings at the top left of the back."""
 
+THUMB_X_MIN = -71.0
+"""The tab never reaches further left than this, 2 inside the back's edge
+(BACK_W, below), so a bigger jig gets a narrower tab, not one hanging off the
+back."""
+
 BACK_W = 73.0
 BACK_SCREWS_Y = -81.0
 """The back's width, and where its two lower screw holes are: both estimated
@@ -102,20 +111,29 @@ KEY_SEAT = 2.0
 slot's top end runs under the router's floor."""
 KEY_CHAMFER = 0.4
 """Round the end that goes in the slot, to find it."""
-KEY_RECESS_W = 3.2
-KEY_RECESS_L = 9.0
-"""The pocket under the jig. 0.1 over the key, which a printer closes up to a
-press fit."""
+PRESS_FIT = 0.05
+"""Each side of the pockets the key and the post press into, over the part.
+A printer closes that up to a press fit."""
+KEY_RECESS_W = KEY_W + 2 * PRESS_FIT
+KEY_RECESS_L = KEY_L + 2 * PRESS_FIT
+"""3.2 x 9: the key's pocket under the jig."""
 KEY_SURROUND = 4.0
 """Jig beyond the pocket's bottom end, which takes the jig's bottom edge past
 the slot."""
-JIG_Y0 = USBC_Y - KEY_RECESS_L / 2 - KEY_SURROUND
-"""-64.545: the jig's bottom edge."""
+JIG_Y0 = min(USBC_Y - KEY_RECESS_L / 2 - KEY_SURROUND,
+             HOLE_Y - POCKET_H / 2 - WALL_W)
+"""-64.545: the jig's bottom edge. A foot much bigger than 60 brings the
+bottom wall down past that, and the edge goes with it."""
 
 # --- post: stops the jig turning about the key ----------------------------------
 
-HANDHOLD_CORNER_X = HOLE_X - POCKET_W / 2 - WALL_W + 22.3
-HANDHOLD_CORNER_Y = HOLE_Y + POCKET_H / 2 + WALL_W - 20.65
+PRINTED_JIG_LEFT = -46.15
+PRINTED_JIG_TOP = 21.455
+"""Where the left and top edges of the printed jig Wells measured on were:
+a 60 foot, a 3 bit and a 7 x 14 hole. Fixed, so a different foot or hole
+moves the jig's edges but not the clock's corner."""
+HANDHOLD_CORNER_X = PRINTED_JIG_LEFT + 22.3
+HANDHOLD_CORNER_Y = PRINTED_JIG_TOP - 20.65
 """(-23.85, 0.805): the inside corner where the end of the hand-hold meets the
 clock's top. Measured by Wells on the printed jig sitting on the clock, 22.3
 in from its left edge and 20.65 down from its top."""
@@ -133,9 +151,14 @@ POST_SEAT = 2.0
 POST_PROUD = 5.0
 """Like the key: pressed up into a pocket under the jig, and down past the
 back into the corner."""
-POST_RECESS_CLEAR = 0.05
-"""Each side of the pocket over the post, which a printer closes up to a
-press fit."""
+POST_RECESS_CLEAR = PRESS_FIT
+"""Each side of the pocket over the post."""
+POST_SURROUND = 2.0
+"""Jig beyond the pocket's top side, at least."""
+JIG_Y1 = max(HOLE_Y + POCKET_H / 2 + WALL_W,
+             HANDHOLD_CORNER_Y + POST_CLEAR + POST_W + POST_RECESS_CLEAR + POST_SURROUND)
+"""21.455: the jig's top edge. A small foot or hole would bring the top wall
+down near the post's pocket, and the edge stops POST_SURROUND past it."""
 
 # --- side stop: a block screwed up under the overhang, squaring the jig ---------
 
