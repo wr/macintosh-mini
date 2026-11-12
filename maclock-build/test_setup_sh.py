@@ -299,6 +299,85 @@ class AudioLevel(unittest.TestCase):
         self.assertNotIn('value 0', state.replace(self.HDMI, ''))
 
 
+class MuteBetweenSounds(unittest.TestCase):
+    """The audio gate is a choice, off unless asked for: it quiets rev 2026.09
+    boards and makes rev 2026.11 pop. Turning it off takes out what 1.10.0 put
+    on every Mac."""
+
+    FILES = ('etc/systemd/system/audio-gate.socket', 'etc/systemd/system/audio-gate.service',
+             'usr/local/bin/audio_gate.py',
+             'usr/local/lib/alsa-lib/libasound_module_pcm_audiogate.so', 'run/audio-gate.sock')
+
+    def remove(self, asound=None, installed=True):
+        tmp = Path(tempfile.mkdtemp())
+        root, calls = tmp / 'root', tmp / 'calls'
+        if installed:
+            for f in self.FILES:
+                (root / f).parent.mkdir(parents=True, exist_ok=True)
+                (root / f).write_text('x')
+        if asound is not None:
+            (root / 'etc').mkdir(parents=True, exist_ok=True)
+            (root / 'etc/asound.conf').write_text(asound)
+        bin_ = tmp / 'bin'
+        bin_.mkdir()
+        # systemctl notes whether players still go through the plugin when
+        # it's called, and fails like the real one when there's no unit.
+        for name, body in (('sudo', 'exec "$@"'),
+                           ('systemctl', f'echo "$* asound=$([ -e {root}/etc/asound.conf ] '
+                                         f'&& echo y || echo n)" >> {calls}\n'
+                                         f'[ "$1" = daemon-reload ] || [ "{int(installed)}" = 1 ]')):
+            (bin_ / name).write_text(f'#!/bin/sh\n{body}\n')
+            (bin_ / name).chmod(0o755)
+        fn = function('remove_audio_gate')
+        for d in ('/etc/', '/usr/local/', '/run/'):
+            fn = fn.replace(d, f'{root}{d}')
+        r = subprocess.run(['bash', '-euo', 'pipefail', '-c', fn + 'remove_audio_gate; echo "rc=$?"\n'],
+                           capture_output=True, text=True,
+                           env=dict(os.environ, PATH=f'{bin_}:/usr/bin:/bin'))
+        self.assertIn('rc=0', r.stdout, r.stderr)
+        return root, calls.read_text().splitlines()
+
+    def test_stops_the_gate_before_players_skip_the_plugin(self):
+        root, calls = self.remove(asound=(Path(__file__).resolve().parent / 'asound.conf').read_text())
+        self.assertEqual(calls[0], 'disable --now audio-gate.socket audio-gate.service asound=y')
+        self.assertFalse((root / 'etc/asound.conf').exists())
+        for f in self.FILES:
+            self.assertFalse((root / f).exists(), f)
+        self.assertTrue(calls[-1].startswith('daemon-reload'))
+
+    def test_keeps_an_owners_asound_conf(self):
+        root, _ = self.remove(asound='pcm.!default { type hw; card 1 }\n')
+        self.assertTrue((root / 'etc/asound.conf').exists())
+
+    def test_nothing_to_remove_on_a_fresh_card(self):
+        root, calls = self.remove(installed=False)
+        self.assertEqual(calls[-1], 'daemon-reload asound=n')
+
+    def pick(self, current, choice):
+        """Run pick_audio_gate with wt_menu answering `choice` (None = Cancel)."""
+        fake = ('wt_menu() { echo "default=$3" >&2; '
+                + ('return 1; }\n' if choice is None else f'echo {choice}; }}\n'))
+        script = (fake + function('pick_audio_gate') + 'AUDIO_GATE=""\n'
+                  + f'if pick_audio_gate {current}; then echo "gate=$AUDIO_GATE"; '
+                  + 'else echo cancelled; fi\n')
+        r = subprocess.run(['bash', '-euo', 'pipefail', '-c', script], capture_output=True, text=True)
+        return r.stdout.strip(), r.stderr.strip()
+
+    def test_off_unless_this_mac_has_it(self):
+        self.assertEqual(self.pick('""', 'Off'), ('gate=0', 'default=Off'))
+        self.assertEqual(self.pick(0, 'On'), ('gate=1', 'default=Off'))
+        self.assertEqual(self.pick(1, 'Off'), ('gate=0', 'default=On'))
+
+    def test_cancel_leaves_the_choice_unmade(self):
+        self.assertEqual(self.pick(0, None)[0], 'cancelled')
+
+    def test_update_keeps_the_installed_choice_and_records_it(self):
+        self.assertIn('[[ -z $AUDIO_GATE ]] && AUDIO_GATE=${INSTALLED_AUDIO_GATE:-0}', SETUP)
+        self.assertIn('AUDIO_GATE=%s', function('record_install'))
+        # 1.10.0 put the gate on every Mac and recorded nothing
+        self.assertIn('systemctl is-enabled --quiet audio-gate.service', SETUP)
+
+
 class WhatsNew(unittest.TestCase):
     """The update menu lists the changelog entries since the installed version."""
 

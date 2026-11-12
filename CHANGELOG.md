@@ -3,6 +3,10 @@
 Notable changes to the macintosh-mini installer (`setup.sh`). Re-running on an
 existing Pi shows the entries added since the installed version.
 
+## [1.11.0] - 2026-11-12
+- Muting the speaker between sounds is now a setting, off on new installs. It quiets rev 2026.09 boards and makes rev 2026.11 boards pop.
+- Updating keeps what your Mac has. To change it, pick Edit settings, then Mute between sounds.
+
 ## [1.10.0] - 2026-10-27
 - Quieter speaker: no hiss, burble or ticking while the Mac is silent. A faint click about 3 s after a sound is normal.
 - The startup chime no longer crackles on Macs set up from a fresh card.
