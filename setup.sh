@@ -36,6 +36,11 @@
 #                       (default: prompt; 22:00 on a fresh install)
 #   --timezone <zone>   Area/City for the sunrise schedule (default: keep, or
 #                       prompt when the Pi is still on UTC)
+#   --auto-mute | --no-auto-mute
+#                       speaker auto-mute: mute the speaker when no sound is
+#                       playing. Only for a speaker that hisses or burbles when
+#                       idle (rev 2026.09 boards and earlier); rev 2026.11 pops
+#                       (default: prompt, off; an update keeps what's installed)
 #   --branch <name>     fetch the helper files from a branch other than main
 #   --hotspot-setup     prepare this Mac for someone else, who sets up Wi-Fi from
 #                       a phone instead of a network saved on the card. Installs
@@ -56,7 +61,7 @@ set -euo pipefail
 
 REPO_BRANCH="main"   # --branch: test an unmerged branch on a real Pi
 REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/$REPO_BRANCH"
-VERSION="1.10.0"
+VERSION="1.11.0"
 
 # SheepShaver paths (DISK_IMAGE is auto-discovered or set via --disk)
 DISK_IMAGE=""
@@ -602,7 +607,8 @@ NIGHT_DIM=""       # "" = prompt, 1 = dim the screen at night, 0 = don't
 NIGHT_OFF=""       # "" = prompt, "never", or HH:MM to turn the screen off
 TIMEZONE=""        # Area/City to set; the night schedule needs a real one
 NIGHT_CONF=/etc/default/brightness-control
-HOTSPOT_SETUP=0    # 1 = --hotspot-setup: prepare the Mac for phone setup
+AUDIO_GATE=""      # speaker auto-mute: "" = prompt (an update keeps the installed choice), 1 = on, 0 = off
+HOTSPOT_SETUP=0   # 1 = --hotspot-setup: prepare the Mac for phone setup
 GET_DISK=0         # 1 = --get-disk: download our disk without asking
 SKIP_PI_CHECK=0    # 1 = --skip-pi-check: run on something that isn't a Pi
 
@@ -630,6 +636,8 @@ while [[ $# -gt 0 ]]; do
     --no-night-dim)  NIGHT_DIM=0; shift ;;
     --night-off)     NIGHT_OFF=$2; shift 2 ;;
     --timezone)      TIMEZONE=$2; shift 2 ;;
+    --auto-mute)     AUDIO_GATE=1; shift ;;
+    --no-auto-mute)  AUDIO_GATE=0; shift ;;
     --hotspot-setup) HOTSPOT_SETUP=1; shift ;;
     --branch)        REPO_BRANCH=$2; REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/$REPO_BRANCH"; shift 2 ;;
     --debug)         DEBUG=1; shift ;;
@@ -686,6 +694,11 @@ INSTALLED_MACLOCK=$(state_get MACLOCK)
 INSTALLED_EMULATOR=$(state_get EMULATOR)
 INSTALLED_PERF=$(state_get PERF)
 INSTALLED_BLUETOOTH=$(state_get BLUETOOTH)
+INSTALLED_AUDIO_GATE=$(state_get AUDIO_GATE)
+# 1.10.0 put the audio gate on every Mac with the Maclock hardware and recorded
+# nothing, so go by whether it's switched on.
+[[ -z $INSTALLED_AUDIO_GATE ]] && systemctl is-enabled --quiet audio-gate.service 2>/dev/null \
+  && INSTALLED_AUDIO_GATE=1
 if [[ -z $INSTALLED_VERSION ]]; then
   [[ -f /etc/systemd/system/brightness-control.service ]] && INSTALLED_MACLOCK=1
   grep -qsF "# >>> basilisk-autostart >>>" "$HOME/.profile" && INSTALLED_EMULATOR=basilisk
@@ -950,58 +963,85 @@ reconf_chime() {
   return 0
 }
 
-configure_existing() {  # $1=prefs  $2=is_basilisk
-  local prefs=$1 isb=$2 cur_disk cur_depth cur_chime cur_color cur_modelid cur_model cur_atalk pick
+# Speaker auto-mute (the audio gate, installed further down). The Pi's audio
+# PWM runs even when nothing plays, and on rev 2026.09 boards and earlier it
+# carries the Pi's supply noise into the amp: hiss, and a burble on battery.
+# Letting go of the pin between sounds silences that. Rev 2026.11 rebuilds the
+# signal from its own regulator, so it's quiet already, and letting go of the
+# pin there leaves its buffer's input floating: each let-go and take-back pops.
+# Off unless asked for. Sets AUDIO_GATE; $1 = the current choice (0 or 1).
+pick_audio_gate() {
+  local cur=No pick
+  [[ ${1:-0} == 1 ]] && cur=Yes
+  pick=$(wt_menu "Speaker auto-mute" \
+    "Do you want the speaker to automatically mute when no sound is playing?
+(Don't enable this unless your speaker makes a loud hiss/burble sound when idle)" \
+    "$cur" 2 \
+    "Yes" "" \
+    "No"  "") || return 1
+  case "$pick" in
+    Yes) AUDIO_GATE=1 ;;
+    No)  AUDIO_GATE=0 ;;
+  esac
+}
+
+# The settings editor. $1 = the emulator's prefs, or "" on a hardware-only
+# install; $2 = 1 for Basilisk II. Select edits the highlighted setting; Back
+# returns to the previous menu. Emulator settings change in place at once;
+# Speaker auto-mute takes effect when the install runs.
+configure_existing() {
+  local prefs=$1 isb=$2 cur_disk cur_depth cur_chime cur_color cur_modelid cur_model cur_atalk cur_gate pick
+  local rows=()
   while true; do
-    cur_disk=$(basename "$(pref_get "$prefs" disk)" 2>/dev/null)
-    if [[ $isb -eq 1 ]]; then cur_depth=$(pref_get "$prefs" displaycolordepth)
-    else cur_depth=$(pref_get "$prefs" screen | sed 's#.*/##'); fi
-    cur_chime=$(cat "$HOME/.macintosh_chime" 2>/dev/null || true)
-    case "${cur_depth:-}" in
-      16) cur_color="Color 16-bit" ;;
-      8)  cur_color="Grayscale 8-bit" ;;
-      1)  cur_color="Black & White 1-bit" ;;
-      *)  cur_color="${cur_depth:-?}-bit" ;;
-    esac
-    # Each row edits its setting in place (applied immediately). Select = edit
-    # the highlighted setting; Back = return to the previous menu.
-    if [[ $isb -eq 1 ]]; then
-      cur_modelid=$(pref_get "$prefs" modelid)
-      case "${cur_modelid:-}" in
-        5)  cur_model="Mac IIci (5) — System 7.0/7.1" ;;
-        14) cur_model="Quadra (14) — System 7.5+ / OS 8" ;;
-        *)  cur_model="modelid ${cur_modelid:-?}" ;;
+    rows=()
+    if [[ -n $prefs ]]; then
+      cur_disk=$(basename "$(pref_get "$prefs" disk)" 2>/dev/null)
+      if [[ $isb -eq 1 ]]; then cur_depth=$(pref_get "$prefs" displaycolordepth)
+      else cur_depth=$(pref_get "$prefs" screen | sed 's#.*/##'); fi
+      cur_chime=$(cat "$HOME/.macintosh_chime" 2>/dev/null || true)
+      case "${cur_depth:-}" in
+        16) cur_color="Color 16-bit" ;;
+        8)  cur_color="Grayscale 8-bit" ;;
+        1)  cur_color="Black & White 1-bit" ;;
+        *)  cur_color="${cur_depth:-?}-bit" ;;
       esac
-      cur_atalk=Off; appletalk_on "$prefs" && cur_atalk=On
-      pick=$(whiptail --backtitle "macintosh-mini" --title "Emulator Settings" \
-          --ok-button "Select" --cancel-button "Back" --menu "" 14 72 5 \
-          "Disk image:"    "${cur_disk:-unknown}" \
-          "Startup chime:" "${cur_chime:-—}" \
-          "Color depth:"   "$cur_color" \
-          "Mac model:"     "$cur_model" \
-          "AppleTalk:"     "$cur_atalk" \
-          3>&1 1>&2 2>&3 </dev/tty) || break
-    else
-      pick=$(whiptail --backtitle "macintosh-mini" --title "Emulator Settings" \
-          --ok-button "Select" --cancel-button "Back" --menu "" 12 72 3 \
-          "Disk image:"    "${cur_disk:-unknown}" \
-          "Startup chime:" "${cur_chime:-—}" \
-          "Color depth:"   "$cur_color" \
-          3>&1 1>&2 2>&3 </dev/tty) || break
+      rows+=("Disk image:"    "${cur_disk:-unknown}"
+             "Startup chime:" "${cur_chime:-—}"
+             "Color depth:"   "$cur_color")
+      if [[ $isb -eq 1 ]]; then
+        cur_modelid=$(pref_get "$prefs" modelid)
+        case "${cur_modelid:-}" in
+          5)  cur_model="Mac IIci (5) — System 7.0/7.1" ;;
+          14) cur_model="Quadra (14) — System 7.5+ / OS 8" ;;
+          *)  cur_model="modelid ${cur_modelid:-?}" ;;
+        esac
+        cur_atalk=Off; appletalk_on "$prefs" && cur_atalk=On
+        rows+=("Mac model:" "$cur_model" "AppleTalk:" "$cur_atalk")
+      fi
     fi
+    if [[ $INSTALL_MACLOCK -eq 1 ]]; then
+      cur_gate=Off; [[ ${AUDIO_GATE:-${INSTALLED_AUDIO_GATE:-0}} == 1 ]] && cur_gate=On
+      rows+=("Speaker auto-mute:" "$cur_gate")
+    fi
+    pick=$(whiptail --backtitle "macintosh-mini" --title "Settings" \
+        --ok-button "Select" --cancel-button "Back" --menu "" \
+        $(( ${#rows[@]} / 2 + 9 )) 72 $(( ${#rows[@]} / 2 )) \
+        "${rows[@]}" 3>&1 1>&2 2>&3 </dev/tty) || break
     case "$pick" in
       "Disk image:")    reconf_disk    "$prefs" "$isb" || true ;;
       "Startup chime:") reconf_chime                   || true ;;
       "Color depth:")   reconf_color   "$prefs" "$isb" || true ;;
       "Mac model:")     reconf_modelid "$prefs"        || true ;;
       "AppleTalk:")     reconf_appletalk "$prefs"      || true ;;
+      "Speaker auto-mute:")
+        pick_audio_gate "${AUDIO_GATE:-${INSTALLED_AUDIO_GATE:-0}}" || true ;;
     esac
   done
 }
 
 if [[ $IS_UPDATE -eq 1 ]]; then
-  # The update's main menu. "Edit settings" opens the emulator settings editor
-  # as a modal (its Back returns here); "Update to version X" proceeds, keeping
+  # The update's main menu. "Edit settings" opens the settings editor as a
+  # modal (its Back returns here); "Update to version X" proceeds, keeping
   # every other setting. Cancel/Esc exits. What's new is folded into the prompt
   # (wt_menu grows the box per newline) so it's on the first screen.
   opt_up="Update to version $VERSION"
@@ -1019,8 +1059,7 @@ if [[ $IS_UPDATE -eq 1 ]]; then
       "$opt_edit")
         if   [[ $INSTALL_BASILISK    -eq 1 ]]; then configure_existing "$HOME/.basilisk_ii_prefs" 1
         elif [[ $INSTALL_SHEEPSHAVER -eq 1 ]]; then configure_existing "$HOME/.sheepshaver_prefs" 0
-        else whiptail --backtitle "macintosh-mini" --title "Edit settings" \
-               --msgbox "No editable settings for a hardware-only install." 8 60 </dev/tty || true
+        else configure_existing "" 0
         fi ;;
       *) exit 0 ;;
     esac
@@ -1143,7 +1182,12 @@ Useful if your Macintosh Mini is a desk accessory or display piece." "$cur" 3 \
       "1 AM")  NIGHT_OFF=01:00 ;;
     esac
   fi
+  if [[ -z $AUDIO_GATE ]]; then
+    pick_audio_gate "${INSTALLED_AUDIO_GATE:-0}" || die "Cancelled"
+  fi
 fi
+# An update keeps what this Mac has; anything else not asked above stays off.
+[[ -z $AUDIO_GATE ]] && AUDIO_GATE=${INSTALLED_AUDIO_GATE:-0}
 
 
 # An emulator binary needs (re)building when it is missing or was built against
@@ -1309,7 +1353,7 @@ if [[ $INSTALL_MACLOCK -eq 1 ]]; then
   APT_PKGS+=(python3-lgpio device-tree-compiler unzip)
   # The audio gate's ALSA plugin is built on the Pi. Pi OS Lite already has
   # the compiler; only the ALSA headers are new.
-  APT_PKGS+=(gcc libc6-dev libasound2-dev)
+  [[ $AUDIO_GATE -eq 1 ]] && APT_PKGS+=(gcc libc6-dev libasound2-dev)
 fi
 if [[ $FIRST_BOOT_WAIT -eq 1 ]]; then
   run_long "Waiting for Pi OS to finish its first start" wait_for_first_boot
@@ -1661,11 +1705,9 @@ QUIT
   }
   run "[maclock] Installing reset-button wrappers" install_restart_wrapper
 
-  # The audio PWM on GPIO 19 runs even when nothing plays, carrying the Pi's
-  # supply noise into the speaker: hiss, a burble on battery, ticking while
-  # the setup hotspot is up. audio_gate.py lets go of the pin between sounds.
-  # The ALSA plugin built here tells it when a player has sound, ahead of the
-  # speaker. See maclock-build/README.md.
+  # Speaker auto-mute (see pick_audio_gate): audio_gate.py lets go of the
+  # audio pin between sounds, and the ALSA plugin built here tells it when a
+  # player has sound, ahead of the speaker. See maclock-build/README.md.
   install_audio_gate() {
     # A hand-made asound.conf (for a USB DAC, say) is the owner's. The gate
     # needs its own, so leave both alone.
@@ -1695,7 +1737,27 @@ QUIT
     sudo install -m644 "$tmp/asound.conf" /etc/asound.conf || return $?
     rm -rf "$tmp"
   }
-  run "[maclock] Installing the audio gate" install_audio_gate
+  # Off: take out what 1.10.0 put on every Mac. Stop the gate first, which
+  # connects the pin (the unit's ExecStopPost; the audio overlay connects it at
+  # every boot), then send players straight to the card again. The other way
+  # round, a sound in between would play to a pin that's let go. An asound.conf
+  # without the plugin is the owner's and stays. A running emulator keeps the
+  # plugin it loaded until the reboot at the end; its notices go nowhere.
+  remove_audio_gate() {
+    sudo systemctl disable --now audio-gate.socket audio-gate.service 2>/dev/null || true
+    if grep -qs audiogate /etc/asound.conf; then
+      sudo rm -f /etc/asound.conf || return $?
+    fi
+    sudo rm -f /etc/systemd/system/audio-gate.socket /etc/systemd/system/audio-gate.service \
+      /usr/local/bin/audio_gate.py /usr/local/lib/alsa-lib/libasound_module_pcm_audiogate.so \
+      /run/audio-gate.sock || return $?
+    sudo systemctl daemon-reload
+  }
+  if [[ $AUDIO_GATE -eq 1 ]]; then
+    run "[maclock] Speaker auto-mute: on" install_audio_gate
+  else
+    run "[maclock] Speaker auto-mute: off" remove_audio_gate
+  fi
 
   # Full-scale PWM audio (~3.3 Vpp) through the breakout amp's 2.6x gain asks
   # for more swing than the amp can put across 8 ohms from the clock's ~4 V
@@ -2201,8 +2263,9 @@ record_install() {
   [[ $INSTALL_BASILISK -eq 1 ]] && emulator=basilisk
   [[ $INSTALL_SHEEPSHAVER -eq 1 ]] && emulator=sheepshaver
   [[ $INSTALL_MACLOCK -eq 1 ]] && maclock=1
-  printf 'VERSION=%s\nMACLOCK=%s\nEMULATOR=%s\nPERF=%s\nBLUETOOTH=%s\n' \
-    "$VERSION" "$maclock" "$emulator" "${PERF:-0}" "$BLUETOOTH" | sudo tee "$INSTALL_STATE" >/dev/null
+  printf 'VERSION=%s\nMACLOCK=%s\nEMULATOR=%s\nPERF=%s\nBLUETOOTH=%s\nAUDIO_GATE=%s\n' \
+    "$VERSION" "$maclock" "$emulator" "${PERF:-0}" "$BLUETOOTH" "$AUDIO_GATE" \
+    | sudo tee "$INSTALL_STATE" >/dev/null
 }
 run "Recording the install" record_install
 
