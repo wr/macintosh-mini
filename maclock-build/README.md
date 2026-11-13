@@ -178,9 +178,13 @@ Edge cases:
 
 ---
 
-## 4. Quiet speaker between sounds
+## 4. Speaker auto-mute (optional)
 
-The Pi's audio PWM on GPIO 19 runs even when nothing plays. Sitting at half duty, it carries noise from the Pi's own 3.3 V into the amp: hiss, the burble on battery, and a ticking while the Wi-Fi setup hotspot is up. Letting go of the pin (input, no pull) silences all of it. Measured with a mic beside the speaker, the hotspot ticking goes away, and with the emulator busy and silent the background drops 12 to 16 dB. Letting go clicks faintly. Taking the pin back is silent, because the filter after the pin holds its level meanwhile. Driving the pin low instead pops loudly both ways.
+Only for a speaker that hisses or burbles while nothing is playing, which means a rev 2026.09 board or earlier. Leave it off on rev 2026.11: that board is quiet already, and auto-mute makes it pop. The installer asks, with No preselected, and `--auto-mute` or `--no-auto-mute` answers for you. An update keeps what the Mac has; to change it, run the installer and pick Edit settings, then Speaker auto-mute.
+
+The Pi's audio PWM on GPIO 19 runs even when nothing plays. Sitting at half duty, it carries noise from the Pi's own 3.3 V into the amp: hiss, the burble on battery, and a ticking while the Wi-Fi setup hotspot is up. On rev 2026.09, letting go of the pin (input, no pull) silences all of it. Measured with a mic beside the speaker, the hotspot ticking goes away, and with the emulator busy and silent the background drops 12 to 16 dB. Letting go clicks faintly. Taking the pin back is silent, because the filter after the pin holds its level meanwhile. Driving the pin low instead pops loudly both ways.
+
+Rev 2026.11 feeds the pin into a buffer powered from the board's own 3.0 V regulator. A pin that's let go leaves the buffer's input floating, so its output jumps to one rail, and the speaker pops each time the pin is let go or taken back, about as loud as the startup chime.
 
 Two pieces do it:
 
@@ -204,7 +208,14 @@ sudo systemctl enable --now audio-gate.socket audio-gate.service
 sudo install -m644 asound.conf /etc/asound.conf
 ```
 
-Install [`asound.conf`](./asound.conf) last: from then on every player goes through the plugin. If the gate isn't running, the plugin's bytes go nowhere and sound plays as before. Without the plugin in `asound.conf`, the gate never lets go. To turn it off, delete `/etc/asound.conf`, then `sudo systemctl disable --now audio-gate.socket audio-gate.service`.
+Install [`asound.conf`](./asound.conf) last: from then on every player goes through the plugin. If the gate isn't running, the plugin's bytes go nowhere and sound plays as before. Without the plugin in `asound.conf`, the gate never lets go.
+
+To turn it off, stop the gate first, which connects the pin again, then delete `/etc/asound.conf`. The other way round, a sound in between could play to a pin that's been let go.
+
+```bash
+sudo systemctl disable --now audio-gate.socket audio-gate.service
+sudo rm /etc/asound.conf
+```
 
 ---
 
@@ -312,10 +323,10 @@ If the old name comes back in `/etc/hosts` after a reboot, that is cloud-init's 
 
 The setup script does all of this for you when you give it a hostname.
 
-**Audio buzz at low brightness.** The onboard analogue audio is PWM on a digital pin next to the display's, so it picks up interference. The audio gate ([step 4](#4-quiet-speaker-between-sounds)) silences it between sounds; under sound it's still there, and a USB DAC fixes that.
+**Audio buzz at low brightness.** On rev 2026.09 boards and earlier, the onboard analogue audio is PWM on a digital pin next to the display's, so it picks up interference. Speaker auto-mute ([step 4](#4-speaker-auto-mute-optional)) silences it between sounds; under sound it's still there, and a USB DAC fixes that. Rev 2026.11 boards don't buzz at any brightness.
 
 **Audio burbles on battery.** On rev 2026.09 boards, running from the internal 18650 puts a constant burble in the speaker. It gets louder as the brightness goes up, and changes when the charge cable is plugged in.
 
 The Maclock's charging board does not boost the cell to 5 V. Its output is the cell itself: about 4.15 V with no load and about 4.00 V with the Pi running, and the same with the charge cable plugged in. The Pi runs from that and makes its own 3.3 V from it with far less margin than it has on 5 V. The PWM audio pin switches between that 3.3 V and ground, so noise on the Pi's 3.3 V rides straight into the amp. Holding GPIO 19 low with the emulator still running (`pinctrl set 19 op dl`; `pinctrl set 19 a5` restores it) drops the burble to the noise floor, so the amp's own supply and ground are clean. The Pi does not flag the low supply either: `vcgencmd get_throttled` reported `0x0` while it ran at 4.00 V.
 
-The next board revision rebuilds the audio signal on the board from its own low-noise 3.0 V regulator, which takes the Pi's supply out of the path. It hasn't been built and tested yet. Until then, the audio gate ([step 4](#4-quiet-speaker-between-sounds)) keeps the speaker quiet between sounds, and turning the brightness down helps during them.
+Rev 2026.11 rebuilds the audio signal on the board from its own low-noise 3.0 V regulator, which takes the Pi's supply out of the path. Measured with a mic on battery and on the charge cable, it's as quiet with the audio pin connected as with it let go, at every brightness. It hasn't been tested with the battery run down. On rev 2026.09 and earlier, Speaker auto-mute ([step 4](#4-speaker-auto-mute-optional)) keeps the speaker quiet between sounds, and turning the brightness down helps during them.

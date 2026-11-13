@@ -15,6 +15,10 @@
 # is silent, because the filter after the pin holds its level meanwhile.
 # Driving the pin low instead pops loudly both ways.
 #
+# Rev 2026.11 is quiet without this, and there a let-go pin leaves its buffer's
+# input floating, which pops both ways. So the installer only sets it up when
+# the owner turns Speaker auto-mute on.
+#
 # Every player goes through the ALSA plugin in audio_gate_plugin.c (see
 # /etc/asound.conf), which sends a byte to /run/audio-gate.sock whenever it's
 # handed sound. Players write ahead of the hardware, so the pin is back before
