@@ -49,18 +49,18 @@ the tiny Mac boots System 7 or Mac OS 8. This repo holds the installer (`setup.s
 | `maclock-build/README.md` | Setting up the Pi by hand: what `setup.sh` does, step by step. |
 | `emulators/` | Installing Basilisk II or SheepShaver by hand; the startup chimes. |
 | `maclock-pcb/README.md` | The breakout board: BOM and the PCBWay project. |
+| `maclock-interposer/README.md` | The GPIO interposer between the Pi and the screen. |
 | `maclock-screen-bezel/`, `maclock-usb-jig/` | Printed parts, each with its own README. |
 | `disk-image/README.md` | Building, checking and uploading a new Mac OS 8.1 disk. |
 | `docs/setup-guide/` | The printed setup guide for finished Macs. |
 | `REUSE.toml` | Which licence covers each file. |
 
 ## Board revisions
-- `main` has rev 2026.05 (solder pads, only the Pi header), which the PCBWay shared project builds.
-- The boards that were built and shipped say rev 2026.09 on the silk. Anything about real,
-  measured or shipped boards means 2026.09, even where it says "2026.10" (PR #21's description
-  does): rev 2026.10 was never built.
-- Rev 2026.11 (on-board amp with its own quiet supply, HUANO dial, PicoBlade plugs) and the GPIO
-  interposer are on PR #21, unbuilt. Rev 2026.09's files are in that branch's history.
+- `main` has rev 2026.11 (on-board amp with its own quiet 3.0 V supply, HUANO dial laid flat,
+  PicoBlade plugs) and the GPIO interposer. The shop sells 2026.11 and the PCBWay shared project
+  builds it.
+- The earlier boards that were built and sold say rev 2026.09 on the silk (`fad641b`). Anything
+  about those boards means 2026.09, even where it says "2026.10": rev 2026.10 was never built.
 
 ## KiCad
 Three tools, three jobs:
@@ -139,6 +139,7 @@ maclock-build/      Pi helpers it installs (buttons, brightness, Wi-Fi setup) an
 emulators/          emulator notes and the startup chimes
 disk-image/         recipe for the Mac OS 8.1 disk on the Internet Archive
 maclock-pcb/        breakout board (KiCad 10)
+maclock-interposer/ GPIO interposer between the Pi and the screen (KiCad 10)
 maclock-screen-bezel/, maclock-usb-jig/   printed parts (build123d)
 docs/setup-guide/   printed setup guide
 .github/            emulator CI and the weekly upstream watch
