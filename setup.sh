@@ -36,9 +36,10 @@
 #                       (default: prompt; 22:00 on a fresh install)
 #   --timezone <zone>   Area/City for the sunrise schedule (default: keep, or
 #                       prompt when the Pi is still on UTC)
-#   --audio-gate | --no-audio-gate
-#                       mute the speaker between sounds, which quiets rev
-#                       2026.09 boards and earlier but makes rev 2026.11 pop
+#   --auto-mute | --no-auto-mute
+#                       speaker auto-mute: mute the speaker when no sound is
+#                       playing. Only for a speaker that hisses or burbles when
+#                       idle (rev 2026.09 boards and earlier); rev 2026.11 pops
 #                       (default: prompt, off; an update keeps what's installed)
 #   --branch <name>     fetch the helper files from a branch other than main
 #   --hotspot-setup     prepare this Mac for someone else, who sets up Wi-Fi from
@@ -606,7 +607,7 @@ NIGHT_DIM=""       # "" = prompt, 1 = dim the screen at night, 0 = don't
 NIGHT_OFF=""       # "" = prompt, "never", or HH:MM to turn the screen off
 TIMEZONE=""        # Area/City to set; the night schedule needs a real one
 NIGHT_CONF=/etc/default/brightness-control
-AUDIO_GATE=""      # "" = prompt (an update keeps the installed choice), 1 = mute between sounds, 0 = don't
+AUDIO_GATE=""      # speaker auto-mute: "" = prompt (an update keeps the installed choice), 1 = on, 0 = off
 HOTSPOT_SETUP=0   # 1 = --hotspot-setup: prepare the Mac for phone setup
 GET_DISK=0         # 1 = --get-disk: download our disk without asking
 SKIP_PI_CHECK=0    # 1 = --skip-pi-check: run on something that isn't a Pi
@@ -635,8 +636,8 @@ while [[ $# -gt 0 ]]; do
     --no-night-dim)  NIGHT_DIM=0; shift ;;
     --night-off)     NIGHT_OFF=$2; shift 2 ;;
     --timezone)      TIMEZONE=$2; shift 2 ;;
-    --audio-gate)    AUDIO_GATE=1; shift ;;
-    --no-audio-gate) AUDIO_GATE=0; shift ;;
+    --auto-mute)     AUDIO_GATE=1; shift ;;
+    --no-auto-mute)  AUDIO_GATE=0; shift ;;
     --hotspot-setup) HOTSPOT_SETUP=1; shift ;;
     --branch)        REPO_BRANCH=$2; REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/$REPO_BRANCH"; shift 2 ;;
     --debug)         DEBUG=1; shift ;;
@@ -962,7 +963,7 @@ reconf_chime() {
   return 0
 }
 
-# Mute between sounds (the audio gate, installed further down). The Pi's audio
+# Speaker auto-mute (the audio gate, installed further down). The Pi's audio
 # PWM runs even when nothing plays, and on rev 2026.09 boards and earlier it
 # carries the Pi's supply noise into the amp: hiss, and a burble on battery.
 # Letting go of the pin between sounds silences that. Rev 2026.11 rebuilds the
@@ -970,23 +971,24 @@ reconf_chime() {
 # pin there leaves its buffer's input floating: each let-go and take-back pops.
 # Off unless asked for. Sets AUDIO_GATE; $1 = the current choice (0 or 1).
 pick_audio_gate() {
-  local cur=Off pick
-  [[ ${1:-0} == 1 ]] && cur=On
-  pick=$(wt_menu "Mute between sounds" \
-    "Mutes the speaker while the Mac is silent. Which board is in this Mac? The revision is printed on it." \
+  local cur=No pick
+  [[ ${1:-0} == 1 ]] && cur=Yes
+  pick=$(wt_menu "Speaker auto-mute" \
+    "Do you want the speaker to automatically mute when no sound is playing?
+(Don't enable this unless your speaker makes a loud hiss/burble sound when idle)" \
     "$cur" 2 \
-    "Off" "Rev 2026.11 or later: quiet already, and muting pops" \
-    "On"  "Rev 2026.09 or earlier: stops the hiss and burble") || return 1
+    "Yes" "" \
+    "No"  "") || return 1
   case "$pick" in
-    On)  AUDIO_GATE=1 ;;
-    Off) AUDIO_GATE=0 ;;
+    Yes) AUDIO_GATE=1 ;;
+    No)  AUDIO_GATE=0 ;;
   esac
 }
 
 # The settings editor. $1 = the emulator's prefs, or "" on a hardware-only
 # install; $2 = 1 for Basilisk II. Select edits the highlighted setting; Back
 # returns to the previous menu. Emulator settings change in place at once;
-# Mute between sounds takes effect when the install runs.
+# Speaker auto-mute takes effect when the install runs.
 configure_existing() {
   local prefs=$1 isb=$2 cur_disk cur_depth cur_chime cur_color cur_modelid cur_model cur_atalk cur_gate pick
   local rows=()
@@ -1019,7 +1021,7 @@ configure_existing() {
     fi
     if [[ $INSTALL_MACLOCK -eq 1 ]]; then
       cur_gate=Off; [[ ${AUDIO_GATE:-${INSTALLED_AUDIO_GATE:-0}} == 1 ]] && cur_gate=On
-      rows+=("Mute between sounds:" "$cur_gate")
+      rows+=("Speaker auto-mute:" "$cur_gate")
     fi
     pick=$(whiptail --backtitle "macintosh-mini" --title "Settings" \
         --ok-button "Select" --cancel-button "Back" --menu "" \
@@ -1031,7 +1033,7 @@ configure_existing() {
       "Color depth:")   reconf_color   "$prefs" "$isb" || true ;;
       "Mac model:")     reconf_modelid "$prefs"        || true ;;
       "AppleTalk:")     reconf_appletalk "$prefs"      || true ;;
-      "Mute between sounds:")
+      "Speaker auto-mute:")
         pick_audio_gate "${AUDIO_GATE:-${INSTALLED_AUDIO_GATE:-0}}" || true ;;
     esac
   done
@@ -1703,7 +1705,7 @@ QUIT
   }
   run "[maclock] Installing reset-button wrappers" install_restart_wrapper
 
-  # Mute between sounds (see pick_audio_gate): audio_gate.py lets go of the
+  # Speaker auto-mute (see pick_audio_gate): audio_gate.py lets go of the
   # audio pin between sounds, and the ALSA plugin built here tells it when a
   # player has sound, ahead of the speaker. See maclock-build/README.md.
   install_audio_gate() {
@@ -1752,9 +1754,9 @@ QUIT
     sudo systemctl daemon-reload
   }
   if [[ $AUDIO_GATE -eq 1 ]]; then
-    run "[maclock] Mute between sounds: on" install_audio_gate
+    run "[maclock] Speaker auto-mute: on" install_audio_gate
   else
-    run "[maclock] Mute between sounds: off" remove_audio_gate
+    run "[maclock] Speaker auto-mute: off" remove_audio_gate
   fi
 
   # Full-scale PWM audio (~3.3 Vpp) through the breakout amp's 2.6x gain asks

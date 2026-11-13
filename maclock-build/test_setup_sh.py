@@ -299,10 +299,10 @@ class AudioLevel(unittest.TestCase):
         self.assertNotIn('value 0', state.replace(self.HDMI, ''))
 
 
-class MuteBetweenSounds(unittest.TestCase):
-    """The audio gate is a choice, off unless asked for: it quiets rev 2026.09
-    boards and makes rev 2026.11 pop. Turning it off takes out what 1.10.0 put
-    on every Mac."""
+class SpeakerAutoMute(unittest.TestCase):
+    """Speaker auto-mute (the audio gate) is a choice, off unless asked for:
+    it quiets rev 2026.09 boards and makes rev 2026.11 pop. Turning it off
+    takes out what 1.10.0 put on every Mac."""
 
     FILES = ('etc/systemd/system/audio-gate.socket', 'etc/systemd/system/audio-gate.service',
              'usr/local/bin/audio_gate.py',
@@ -364,9 +364,9 @@ class MuteBetweenSounds(unittest.TestCase):
         return r.stdout.strip(), r.stderr.strip()
 
     def test_off_unless_this_mac_has_it(self):
-        self.assertEqual(self.pick('""', 'Off'), ('gate=0', 'default=Off'))
-        self.assertEqual(self.pick(0, 'On'), ('gate=1', 'default=Off'))
-        self.assertEqual(self.pick(1, 'Off'), ('gate=0', 'default=On'))
+        self.assertEqual(self.pick('""', 'No'), ('gate=0', 'default=No'))
+        self.assertEqual(self.pick(0, 'Yes'), ('gate=1', 'default=No'))
+        self.assertEqual(self.pick(1, 'No'), ('gate=0', 'default=Yes'))
 
     def test_cancel_leaves_the_choice_unmade(self):
         self.assertEqual(self.pick(0, None)[0], 'cancelled')
