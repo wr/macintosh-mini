@@ -1,0 +1,178 @@
+# SPDX-FileCopyrightText: 2026 Wells Riley
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Builds Basilisk II and SheepShaver once per pin, so Pis download them
+# instead of compiling (see setup.sh's "prebuilt emulators").
+#
+# On every push that touches setup.sh or these scripts:
+#   plan     works out the release tag for the pin and build settings, and
+#            whether that release exists and setup.sh already pins it
+#   build    if not, builds both emulators, plain and tuned, on arm64 in
+#            the same Debian as Raspberry Pi OS 13, and checks each one runs
+#   publish  puts them in a pre-release named after the tag
+#   pin      commits the release's checksums into setup.sh on the branch
+#
+# On main it never commits: if main's pins are stale it fails, and Pis
+# running main compile until a PR re-pins.
+
+name: Prebuilt emulators
+
+on:
+  push:
+    branches: ['**']   # not tags: tagging a release must not start a build
+    paths:
+      - setup.sh
+      - .github/scripts/build-emulator.sh
+      - .github/scripts/pin-emulators.sh
+      - .github/scripts/test-emulators.sh
+      - .github/workflows/emulators.yml
+  workflow_dispatch:
+
+# Read-only by default. Only publish and pin can write, and the build, which
+# runs upstream's configure and make, never sees a token.
+permissions:
+  contents: read
+
+# One run per branch at a time, so a release is never left half-made.
+concurrency:
+  group: emulators-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    outputs:
+      tag: ${{ steps.plan.outputs.tag }}
+      status: ${{ steps.plan.outputs.status }}
+      image: ${{ steps.plan.outputs.image }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - name: Test the pin plumbing
+        run: .github/scripts/test-emulators.sh
+      - id: plan
+        name: Plan
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          pin=.github/scripts/pin-emulators.sh
+          tag=$($pin tag)
+          status=$($pin status)
+          image=$(eval "$($pin settings)"; echo "$EMULATORS_IMAGE")
+          printf 'tag=%s\nstatus=%s\nimage=%s\n' "$tag" "$status" "$image" >> "$GITHUB_OUTPUT"
+          echo "Release \`$tag\`: $status" >> "$GITHUB_STEP_SUMMARY"
+
+  build:
+    needs: plan
+    if: needs.plan.outputs.status == 'build'
+    runs-on: ubuntu-24.04-arm
+    env:
+      IMAGE: ${{ needs.plan.outputs.image }}
+      EMULATOR: ${{ matrix.emulator }}
+      PERF: ${{ matrix.perf }}
+    strategy:
+      fail-fast: false   # see every build's result, not just the first failure
+      matrix:
+        emulator: [BasiliskII, SheepShaver]
+        perf: [0, 1]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - name: Let configure map low memory, as setup.sh does on the Pi
+        run: sudo sysctl -w vm.mmap_min_addr=0
+      - name: Build
+        run: >-
+          docker run --rm -v "$PWD:/repo" -w /repo "$IMAGE"
+          .github/scripts/build-emulator.sh build "$EMULATOR" "$PERF" out
+      - name: Check it runs with only the runtime packages
+        run: >-
+          docker run --rm -v "$PWD:/repo" -w /repo "$IMAGE"
+          .github/scripts/build-emulator.sh check "$EMULATOR" "$PERF" out
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ${{ matrix.emulator }}-perf${{ matrix.perf }}
+          path: out/
+          if-no-files-found: error
+
+  publish:
+    needs: [plan, build]
+    runs-on: ubuntu-24.04
+    # Branches with the same pin and settings share a release.
+    concurrency:
+      group: emulators-release-${{ needs.plan.outputs.tag }}
+      cancel-in-progress: false
+    permissions:
+      contents: write   # create the release
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ needs.plan.outputs.tag }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          path: out
+          merge-multiple: true
+      - name: Publish the release
+        run: |
+          state=$(gh release view "$TAG" --json isDraft --jq .isDraft 2>/dev/null) || state=none
+          if [[ $state == false ]]; then
+            echo "$TAG was published meanwhile by another run; using that one."
+            exit 0
+          fi
+          # A draft is left by a run that failed halfway: start it over.
+          [[ $state == true ]] && gh release delete "$TAG" --yes
+          (cd out && sha256sum ./*.gz | sed 's| \./| |' > SHA256SUMS && cat SHA256SUMS)
+          commit=$(eval "$(.github/scripts/pin-emulators.sh settings)"; echo "${MACEMU_COMMIT:0:7}")
+          .github/scripts/pin-emulators.sh notes "$GITHUB_SHA" > "$RUNNER_TEMP/notes.md"
+          # Draft first, so nobody sees it half-uploaded.
+          gh release create "$TAG" out/*.gz out/SHA256SUMS --draft --prerelease \
+            --latest=false --target "$GITHUB_SHA" \
+            --title "Emulators $commit (Debian 13, arm64)" --notes-file "$RUNNER_TEMP/notes.md"
+          gh release edit "$TAG" --draft=false --prerelease --latest=false
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: config.h
+          path: out/*.config.h
+
+  pin:
+    needs: [plan, publish]
+    if: >-
+      always() && needs.plan.result == 'success' &&
+      (needs.plan.outputs.status == 'repin' || needs.publish.result == 'success')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write   # push the pin commit
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ needs.plan.outputs.tag }}
+      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.ref_name }}   # the branch tip now, not the pushed commit
+      - name: Pin the release in setup.sh
+        run: |
+          pin=.github/scripts/pin-emulators.sh
+          if [[ $($pin tag) != "$TAG" ]]; then
+            echo "The branch has moved on to another pin or settings; its own run pins that."
+            exit 0
+          fi
+          gh release download "$TAG" --pattern SHA256SUMS --dir "$RUNNER_TEMP"
+          $pin write "$RUNNER_TEMP/SHA256SUMS"
+          if git diff --quiet; then
+            echo "setup.sh already pins $TAG."
+            exit 0
+          fi
+          git diff
+          if [[ $GITHUB_REF_NAME == "$DEFAULT_BRANCH" ]]; then
+            echo "::error::setup.sh on $GITHUB_REF_NAME doesn't pin $TAG, so Pis compile. Re-pin in a PR: the diff above is the change."
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -q -am "Installer: pin the prebuilt emulators for macemu ${TAG#emulators-}"
+          git push origin "HEAD:$GITHUB_REF_NAME"

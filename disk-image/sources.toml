@@ -1,0 +1,87 @@
+# The downloads the Mac OS 8.1 disk image is built from, pinned by SHA-256.
+# fetch.py puts them in .cache/. An entry with no url is fetched by hand:
+# its note says from where.
+
+[[source]]
+id = "macos81-cd"
+file = "MacOS8_1.iso"
+url = "https://archive.org/download/apple-mac-os-8.1-iso/Apple%20Mac%20OS%208.1%20(ISO)/MacOS8_1.iso"
+sha256 = "10f218f5ad4105d27b7ad3f82a7a12a8c1e2203e42cdd358936c8a27f6892c51"
+note = "Mac OS 8.1 CD, US English (its System's vers region is 0), archive.org item apple-mac-os-8.1-iso, MD5 4a88bcda344356faac62af9749f4c61e. Not mac-os-8.1: that one is the UK edition."
+
+[[source]]
+id = "imagewriter-option"
+file = "iw_0.sit"
+url = "https://old.mac.gdn/apps/iw_0.sit"
+sha256 = "6ba91270bc4303cb8826ce268165665918815f9bbd2ceb1e35736c1d0bc9e8ec"
+note = "ImageWriter II/LQ LocalTalk Option disk: an 800K floppy image holding AppleTalk ImageWriter"
+
+# After Dark 2.0 (1990-92) and the More After Dark add-on: Wells chose the
+# original modules, and After Dark 4.03's control panel can't run any module on a
+# real idle start under Mac OS 8.1 on a 68k Mac, while 2.0's can (after-dark.md).
+
+[[source]]
+id = "after-dark-2"
+file = "After_Dark_2.0w.hqx"
+url = "https://old.mac.gdn/apps/After_Dark_2.0w.hqx"
+sha256 = "0a7775ec2989a3d99509f1f92539fa7f692c0085a05a8f6a2f5b60532f4848b4"
+note = "macintoshgarden.org/apps/after-dark-20: an 800K floppy image, 'After Dark 2.0w.img', with the 2.0w control panel and its modules loose in 'After Dark Files' (no installer, no serial)."
+
+[[source]]
+id = "more-after-dark"
+file = "more_after_dark_modules.sit"
+url = "https://old.mac.gdn/apps/more_after_dark_modules.sit"
+sha256 = "3982f4b42f34a09f575050d59664da0880a86d9ce7080e93c049965b4b68f99f"
+note = "macintoshgarden.org/apps/after-dark-more-after-dark: the More After Dark add-on's 27 modules, loose, in 'More After Dark modules/More After Dark'."
+
+# Big Maclock, RetroTheory's clock app and its After Dark module (MIT; the licence
+# ships beside them, from files/Big Maclock License.txt).
+
+[[source]]
+id = "bigmaclock"
+file = "BigMaclock-1.01.zip"
+url = "https://github.com/retrotheory/BigMaclock/releases/download/Release1.01/BigMaclock.zip"
+sha256 = "6f465c4b1e1a159a9ddff0d06d4e6f2a96e7d3491a793c43e7ee870750907491"
+note = "github.com/retrotheory/BigMaclock release 1.01: 'BigMaclock' (APPL), as a MacBinary inside the zip."
+
+[[source]]
+id = "bigmaclock-ad"
+file = "BigMaclockAD.bin"
+url = "https://github.com/retrotheory/BigMaclockAD/releases/download/Release/BigMaclock.bin"
+sha256 = "89ba214dd86dceca1f0f8c8b4a4df544f1ae0d192bce0a23572fd52b6da3c100"
+note = "github.com/retrotheory/BigMaclockAD release: the After Dark module 'BigMaclock' (ADgm/ADrk), MacBinary."
+
+[[source]]
+id = "icab-68k"
+file = "iCab_Pre2.99b_English_68k.sit"
+url = "https://icab.clauss-net.de/icab/iCab_Pre2.99b_English_68k.sit"
+sha256 = "53043c8e79a8ee295bc13a502f0bc29faaaa2067e75da1286852615128366751"
+note = "iCab 2.9.9 (Classic, 68K), linked from icab.de/download.html. Members: 'iCab' (APPL/iCAB), 'Plug-ins'. Has a 'Register iCab' app; 2.9.9 is said to run with no limits."
+
+[[source]]
+id = "mr-browser-68k"
+file = "MR-Browser-68K-v0.39.bin"
+url = "https://macintoshrepository.org/files/direct/MR-Browser-68K-v0.39.bin"
+sha256 = "5d50cc972ce91e039e6097cb3049e27df6656a446996933dcf0ce8e520aec541"
+note = "MacBinary of 'MR Browser 68K v0.39' (APPL/MRBr). Asks for a sign-in PIN when opened. Replaced in place once (2026-02); re-pin if it changes again."
+
+[[source]]
+id = "stuffit-expander"
+file = "StuffIt_Expander_v5-5.bin"
+url = "https://archive.org/download/stuffit_expander_55_selfcontained/StuffIt_Expander_v5-5.bin"
+sha256 = "7c63533ea7144e4bf6cf0ce776b58f6686c17eacc28cd5a49c11c3886a9244a6"
+note = "MacBinary of 'StuffIt Expander' 5.5 (APPL/SITx, fat, self-contained). No serial."
+
+[[source]]
+id = "disk-copy"
+file = "Disk-Copy-633-smi.sit"
+url = "https://old.mac.gdn/apps/Disk-Copy-633-smi.sit"
+sha256 = "b035fba7facd0d2d81fcb599ad3b95ba49c4d477d49389ee851dd9b309851519"
+note = "Member 'Disk Copy 6.3.3.smi': a self-mounting image; open it in the emulator and copy Disk Copy out. No serial."
+
+[[source]]
+id = "ie-401-68k"
+file = "IE_4.01_68K.sit"
+url = "https://old.mac.gdn/apps/IE_4.01_68K.sit"
+sha256 = "c488efbbf97927ddddd82c0a01a9f280f6c54d3fa61f2b933094897bcb4e18fb"
+note = "Fallback browser only (if iCab nags): 'IE 4.01 Full 68K Installer', run in the emulator. Free, no serial."

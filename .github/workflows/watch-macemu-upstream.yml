@@ -1,0 +1,42 @@
+# SPDX-FileCopyrightText: 2026 Wells Riley
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+name: Watch upstream emulators
+
+# setup.sh builds Basilisk II and SheepShaver from kanjitalk755/macemu at one
+# pinned commit, and the pin moves only on purpose (every move makes every Mac
+# recompile). This checks once a week whether upstream has changes newer than
+# the pin and keeps a single issue in step with the answer. It never opens a PR
+# or changes the pin. The logic lives in the script so it can be run by hand:
+#   .github/scripts/check-macemu-upstream.sh --dry-run
+
+on:
+  schedule:
+    - cron: "17 6 * * 1" # Mondays, 06:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: watch-macemu-upstream
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # The default branch, whichever ref the run was started from: the pin we
+      # watch is the one on main.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          sparse-checkout: .github/scripts # setup.sh at the top level comes along
+          persist-credentials: false
+
+      - name: Compare the pin with upstream
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash .github/scripts/check-macemu-upstream.sh

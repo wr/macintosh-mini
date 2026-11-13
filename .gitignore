@@ -18,3 +18,13 @@ sym-lib-table
 
 # Python
 __pycache__/
+
+# build123d venvs for the printed parts (each folder's build.sh)
+maclock-screen-bezel/.venv/
+maclock-usb-jig/.venv/
+__pycache__/
+
+# Disk image build (disk-image/): venv, downloaded sources, outputs
+disk-image/.venv/
+disk-image/.cache/
+disk-image/out/

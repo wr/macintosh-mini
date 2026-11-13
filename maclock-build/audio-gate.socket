@@ -1,0 +1,12 @@
+[Unit]
+Description=Sound notices from the audiogate ALSA plugin, for audio-gate
+
+[Socket]
+# Held here rather than by the service, so it's there from early boot, and
+# notices sent while the service restarts wait for it (or start it).
+ListenDatagram=/run/audio-gate.sock
+SocketMode=0660
+SocketGroup=audio
+
+[Install]
+WantedBy=sockets.target

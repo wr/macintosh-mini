@@ -1,0 +1,15 @@
+[Unit]
+Description=Let go of the speaker's audio pin while nothing plays
+Requires=audio-gate.socket
+After=audio-gate.socket
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/local/bin/audio_gate.py
+# However it stops, leave the speaker connected.
+ExecStopPost=/usr/bin/pinctrl set 19 a5
+Restart=always
+RestartSec=1
+
+[Install]
+WantedBy=multi-user.target

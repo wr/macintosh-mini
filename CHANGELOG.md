@@ -3,19 +3,49 @@
 Notable changes to the macintosh-mini installer (`setup.sh`). Re-running on an
 existing Pi shows the entries added since the installed version.
 
+## [1.11.0] - 2026-11-12
+- Speaker auto-mute is now a setting, off on new installs. Only turn it on if your speaker hisses or burbles when nothing is playing.
+- Updating keeps what your Mac has. To change it, pick Edit settings, then Speaker auto-mute.
+
+## [1.10.0] - 2026-10-27
+- Quieter speaker: no hiss, burble or ticking while the Mac is silent. A faint click about 3 s after a sound is normal.
+- The startup chime no longer crackles on Macs set up from a fresh card.
+
+## [1.9.1] - 2026-10-22
+- A fresh card no longer stops at "Installing apt packages" when the installer starts right after the Pi's first boot.
+
+## [1.9.0] - 2026-10-21
+- No disk image? A new Basilisk II install offers a ready-made Mac OS 8.1 disk. `--get-disk` downloads it without asking.
+
+## [1.8.1] - 2026-10-21
+- The Mac starts again on Pis that had lost XWayland, which the emulators need to draw.
+
+## [1.8.0] - 2026-10-21
+- AppleTalk printers and file sharing work alongside the internet. On an existing Mac, turn AppleTalk on in Edit settings.
+- Basilisk II and SheepShaver get fixes to their AppleTalk networking.
+- Emulators arrive ready-built: seconds to install instead of about 8 minutes of compiling.
+- Turning the performance option on or off swaps in the matching emulator.
+
+## [1.7.0] - 2026-10-17
+- Change Wi-Fi without opening the case: hold the left button for 10 s, then pick your network from your phone.
+- A Mac with no ROM shows a QR code for adding one from your phone.
+- Setup shows its steps on the Mac's screen and plays a sound when it's ready, connected or stuck.
+- `--hotspot-setup` prepares a Mac for someone else to finish from their phone.
+- `.local` names work with the performance option on.
+
 ## [1.6.1] - 2026-10-05
-- Turns the Pi's audio output down 4 dB, so the loudest notes of the startup chime no longer crackle through the board's amp.
+- Audio 4 dB down, so the startup chime doesn't crackle.
 
 ## [1.6.0] - 2026-10-05
-- Finds disk images named `.img`, `.hfv` or `.sparsebundle`, as well as `.hda` and `.dsk`, for either emulator.
+- Finds `.img`, `.hfv` and `.sparsebundle` disk images too.
 
 ## [1.5.0] - 2026-09-16
-- Emulator alerts (e.g. no network for slirp) log to the journal instead of a dialog nobody can click; existing installs rebuild the emulator once.
-- Hide agetty's "automatic login" line and systemd status lines at boot.
+- Emulator alerts go to the system log instead of a dialog nobody can click.
+- A cleaner boot screen, without login and status lines.
 - Black-and-white installer theme, after the System 7 Installer.
-- Rebooting after the night cutoff dims for ten minutes instead of coming up dark.
+- Restarting at night dims the screen for ten minutes instead of coming up dark.
 - Brightness dial turns the right way: clockwise brightens.
-- Bluetooth stays on; it is no longer switched off by the performance option (`--no-bluetooth` to turn it off). Installs that lost it get it back after a reboot.
+- Bluetooth stays on with the performance option (`--no-bluetooth` turns it off).
 
 ## [1.4.0] - 2026-09-11
 - Console and emulator boot in landscape, rotated from the first frame.

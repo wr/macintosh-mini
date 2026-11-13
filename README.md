@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="BUILD.md">Build guide</a> ⬪
+  <a href="https://wells.ee/projects/macintosh-mini/?ref=gh-macintosh-mini">Build guide</a> ⬪
   <a href="#step-2-install-the-software">Install the software</a> ⬪
   <a href="https://shop.wells.ee/products/macintosh-mini/?ref=gh-macintosh-mini">Buy a kit</a> ⬪
   <a href="#donate">Donate</a>
@@ -25,7 +25,7 @@ A [Maclock](https://www.aliexpress.us/w/wholesale-maclock.html) is a cheap alarm
 
 ## Step 1: Build or buy one
 
-The [build guide](BUILD.md) covers everything from opening the clock to the first boot: parts, assembly, software, and troubleshooting.
+The [build guide](https://wells.ee/projects/macintosh-mini/?ref=gh-macintosh-mini), on my site, covers everything from opening the clock to the first boot: parts, assembly, software, and troubleshooting.
 
 You can [buy a DIY kit or a finished build](https://shop.wells.ee/products/macintosh-mini/?ref=gh-macintosh-mini) from my maker shop. Faster than shipping from China, and your purchase supports the continued development of this project.
 
@@ -37,11 +37,11 @@ You can [buy a DIY kit or a finished build](https://shop.wells.ee/products/macin
 
 **You will need:**
 - A Mac ROM file (`064DC91D` is a common one to search for)
-- A Mac OS disk image with System 7.0 to 8.5. The [BlueSCSI image library](https://bluescsi.com/docs/BlueSCSI-Images) has ready-made ones
+- A Mac OS disk image with System 7.0 to 8.5. The [BlueSCSI image library](https://bluescsi.com/docs/BlueSCSI-Images) has ready-made ones, or skip it: the installer offers [our Mac OS 8.1 disk](https://archive.org/details/macos-8.1-basilisk-ii)
 
 **Prepare the MicroSD card**
 1. Flash **Raspberry Pi OS Lite (64-bit)** to a microSD card with [Raspberry Pi Imager](https://www.raspberrypi.com/software/). Set your Wi-Fi network and turn on SSH in its settings.
-2. Rename your Mac ROM file to `ROM`, and copy it and a disk image to the Pi's home folder:
+2. Rename your Mac ROM file to `ROM`, and copy it and your disk image, if you have one, to the Pi's home folder:
 
    ```bash
    scp ROM yourdisk.hda <user>@<pi_ip>:~/
@@ -81,7 +81,7 @@ While this project is free and open source, donations are deeply appreciated, an
 
 Copyright © 2026 Wells Riley.
 
-- **Hardware** (the boards and the bezel): [CERN-OHL-S-2.0](./LICENSES/CERN-OHL-S-2.0.txt)
+- **Hardware** (the boards, the bezel and the USB port jig): [CERN-OHL-S-2.0](./LICENSES/CERN-OHL-S-2.0.txt)
 - **Software** ([`setup.sh`](./setup.sh) and [`maclock-build/`](./maclock-build/)): [GPL-3.0-or-later](./LICENSES/GPL-3.0-or-later.txt)
 - **Everything else** (docs, drawings, photos): [CC BY-SA 4.0](./LICENSES/CC-BY-SA-4.0.txt)
 

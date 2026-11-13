@@ -4,7 +4,7 @@
 
 KiCad 10 project for the breakout that connects the Mac-shaped clock's front-panel parts (rotary encoder, two pushbuttons, speaker, power switch and battery harness) to the Pi Zero 2 W. The PAM8302A audio amplifier is on the board itself. Current revision: 2026.11, which rebuilds the Pi's audio signal on the board and gives the Pi's supply current its own ground return (see [Design notes](#design-notes)); rev 2026.09 boards, the ones that shipped, work but whine faintly with the Pi running.
 
-Wiring it to the Pi, with pin assignments, is [step 2 of the build guide](../BUILD.md#2-connect-the-pi-to-the-screen-and-the-board). For the case-side parts you'll print, see the [3D-printed screen bezel](../maclock-screen-bezel/).
+Wiring it to the Pi, with pin assignments, is [step 2 of the build guide](https://wells.ee/projects/macintosh-mini/#2-connect-the-pi-to-the-screen-and-the-board). For the case-side parts you'll print, see the [3D-printed screen bezel](../maclock-screen-bezel/).
 
 Order from [PCBway](https://www.pcbway.com/project/shareproject/W654223ASS41_Untitled_kicad_pcb_95cca7e3.html). You can [use my referral code](https://pcbway.com/g/AsfKU9) to get $5 off your order, if you want.
 

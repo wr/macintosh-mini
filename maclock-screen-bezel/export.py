@@ -1,0 +1,24 @@
+"""Write the print plate as STEP (to edit in any CAD tool) and STL (to slice)."""
+import pathlib
+import sys
+
+from build123d import export_step, export_stl
+
+import bezel
+
+HERE = pathlib.Path(__file__).resolve().parent
+NAME = "maclock-screen-bezel"
+
+
+def main() -> int:
+    plate = bezel.plate()
+    export_step(plate, str(HERE / f"{NAME}.step"))
+    export_stl(plate, str(HERE / f"{NAME}.stl"), tolerance=0.001, angular_tolerance=0.1)
+    for name, part in bezel.parts().items():
+        bb = part.bounding_box()
+        print(f"{name}: {bb.size.X:.3f} x {bb.size.Y:.3f} x {bb.size.Z:.3f} mm, {part.volume:.1f} mm3")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

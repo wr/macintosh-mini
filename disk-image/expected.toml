@@ -1,0 +1,58 @@
+# What check_image.py expects of the finished Mac OS 8.1 disk image.
+
+volume_name = "Macintosh HD"
+size = 1073741824   # 1 GiB
+
+required = [
+  "System Folder:System",
+  "System Folder:Finder",
+  "System Folder:Extensions:AppleTalk ImageWriter",
+  "System Folder:Control Panels:After Dark",
+  "System Folder:Control Panels:After Dark Files:Randomizer",
+  "System Folder:Control Panels:After Dark Files:Flying Toasters",
+  "System Folder:Control Panels:After Dark Files:Mowin' Man",
+  "Applications:SimpleText",
+  "Internet:iCab:iCab",
+  "Internet:Start Page",
+  "Internet:MR Browser 68K v0.39",
+  "Utilities:Disk Copy",
+  "Utilities:StuffIt Expander™",
+  "Applications:Big Maclock:BigMaclock",
+  "Applications:Big Maclock:Big Maclock License",
+  "System Folder:Control Panels:After Dark Files:BigMaclock",
+]
+
+# Its chosen printer must be blank: each AirWriter has its own name, so the user picks it once.
+printer_driver = "System Folder:Extensions:AppleTalk ImageWriter"
+
+empty = ["Trash"]
+
+# Display Preferences remembers the colour depth it was saved at and Mac OS restores it at every
+# boot, which would override the depth Basilisk II is set to.
+absent = [
+  "System Folder:Preferences:Display Preferences",
+  # After Dark 4.03: under Mac OS 8.1 on a 68k Mac it can't run a module on a real idle
+  # start, so the image has After Dark 2.0 instead (after-dark.md).
+  "System Folder:Control Panels:After Dark 4.0",
+  "System Folder:Preferences:After Dark Preferences",
+]
+
+# The Mac that ran the Mac OS installer: its Sharing Setup names end up in the
+# aliases the installer makes (scrub_aliases.py blanks them).
+alias_names_absent = ["SE/30", "Wells"]
+
+[[desktop]]
+name = "iCab"
+alias = true
+
+[[desktop]]
+name = "SimpleText"
+alias = true
+
+[[desktop]]
+name = "MR Browser"
+alias = true
+
+[[desktop]]
+name = "BigMaclock"
+alias = true
