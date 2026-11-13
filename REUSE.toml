@@ -35,9 +35,10 @@ path = "disk-image/files/Big Maclock License.txt"
 SPDX-FileCopyrightText = "2026 Retro-Theory"
 SPDX-License-Identifier = "MIT"
 
-# 3D models from LCSC's EasyEDA library, used only for renders.
+# LCSC's symbol, footprint and 3D model for the side switches, converted from
+# its EasyEDA library.
 [[annotations]]
-path = "maclock-pcb/lcsc.3dshapes/**"
+path = ["maclock-pcb/lcsc.kicad_sym", "maclock-pcb/lcsc.pretty/**", "maclock-pcb/lcsc.3dshapes/**"]
 SPDX-FileCopyrightText = "LCSC Electronics"
 SPDX-License-Identifier = "LicenseRef-Third-Party"
 
