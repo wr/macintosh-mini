@@ -105,7 +105,7 @@
 				)
 			)
 		)
-		(property "Value" "PM254V-11-07-H85"
+		(property "Value" "PM254V-11-07-H71-U"
 			(at 0 18.01 90)
 			(layer "F.Fab")
 			(uuid "535d5c09-18ec-4d9e-a608-ba2bae66af71")
@@ -116,7 +116,7 @@
 				)
 			)
 		)
-		(property "Datasheet" "https://www.lcsc.com/product-detail/C2832270.html"
+		(property "Datasheet" "https://www.lcsc.com/product-detail/C55218706.html"
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
@@ -127,7 +127,7 @@
 				)
 			)
 		)
-		(property "Description" "1x7 female header (socket), 2.54 mm, 8.5 mm, through-hole"
+		(property "Description" "1x7 female header (socket), 2.54 mm, 7.1 mm, through-hole"
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
@@ -150,7 +150,7 @@
 				)
 			)
 		)
-		(property "MPN" "PM254V-11-07-H85"
+		(property "MPN" "PM254V-11-07-H71-U"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -162,7 +162,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C2832270"
+		(property "LCSC" "C55218706"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -347,7 +347,7 @@
 				(xyz 0 0 0)
 			)
 			(scale
-				(xyz 1 1 1)
+				(xyz 1 1 0.8352941176)
 			)
 			(rotate
 				(xyz 0 0 0)

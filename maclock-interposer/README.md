@@ -24,7 +24,7 @@ The board is drawn the way it sits in the Maclock: Pi mounted upside-down, seen 
 | --- | --- | --------------------------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------- |
 | J1  | 1   | 2×20 female socket, 2.54 mm, SMD, 8.5 mm — Hong Cheng `HC-PM254-8.5H-2x20PS` | [`C22436166`](https://www.lcsc.com/product-detail/C22436166.html) | **Bottom** side, plugs onto the Pi                |
 | J3  | 1   | 2×20 pin header, 2.54 mm, SMD — Hanbo `HB-PH9-254220PB2GOP`            | [`C6332245`](https://www.lcsc.com/product-detail/C6332245.html)       | Top side, plugs into the display                  |
-| J2  | 1   | 1×7 female header (socket), 2.54 mm, 8.5 mm, THT — XFCN `PM254V-11-07-H85` | [`C2832270`](https://www.lcsc.com/product-detail/C2832270.html) | Top (screen) side |
+| J2  | 1   | 1×7 female header (socket), 2.54 mm, 7.1 mm, THT — XFCN `PM254V-11-07-H71-U` | [`C55218706`](https://www.lcsc.com/product-detail/C55218706.html) | Top (screen) side |
 
 Both sides carry parts, so order two-sided assembly. Before ordering, check the J1/J3 drawings for locating pegs — the footprints are KiCad's generic peg-less SMD lands (3.0 / 3.15 × 1.0 mm pads, ±2.52 mm from the centreline).
 
@@ -32,7 +32,7 @@ Both sides carry parts, so order two-sided assembly. Before ordering, check the 
 
 Stack Pi → interposer → display (silk: `THIS SIDE FACING PI` / `THIS SIDE FACING SCREEN`). Run a straight 1×7 male-to-female Dupont cable from J2 to the breakout's `Pi GPIO` header, pin 1 (`Dial B`, square pad, GPIO 21 end) to pin 1 (`Dial B`).
 
-The interposer adds about 12.5 mm between the Pi and the display (8.5 mm socket + 1.6 mm PCB + 2.5 mm header base), and the board reaches ~10.5 mm past the Pi's header edge. J2 stands 8.5 mm off the screen side, and the Dupont plug in it points toward the display — check both against your case and the display board before ordering.
+The interposer adds about 12.5 mm between the Pi and the display (8.5 mm socket + 1.6 mm PCB + 2.5 mm header base), and the board reaches ~10.5 mm past the Pi's header edge. J2 stands 7.1 mm off the screen side, and the Dupont plug in it points toward the display — check both against your case and the display board before ordering.
 
 ## License
 
