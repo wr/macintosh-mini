@@ -69,8 +69,9 @@ Three tools, three jobs:
   `.kicad_*` files and say why in the commit message.
 - **`kicad-cli`** verifies and exports: ERC, DRC, BOM and fab outputs. It isn't on `PATH`; call it
   inside the KiCad app bundle, and check `<subcommand> --help` first (KiCad 10 flags differ).
-- **Konnect** (MCP) opens, views and reads projects. It can't set a pad's net or delete board
-  graphics; do those in a `pcbnew` script.
+- **Konnect** (MCP) opens, views and reads projects. Its board tools need the board open in KiCad's
+  PCB editor, not just the project manager. It can't set a pad's net or delete board graphics; do
+  those in a `pcbnew` script.
 
 Habits:
 - Edit files on disk with KiCad closed. A person may edit in the GUI between turns, so re-read the board
@@ -79,10 +80,19 @@ Habits:
   every unconnected item as real. ERC: 0 errors. BOM from the schematic, with `--exclude-dnp`.
 - After Konnect edits a schematic, run `kicad-cli sch upgrade --force` and re-check ERC.
 - Let ground pads join the pour; add free-standing stitching vias, not a stub and via per pad.
+- `--refill-zones` fills only in memory. To keep fills in the file, load the board, run the zone
+  filler and save in a separate `pcbnew` run (filling in the same run that created the board
+  ignores rounded edges), then gate DRC with and without `--refill-zones`.
+- J1 and J3 are the same 2-pin PicoBlade. The `Label` field on J1–J3 ("Switch", "Power",
+  "Speaker": hidden on the symbols, shown on the board silk) is all that tells them apart; keep it
+  when cleaning up fields.
 - pcbnew 10 traps: after the first change in a process, getters can return bare `SwigPyObject`s,
   so read everything first, then mutate; iterate `fp.GraphicalItems()` last, in its own run. A
   pad's `(at)` is the hole and the drill offset moves the copper. When swapping a footprint, reuse
   the old one's UUID so the diff stays small.
+  `PCB_SHAPE.SetPolyPoints` segfaults (build with `GetPolyShape().NewOutline()` and `Append`), and
+  `FOOTPRINT.Flip()` segfaults unless the footprint was added to the board first; run scripts with
+  `python3 -u -X faulthandler` so a crash says where.
 
 ## Printed parts
 Follow airwriter's enclosure pattern (github.com/wr/airwriter, `enclosure/`): one folder per part
