@@ -8449,7 +8449,7 @@
 				)
 			)
 		)
-		(property "Datasheet" "http://www.diodes.com/_files/datasheets/ds30124.pdf"
+		(property "Datasheet" "https://www.diodes.com/datasheet/download/MMDT3906.pdf"
 			(at 149.86 208.28 0)
 			(hide yes)
 			(show_name no)
@@ -9776,7 +9776,7 @@
 				)
 			)
 		)
-		(property "Datasheet" "https://assets.nexperia.com/documents/data-sheet/BC847BPN.pdf"
+		(property "Datasheet" "https://www.onsemi.com/download/data-sheet/pdf/mbt3946dw1t1-d.pdf"
 			(at 83.82 270.51 0)
 			(hide yes)
 			(show_name no)
@@ -11578,7 +11578,7 @@
 				)
 			)
 		)
-		(property "Datasheet" "http://ww1.microchip.com/downloads/en/DeviceDoc/21661E.pdf"
+		(property "Datasheet" "https://www.analog.com/media/en/technical-documentation/data-sheets/MAX803-MAX810Z.pdf"
 			(at 40.64 255.27 0)
 			(hide yes)
 			(show_name no)
@@ -15763,7 +15763,7 @@
 				)
 			)
 		)
-		(property "Datasheet" "https://assets.nexperia.com/documents/data-sheet/BC847BPN.pdf"
+		(property "Datasheet" "https://www.onsemi.com/download/data-sheet/pdf/mbt3946dw1t1-d.pdf"
 			(at 121.92 255.27 0)
 			(hide yes)
 			(show_name no)
@@ -16607,7 +16607,7 @@
 				)
 			)
 		)
-		(property "Datasheet" "http://www.diodes.com/_files/datasheets/ds30124.pdf"
+		(property "Datasheet" "https://www.diodes.com/datasheet/download/MMDT3906.pdf"
 			(at 129.54 208.28 0)
 			(hide yes)
 			(show_name no)
@@ -17148,7 +17148,7 @@
 				)
 			)
 		)
-		(property "Label" "Speaker"
+		(property "Label" "Spkr"
 			(at 271.78 53.34 0)
 			(hide yes)
 			(show_name no)
@@ -17996,7 +17996,7 @@
 				)
 			)
 		)
-		(property "Datasheet" "https://www.ti.com/lit/ds/symlink/sn74lvc1g17.pdf"
+		(property "Datasheet" "https://assets.nexperia.com/documents/data-sheet/74LVC1G17.pdf"
 			(at 196.85 109.22 0)
 			(hide yes)
 			(show_name no)

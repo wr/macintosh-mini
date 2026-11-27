@@ -9,8 +9,8 @@
 	(paper "A4")
 	(title_block
 		(title "Macintosh Mini breakout")
-		(date "2026-10-04")
-		(rev "2026.11")
+		(date "2026-11-27")
+		(rev "2027.01")
 		(company "Wells Workshop")
 		(comment 1 "github.com/wr/macintosh-mini")
 		(comment 2 "Licensed CERN-OHL-S-2.0")
@@ -2249,7 +2249,7 @@
 				(justify mirror)
 			)
 		)
-		(property "Datasheet" "https://www.ti.com/lit/ds/symlink/sn74lvc1g17.pdf"
+		(property "Datasheet" "https://assets.nexperia.com/documents/data-sheet/74LVC1G17.pdf"
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
@@ -2840,7 +2840,7 @@
 		(at 144.4 95.5 180)
 		(descr "Murata DFE322520F metal-alloy power inductor, 3.2 x 2.5 x 2.0 mm, Murata's recommended land (0.95 x 2.8 mm pads, 1.8 mm gap). Keep copper and vias out from under the body.")
 		(property "Reference" "L1"
-			(at 0 -2.42625 0)
+			(at 3.1 0.5 0)
 			(layer "B.SilkS")
 			(uuid "d2c7c893-d59a-4ae1-9d4c-f4d052cc3a8b")
 			(effects
@@ -4184,7 +4184,7 @@
 				(justify mirror)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://www.ti.com/lit/ds/symlink/tps61023.pdf"
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
@@ -4528,7 +4528,7 @@
 				(justify mirror)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://www.onsemi.com/download/data-sheet/pdf/mbt3946dw1t1-d.pdf"
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
@@ -5482,7 +5482,7 @@
 				(justify mirror)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "http://www.aosmd.com/pdfs/datasheet/AO3401A.pdf"
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
@@ -6273,7 +6273,7 @@
 				(justify mirror)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "http://www.ti.com/lit/ds/symlink/tca9554.pdf"
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
@@ -6697,7 +6697,7 @@
 				(justify mirror)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://www.analog.com/media/en/technical-documentation/data-sheets/MAX803-MAX810Z.pdf"
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
@@ -7822,7 +7822,7 @@
 				(justify mirror)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://www.analog.com/media/en/technical-documentation/data-sheets/MAX17048-MAX17049.pdf"
 			(at 0 0 180)
 			(layer "B.Fab")
 			(hide yes)
@@ -8457,15 +8457,14 @@
 				)
 			)
 		)
-		(property "Label" "Speaker"
-			(at 5.499999 1.225 0)
+		(property "Label" "Spkr"
+			(at -3.100001 3.15 0)
 			(layer "B.SilkS")
-			(hide yes)
 			(uuid "091f22d1-b1ac-423a-8c1c-c583adb43836")
 			(effects
 				(font
-					(size 1.0795 1.0795)
-					(thickness 0.1905)
+					(size 0.8 0.8)
+					(thickness 0.15)
 				)
 				(justify mirror)
 			)
@@ -10022,14 +10021,13 @@
 			)
 		)
 		(property "Label" "Switch"
-			(at 0.05 3.55 0)
+			(at -0.025 3.15 0)
 			(layer "B.SilkS")
-			(hide yes)
 			(uuid "0424cdd4-353d-4368-8e9c-fa7289fe4c31")
 			(effects
 				(font
-					(size 1.0795 1.0795)
-					(thickness 0.1905)
+					(size 0.8 0.8)
+					(thickness 0.15)
 				)
 				(justify mirror)
 			)
@@ -11211,14 +11209,13 @@
 			)
 		)
 		(property "Label" "Power"
-			(at 0 3.825 0)
+			(at 2.2 3.15 0)
 			(layer "B.SilkS")
-			(hide yes)
 			(uuid "ae8913c9-277b-47a7-89eb-828b2567f747")
 			(effects
 				(font
-					(size 1.0795 1.0795)
-					(thickness 0.1905)
+					(size 0.8 0.8)
+					(thickness 0.15)
 				)
 				(justify mirror)
 			)
@@ -13176,7 +13173,7 @@
 				(justify mirror)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://www.diodes.com/datasheet/download/MMDT3906.pdf"
 			(at 0 0 270)
 			(layer "B.Fab")
 			(hide yes)
@@ -15702,7 +15699,7 @@
 			(justify left mirror)
 		)
 	)
-	(gr_text "rev 2026.12"
+	(gr_text "rev 2027.01"
 		(at 159 85 0)
 		(layer "B.SilkS")
 		(uuid "f40b37dd-e88f-4149-8301-7c2f33c99f50")
