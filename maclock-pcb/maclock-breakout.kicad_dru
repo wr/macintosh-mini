@@ -2,3 +2,7 @@
 (rule "Pour 0.3 mm from board edge"
 	(condition "A.Type == 'Zone'")
 	(constraint edge_clearance (min 0.3mm)))
+
+(rule "SOT-563 pad pitch around U4 (0.15 mm gaps between its own pads)"
+	(condition "A.intersectsCourtyard('U4') || B.intersectsCourtyard('U4')")
+	(constraint clearance (min 0.14mm)))

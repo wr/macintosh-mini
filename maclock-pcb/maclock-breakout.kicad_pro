@@ -521,7 +521,7 @@
         "pcb_color": "rgba(0, 0, 0, 0.000)",
         "priority": 2147483647,
         "schematic_color": "rgba(0, 0, 0, 0.000)",
-        "track_width": 0.5,
+        "track_width": 0.25,
         "tuning_profile": "",
         "via_diameter": 0.6,
         "via_drill": 0.3,
@@ -551,11 +551,19 @@
       },
       {
         "netclass": "5V",
-        "pattern": "/5V_IN"
+        "pattern": "+BATT"
       },
       {
         "netclass": "5V",
-        "pattern": "/GND_PI"
+        "pattern": "/BATT_IN"
+      },
+      {
+        "netclass": "5V",
+        "pattern": "/GND_PWR"
+      },
+      {
+        "netclass": "5V",
+        "pattern": "/BOOST_OUT"
       }
     ]
   },

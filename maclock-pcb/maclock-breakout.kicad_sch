@@ -10266,7 +10266,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Inductor_SMD:L_1210_3225Metric"
+		(property "Footprint" "maclock:L_Murata_DFE322520F"
 			(at 66.04 177.8 0)
 			(hide yes)
 			(show_name no)
