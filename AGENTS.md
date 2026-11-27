@@ -56,9 +56,13 @@ the tiny Mac boots System 7 or Mac OS 8. This repo holds the installer (`setup.s
 | `REUSE.toml` | Which licence covers each file. |
 
 ## Board revisions
-- `main` has rev 2026.11 (on-board amp with its own quiet 3.0 V supply, HUANO dial laid flat,
-  PicoBlade plugs) and the GPIO interposer. The shop sells 2026.11 and the PCBWay shared project
-  builds it.
+- `maclock-pcb/` holds rev 2027.01: one board for the Pi and ESP32-P4 builds, with a 5 V boost,
+  one-way switch, latching low-battery cutoff, TCA9554 input chip, MAX17048 gauge and an 8-pin
+  link (SDA SCL GND 5V 5V GND INT AUDIO). Red solder mask. Not built or tested yet; its Pi
+  interposer and software aren't written.
+- The shop sells rev 2026.11 (blue; on-board amp with its own quiet 3.0 V supply, HUANO dial laid
+  flat, PicoBlade plugs; files at `ea41efe`), and the PCBWay shared project builds it. The GPIO
+  interposer in `maclock-interposer/` goes with 2026.11.
 - The earlier boards that were built and sold say rev 2026.09 on the silk (`fad641b`). Anything
   about those boards means 2026.09, even where it says "2026.10": rev 2026.10 was never built.
 
@@ -84,7 +88,7 @@ Habits:
   filler and save in a separate `pcbnew` run (filling in the same run that created the board
   ignores rounded edges), then gate DRC with and without `--refill-zones`.
 - J1 and J3 are the same 2-pin PicoBlade. The `Label` field on J1–J3 ("Switch", "Power",
-  "Speaker": hidden on the symbols, shown on the board silk) is all that tells them apart; keep it
+  "Spkr": hidden on the symbols, shown on the board silk) is all that tells them apart; keep it
   when cleaning up fields.
 - pcbnew 10 traps: after the first change in a process, getters can return bare `SwigPyObject`s,
   so read everything first, then mutate; iterate `fp.GraphicalItems()` last, in its own run. A
