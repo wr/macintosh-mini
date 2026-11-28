@@ -94,7 +94,7 @@ $K pcb export drill --format excellon --excellon-separate-th -o production/gerbe
 (cd production && zip -qj maclock-breakout-gerbers.zip gerbers/* && rm -r gerbers)
 $K pcb export pos --format csv --units mm --side both -o production/maclock-breakout-positions.csv maclock-breakout.kicad_pcb
 $K sch export bom --fields 'Reference,${QUANTITY},Value,Footprint,Manufacturer,MPN,LCSC,Supplier,Supplier Link' \
-  --group-by 'Value,Footprint,MPN' -o production/maclock-breakout-bom.csv maclock-breakout.kicad_sch
+  --group-by 'Value,Footprint,MPN' --exclude-dnp -o production/maclock-breakout-bom.csv maclock-breakout.kicad_sch
 ```
 
 ## License
