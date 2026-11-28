@@ -473,6 +473,129 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "Connector:TestPoint"
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 0.762)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "TP"
+				(at 0 6.858 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "TestPoint"
+				(at 0 5.08 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 5.08 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 5.08 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "test point"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "test point tp"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "Pin* Test*"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "TestPoint_0_1"
+				(circle
+					(center 0 3.302)
+					(radius 0.762)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "TestPoint_1_1"
+				(pin passive line
+					(at 0 0 90)
+					(length 2.54)
+					(name "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "Connector_Generic:Conn_01x02"
 			(pin_names
 				(offset 1.016)
@@ -6127,17 +6250,6 @@
 			(embedded_fonts no)
 		)
 	)
-	(text "U4 boosts the switched battery to 5.06 V (set by R7/R8) for the\ncomputer and its screen, sized for 1.5 A. When U4 is off its output\nis disconnected from the battery.\nQ1, Q2, R9 and R10 make a one-way switch (an ideal diode): 5 V flows\nout to the computer, never back, so a Pi or P4 plugged into USB\ncan't charge the battery through U4.\nLayout: U4's switching loop (U4, C13, C14) stays small, on GND_PWR,\nat the far side of the block from U1."
-		(exclude_from_sim no)
-		(at 193.04 180.34 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left top)
-		)
-		(uuid "068c7bf1-3a18-4ae8-b418-301124f8503f")
-	)
 	(text "Dial"
 		(exclude_from_sim no)
 		(at 101.6 85.09 0)
@@ -6243,6 +6355,28 @@
 		)
 		(uuid "7b56a736-91a2-439e-b953-9fb9b8fe655a")
 	)
+	(text "U6 reports the battery's charge in percent over I2C (address 0x36).\nIt runs from the battery ahead of the power switch (BATT_IN), so it\nkeeps tracking while the Mac is off, charging included (4-23 uA).\nSoftware must never set MODE.EnSleep, and should set VRESET to 2.5 V\nat boot (the 3.0 V default sits next to the 3.08 V cutoff).\nIts CELL pin senses at J2. ALRT is unused."
+		(exclude_from_sim no)
+		(at 299.72 63.5 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left top)
+		)
+		(uuid "8665f762-03b4-4217-a655-39254d54205b")
+	)
+	(text "U7's pull-ups hold BTN1/BTN2 high.\nSW pins 3-4 are the metal bracket."
+		(exclude_from_sim no)
+		(at 101.6 66.04 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left top)
+		)
+		(uuid "86f0ed8e-3cb6-44bf-919f-4dcaedfd2803")
+	)
 	(text "Buttons"
 		(exclude_from_sim no)
 		(at 101.6 22.86 0)
@@ -6268,16 +6402,16 @@
 		)
 		(uuid "974a4e52-4d22-437a-b25b-217f81b1da20")
 	)
-	(text "C2/R4 and C3/R5 feed the differential input; with the\nPAM8302A's internal 10k the gain is about 9 dB.\nR6 holds SD high from BOOST_EN: the amp is on whenever the\nboost is, and the low-battery cutoff shuts it down too.\nJ3 speaker: 8 ohm, 1 W, Molex PicoBlade plug;\npolarity does not matter."
+	(text "U4 boosts the switched battery to 5.06 V (set by R7/R8) for the\ncomputer and its screen, sized for 1.5 A. When U4 is off its output\nis disconnected from the battery.\nC22 (not fitted) is room for a 220 pF feedforward capacitor across R7,\nin case U4's output rings once the computer's own capacitors are added.\nQ1, Q2, R9 and R10 make a one-way switch (an ideal diode): 5 V flows\nout to the computer, never back, so a Pi or P4 plugged into USB\ncan't charge the battery through U4.\nLayout: U4's switching loop (U4, C13, C14) stays small, on GND_PWR,\nat the far side of the block from U1."
 		(exclude_from_sim no)
-		(at 167.64 78.74 0)
+		(at 193.04 180.34 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify left top)
 		)
-		(uuid "bec27d6d-abe0-461c-96bf-06a62cb9edff")
+		(uuid "9c4b08b4-1b95-41da-80a9-b8b36f3ba063")
 	)
 	(text "U7 reads the dial and both buttons (I2C address 0x20) through its own\n100 kOhm pull-ups and pulls INT low when one changes. VDD comes from the\nswitched battery: its I2C input-high threshold, 0.7 x VDD, stays under\nthe 3.3 V bus. P4-P7 are unused; their pull-ups hold them high."
 		(exclude_from_sim no)
@@ -6315,28 +6449,6 @@
 		)
 		(uuid "d11c93ba-3aba-4733-9dcd-14ae731b4ace")
 	)
-	(text "U6 reports the battery's charge in percent over I2C (address 0x36).\nIt runs from the switched battery, as on the P4 interposer: with the\ncomputer off its I2C lines sit low, and the datasheet says the gauge\nmay then stop tracking. Its CELL pin senses at J1. ALRT is unused."
-		(exclude_from_sim no)
-		(at 299.72 63.5 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left top)
-		)
-		(uuid "d643c754-e209-4f4f-a196-987dc123b8e6")
-	)
-	(text "U7's pull-ups hold BTN1/BTN2 high; R1/R2 limit\ncurrent into its pins.\nSW pins 3-4 are the metal bracket."
-		(exclude_from_sim no)
-		(at 101.6 66.04 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left top)
-		)
-		(uuid "e68daee9-a17d-461e-b38c-deb351929203")
-	)
 	(text "U5 pulls LOWBAT_N low while the battery is under 3.08 V. Through R12 that\npulls BOOST_EN down against R13+R17, slowed by C16 and C19 (about 3 s).\nWhen the PNP half of Q3 gets about 0.6 V it fires, Q3 latches, and\nBOOST_EN stays low until the power switch is turned off. That stops U4,\nwhich would otherwise run the cell down to 0.5 V, and the amp (R6), which\nwould draw about 4 mA. A battery at 3.0 V latches after about 2.5 s.\nPower-up can't trip it: U5's start-up reset lasts at most 560 ms, in which\nthe PNP sees at most about 0.3 V. Dips shorter than about 2 s are ignored.\nC20 keeps noise from firing the latch; D1 stops BOOST_EN going below ground\nas C16/C19 discharge when the switch is turned off. About 0.15 mA in all\nwhile latched off."
 		(exclude_from_sim no)
 		(at 154.94 241.3 0)
@@ -6361,6 +6473,17 @@
 		)
 		(uuid "e9c4c2aa-0903-4522-97a7-89deb2b5f9c6")
 	)
+	(text "C2/R4 and C3/R5 feed the differential input; with the\nPAM8302A's internal 10k the gain is about 9 dB.\nR6 and R18 hold SD at 2.5 V from U4's output, so the amp is on\nwhenever the boost is and the low-battery cutoff shuts it down too.\nC21 holds SD low for a few ms after the boost starts, against a pop.\nJ3 speaker: 8 ohm, 1 W, Molex PicoBlade plug;\npolarity does not matter."
+		(exclude_from_sim no)
+		(at 167.64 78.74 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left top)
+		)
+		(uuid "f9533e04-f735-42a3-8784-45ee17faa45d")
+	)
 	(junction
 		(at 175.26 134.62)
 		(diameter 0)
@@ -6374,6 +6497,12 @@
 		(uuid "1c12f715-2a48-498c-9bca-7205d1b47a0c")
 	)
 	(junction
+		(at 100.33 182.88)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "3c42594b-df04-46de-a783-3cb314ca3591")
+	)
+	(junction
 		(at 187.96 53.34)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -6384,6 +6513,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "49ddf9fb-9fd8-4ace-bb21-3a90bcc11fd5")
+	)
+	(junction
+		(at 223.52 63.5)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "58a44ada-427f-496c-9ad1-3e8f1a64a682")
 	)
 	(junction
 		(at 236.22 38.1)
@@ -6410,6 +6545,18 @@
 		(uuid "a45885ed-f648-43b9-92f8-043644b00008")
 	)
 	(junction
+		(at 91.44 182.88)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "b4d142a9-69b1-42f2-8792-029f6338b5c4")
+	)
+	(junction
+		(at 100.33 193.04)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "c38187d2-69ef-4639-aaa1-2101e13250e6")
+	)
+	(junction
 		(at 219.71 109.22)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -6422,10 +6569,28 @@
 		(uuid "d2364e1f-2aee-4516-a5f2-b0c4915d7be0")
 	)
 	(junction
+		(at 38.1 101.6)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "dee37139-cbc7-4467-a4ec-ba46a1b98a15")
+	)
+	(junction
 		(at 179.07 134.62)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "e19b8a26-268c-4368-a63c-f02e0cbd3bd1")
+	)
+	(junction
+		(at 91.44 193.04)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "ebc6df78-15ce-4784-994f-5ce31b4b1f58")
+	)
+	(junction
+		(at 100.33 205.74)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "eebe5bdb-8bca-4cc6-a024-87608e29e485")
 	)
 	(junction
 		(at 176.53 109.22)
@@ -6787,13 +6952,13 @@
 	)
 	(wire
 		(pts
-			(xy 86.36 193.04) (xy 96.52 193.04)
+			(xy 100.33 203.2) (xy 100.33 205.74)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "2cb181f6-a097-489a-9a29-c56975d795e9")
+		(uuid "312134b9-341f-49b2-8186-d3350f2699f8")
 	)
 	(wire
 		(pts
@@ -6854,16 +7019,6 @@
 			(type default)
 		)
 		(uuid "41036a0a-ed02-4499-87ec-2caa6b9cb67d")
-	)
-	(wire
-		(pts
-			(xy 96.52 203.2) (xy 96.52 205.74)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "4381b5ee-d0b0-4748-8c14-77e4ecc766ee")
 	)
 	(wire
 		(pts
@@ -7077,13 +7232,13 @@
 	)
 	(wire
 		(pts
-			(xy 96.52 193.04) (xy 96.52 195.58)
+			(xy 100.33 190.5) (xy 100.33 195.58)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "5c5221eb-d592-4a8e-ba4e-8087d270b1c8")
+		(uuid "5cc5f09c-63b4-426f-9f33-e5bd45d2ef46")
 	)
 	(wire
 		(pts
@@ -7214,6 +7369,16 @@
 			(type default)
 		)
 		(uuid "74fb3d51-35b6-44c3-ace4-942eaaae4b48")
+	)
+	(wire
+		(pts
+			(xy 91.44 190.5) (xy 91.44 193.04)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "7670f525-2246-4e43-aec0-37efffeeb7bf")
 	)
 	(wire
 		(pts
@@ -7417,6 +7582,16 @@
 	)
 	(wire
 		(pts
+			(xy 86.36 193.04) (xy 100.33 193.04)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "9b9b49e0-7301-4c9e-8317-fc6b3a5b0965")
+	)
+	(wire
+		(pts
 			(xy 48.26 255.27) (xy 58.42 255.27)
 		)
 		(stroke
@@ -7557,6 +7732,16 @@
 	)
 	(wire
 		(pts
+			(xy 213.36 66.04) (xy 223.52 66.04)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b8b860fc-4776-4be3-86f1-db9789abf7a0")
+	)
+	(wire
+		(pts
 			(xy 142.24 208.28) (xy 142.24 200.66)
 		)
 		(stroke
@@ -7594,16 +7779,6 @@
 			(type default)
 		)
 		(uuid "bef74d04-3c35-4c2e-9817-e2429145f691")
-	)
-	(wire
-		(pts
-			(xy 96.52 190.5) (xy 96.52 193.04)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "bfa77ca6-d9f5-45a2-bc9e-d388b6bfab43")
 	)
 	(wire
 		(pts
@@ -7654,6 +7829,16 @@
 			(type default)
 		)
 		(uuid "c4d5dcba-51a0-4796-aa2f-86222b3c86f4")
+	)
+	(wire
+		(pts
+			(xy 223.52 63.5) (xy 223.52 66.04)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c6154a2c-6873-401d-bb82-ce2362cdbafc")
 	)
 	(wire
 		(pts
@@ -8045,6 +8230,16 @@
 		)
 		(uuid "29f801f6-3886-4a1c-be40-7ecf50c36d55")
 	)
+	(label "BATT_IN"
+		(at 325.12 38.1 90)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "2a1766d4-37b0-4ae7-a500-8981ede92ed4")
+	)
 	(label "BOOST_OUT"
 		(at 132.08 213.36 0)
 		(effects
@@ -8335,15 +8530,15 @@
 		)
 		(uuid "d50a017f-9a78-4e91-9a99-6a1852d61702")
 	)
-	(label "BOOST_EN"
-		(at 226.06 38.1 0)
+	(label "BOOST_OUT"
+		(at 226.06 38.1 180)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
-			(justify left bottom)
+			(justify right bottom)
 		)
-		(uuid "db062f5d-1baa-4cc5-a5dd-096cea7ceb75")
+		(uuid "d58d5936-3e35-4ce0-bf7f-07702fdfc554")
 	)
 	(label "INT"
 		(at 30.48 53.34 180)
@@ -10236,6 +10431,83 @@
 		)
 	)
 	(symbol
+		(lib_id "power:GND")
+		(at 213.36 73.66 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "304d8ab9-1604-4ea5-968b-73ea10abfaec")
+		(property "Reference" "#PWR048"
+			(at 213.36 80.01 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 213.36 77.47 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 213.36 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 213.36 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 213.36 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "b945fb00-82d5-449c-91bd-20683409ac87")
+		)
+		(instances
+			(project "maclock-breakout"
+				(path "/4073cbd1-b7cf-4fb7-b392-207b756c9551"
+					(reference "#PWR048")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Device:L")
 		(at 66.04 177.8 90)
 		(unit 1)
@@ -11775,6 +12047,118 @@
 		)
 	)
 	(symbol
+		(lib_id "Device:R")
+		(at 213.36 69.85 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "4fef5e0b-bd37-4429-a062-d70b4693e351")
+		(property "Reference" "R18"
+			(at 215.392 69.85 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "100k"
+			(at 213.36 69.85 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric_Pad0.72x0.64mm_HandSolder"
+			(at 213.36 69.85 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 213.36 69.85 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Resistor, 1 %, 0402"
+			(at 213.36 69.85 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "UNI-ROYAL"
+			(at 213.36 69.85 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "0402WGF1003TCE"
+			(at 213.36 69.85 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C25741"
+			(at 213.36 69.85 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "04ec376c-31f1-4fe1-89d5-7aa994e178bd")
+		)
+		(pin "2"
+			(uuid "4ba0b393-ee3c-4d44-8b04-53375101c7bd")
+		)
+		(instances
+			(project "maclock-breakout"
+				(path "/4073cbd1-b7cf-4fb7-b392-207b756c9551"
+					(reference "R18")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Device:C")
 		(at 83.82 243.84 0)
 		(unit 1)
@@ -11995,6 +12379,120 @@
 			(project "maclock-breakout"
 				(path "/4073cbd1-b7cf-4fb7-b392-207b756c9551"
 					(reference "R6")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:C")
+		(at 223.52 69.85 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "5b2757db-1948-4930-9f29-62049efefdc8")
+		(property "Reference" "C21"
+			(at 224.155 67.31 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "100nF"
+			(at 224.155 72.39 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric_Pad0.74x0.62mm_HandSolder"
+			(at 223.52 69.85 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 223.52 69.85 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Capacitor, X7R, 16 V, 0402"
+			(at 223.52 69.85 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Samsung Electro-Mechanics"
+			(at 223.52 69.85 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "CL05B104KO5NNNC"
+			(at 223.52 69.85 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C1525"
+			(at 223.52 69.85 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "ccd34e57-9f03-4708-bd73-ed521f4a79c4")
+		)
+		(pin "2"
+			(uuid "096be689-cdd9-45d9-9177-f47da6db697b")
+		)
+		(instances
+			(project "maclock-breakout"
+				(path "/4073cbd1-b7cf-4fb7-b392-207b756c9551"
+					(reference "C21")
 					(unit 1)
 				)
 			)
@@ -12495,7 +12993,7 @@
 	)
 	(symbol
 		(lib_id "Device:R")
-		(at 96.52 199.39 0)
+		(at 100.33 199.39 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -12505,7 +13003,7 @@
 		(dnp no)
 		(uuid "60cbd80a-5ad5-41be-a9b8-13d33b367d32")
 		(property "Reference" "R8"
-			(at 98.552 199.39 90)
+			(at 102.362 199.39 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -12515,7 +13013,7 @@
 			)
 		)
 		(property "Value" "100k"
-			(at 96.52 199.39 90)
+			(at 100.33 199.39 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -12525,7 +13023,7 @@
 			)
 		)
 		(property "Footprint" "Resistor_SMD:R_0402_1005Metric_Pad0.72x0.64mm_HandSolder"
-			(at 96.52 199.39 0)
+			(at 100.33 199.39 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -12536,7 +13034,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 96.52 199.39 0)
+			(at 100.33 199.39 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -12547,7 +13045,7 @@
 			)
 		)
 		(property "Description" "Resistor, 1%, 0402"
-			(at 96.52 199.39 0)
+			(at 100.33 199.39 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -12558,7 +13056,7 @@
 			)
 		)
 		(property "Manufacturer" "UNI-ROYAL"
-			(at 96.52 199.39 0)
+			(at 100.33 199.39 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -12569,7 +13067,7 @@
 			)
 		)
 		(property "MPN" "0402WGF1003TCE"
-			(at 96.52 199.39 0)
+			(at 100.33 199.39 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -12580,7 +13078,7 @@
 			)
 		)
 		(property "LCSC" "C25741"
-			(at 96.52 199.39 0)
+			(at 100.33 199.39 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -12942,6 +13440,120 @@
 			(project "maclock-breakout"
 				(path "/4073cbd1-b7cf-4fb7-b392-207b756c9551"
 					(reference "#PWR014")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:C")
+		(at 91.44 186.69 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "657074b1-d122-46f6-9991-a749efe15bf0")
+		(property "Reference" "C22"
+			(at 92.075 184.15 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "220pF"
+			(at 92.075 189.23 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric_Pad0.74x0.62mm_HandSolder"
+			(at 91.44 186.69 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 91.44 186.69 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Capacitor, C0G, 50 V, 0402. Not fitted: feedforward across R7, fit only if U4's 5 V rings"
+			(at 91.44 186.69 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Samsung Electro-Mechanics"
+			(at 91.44 186.69 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "CL05C221JB5NNNC"
+			(at 91.44 186.69 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C307445"
+			(at 91.44 186.69 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "8bc2ac44-7964-41e5-b81e-de255bab4c52")
+		)
+		(pin "2"
+			(uuid "fd258a54-fa7d-42e6-b807-50e097866837")
+		)
+		(instances
+			(project "maclock-breakout"
+				(path "/4073cbd1-b7cf-4fb7-b392-207b756c9551"
+					(reference "C22")
 					(unit 1)
 				)
 			)
@@ -14478,83 +15090,6 @@
 		)
 	)
 	(symbol
-		(lib_id "power:+BATT")
-		(at 325.12 38.1 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "964dc4c3-241f-43a0-af4a-796b0d8e08a0")
-		(property "Reference" "#PWR038"
-			(at 325.12 41.91 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "+BATT"
-			(at 325.12 34.544 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" ""
-			(at 325.12 38.1 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 325.12 38.1 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Power symbol creates a global label with name \"+BATT\""
-			(at 325.12 38.1 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "04833f62-4f32-4188-a68e-781798e7716d")
-		)
-		(instances
-			(project "maclock-breakout"
-				(path "/4073cbd1-b7cf-4fb7-b392-207b756c9551"
-					(reference "#PWR038")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "Device:C_Small")
 		(at 219.71 55.88 0)
 		(unit 1)
@@ -16037,6 +16572,83 @@
 		)
 	)
 	(symbol
+		(lib_id "power:PWR_FLAG")
+		(at 38.1 101.6 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "b96a7799-7226-446f-a472-9341c7221dfa")
+		(property "Reference" "#PWR053"
+			(at 38.1 99.695 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "PWR_FLAG"
+			(at 38.1 97.79 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 38.1 101.6 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 38.1 101.6 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Special symbol for telling ERC where power comes from"
+			(at 38.1 101.6 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "c9a48201-0c8f-4591-ad8b-17d03d78b429")
+		)
+		(instances
+			(project "maclock-breakout"
+				(path "/4073cbd1-b7cf-4fb7-b392-207b756c9551"
+					(reference "#PWR053")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Device:R")
 		(at 114.3 246.38 0)
 		(unit 1)
@@ -17102,6 +17714,83 @@
 		)
 	)
 	(symbol
+		(lib_id "power:GND")
+		(at 223.52 73.66 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "d6d24b22-9c90-4474-800f-d569790f0463")
+		(property "Reference" "#PWR049"
+			(at 223.52 80.01 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 223.52 77.47 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 223.52 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 223.52 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 223.52 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "7339e16a-0535-4529-a3da-bda89dbd3402")
+		)
+		(instances
+			(project "maclock-breakout"
+				(path "/4073cbd1-b7cf-4fb7-b392-207b756c9551"
+					(reference "#PWR049")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Transistor_FET:AO3401A")
 		(at 137.16 187.96 0)
 		(unit 1)
@@ -17220,7 +17909,7 @@
 	)
 	(symbol
 		(lib_id "Device:R")
-		(at 96.52 186.69 0)
+		(at 100.33 186.69 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -17230,7 +17919,7 @@
 		(dnp no)
 		(uuid "dee9533b-f256-49b7-9356-e52d5a4757c1")
 		(property "Reference" "R7"
-			(at 98.552 186.69 90)
+			(at 102.362 186.69 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -17240,7 +17929,7 @@
 			)
 		)
 		(property "Value" "750k"
-			(at 96.52 186.69 90)
+			(at 100.33 186.69 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -17250,7 +17939,7 @@
 			)
 		)
 		(property "Footprint" "Resistor_SMD:R_0402_1005Metric_Pad0.72x0.64mm_HandSolder"
-			(at 96.52 186.69 0)
+			(at 100.33 186.69 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -17261,7 +17950,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 96.52 186.69 0)
+			(at 100.33 186.69 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -17272,7 +17961,7 @@
 			)
 		)
 		(property "Description" "Resistor, 1%, 0402"
-			(at 96.52 186.69 0)
+			(at 100.33 186.69 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -17283,7 +17972,7 @@
 			)
 		)
 		(property "Manufacturer" "UNI-ROYAL"
-			(at 96.52 186.69 0)
+			(at 100.33 186.69 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -17294,7 +17983,7 @@
 			)
 		)
 		(property "MPN" "0402WGF7503TCE"
-			(at 96.52 186.69 0)
+			(at 100.33 186.69 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -17305,7 +17994,7 @@
 			)
 		)
 		(property "LCSC" "C122545"
-			(at 96.52 186.69 0)
+			(at 100.33 186.69 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
