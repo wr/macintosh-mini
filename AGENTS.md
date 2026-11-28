@@ -58,11 +58,12 @@ the tiny Mac boots System 7 or Mac OS 8. This repo holds the installer (`setup.s
 ## Board revisions
 - `maclock-pcb/` holds rev 2027.01: one board for the Pi and ESP32-P4 builds, with a 5 V boost,
   one-way switch, latching low-battery cutoff, TCA9554 input chip, MAX17048 gauge and an 8-pin
-  link (SDA SCL GND 5V 5V GND INT AUDIO). Red solder mask. Not built or tested yet; its Pi
-  interposer and software aren't written.
+  link (SDA SCL GND 5V 5V GND INT AUDIO). Red solder mask. Not built or tested yet, and its
+  software isn't written. The GPIO interposer in `maclock-interposer/` is rev 2027.01 too: the
+  same 8-pin link, I²C pull-ups to the Pi's 3.3 V on GPIO 10/11, INT on GPIO 27, red.
 - The shop sells rev 2026.11 (blue; on-board amp with its own quiet 3.0 V supply, HUANO dial laid
-  flat, PicoBlade plugs; files at `ea41efe`), and the PCBWay shared project builds it. The GPIO
-  interposer in `maclock-interposer/` goes with 2026.11.
+  flat, PicoBlade plugs; files at `ea41efe`), and the PCBWay shared project builds it. Its GPIO
+  interposer (1×7 socket) is at `ea41efe` too.
 - The earlier boards that were built and sold say rev 2026.09 on the silk (`fad641b`). Anything
   about those boards means 2026.09, even where it says "2026.10": rev 2026.10 was never built.
 
