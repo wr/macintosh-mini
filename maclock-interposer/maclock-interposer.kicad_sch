@@ -3475,7 +3475,7 @@
 				)
 			)
 		)
-		(property "Value" "HC-PM254-8.5H-2x20PS"
+		(property "Value" "FH-00148"
 			(at 101.6 128.27 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -3485,7 +3485,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Connector_PinSocket_2.54mm:PinSocket_2x20_P2.54mm_Vertical_SMD"
+		(property "Footprint" "maclock-interposer:PinSocket_2x20_P2.54mm_Vertical_SMD_Liansheng_FH-00148"
 			(at 100.33 100.33 0)
 			(hide yes)
 			(show_name no)
@@ -3518,7 +3518,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Hong Cheng"
+		(property "Manufacturer" "Liansheng"
 			(at 100.33 100.33 0)
 			(hide yes)
 			(show_name no)
@@ -3529,7 +3529,7 @@
 				)
 			)
 		)
-		(property "MPN" "HC-PM254-8.5H-2x20PS"
+		(property "MPN" "FH-00148"
 			(at 100.33 100.33 0)
 			(hide yes)
 			(show_name no)
@@ -3540,7 +3540,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C22436166"
+		(property "LCSC" "C2685092"
 			(at 100.33 100.33 0)
 			(hide yes)
 			(show_name no)

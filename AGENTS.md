@@ -60,9 +60,12 @@ the tiny Mac boots System 7 or Mac OS 8. This repo holds the installer (`setup.s
   one-way switch, latching low-battery cutoff, TCA9554 input chip, MAX17048 gauge and an 8-pin
   link (SDA SCL GND 5V 5V GND INT AUDIO). Red solder mask. Not built or tested yet, and its
   software isn't written. The GPIO interposer in `maclock-interposer/` is rev 2027.01 too: the
-  same 8-pin link, I²C pull-ups to the Pi's 3.3 V on GPIO 10/11, INT on GPIO 27, red. An
-  interposer's J2 plugs straight onto the main board's J4, so when either moves, pin 1 must still
-  land on pin 1: J4's pin 1 is at the window end, so J2's pin 1 is at the end away from GPIO 21.
+  same 8-pin link, I²C pull-ups to the Pi's 3.3 V on GPIO 10/11, INT on GPIO 27, red, 0.8 mm. It
+  takes a Pi Zero 2 W or a Pi 3 A+: its Pi socket (J1, 7.1 mm) sits 6 mm below the screen's, just
+  above J2, so a 3 A+ clears the rear shell's handle; nothing may overlap the main board's window
+  (a plastic piece rises 28 mm through it). An interposer's J2 plugs straight onto the main
+  board's J4, so when either moves, pin 1 must still land on pin 1: J4's pin 1 is at the window
+  end, so J2's pin 1 is at the end away from GPIO 21.
 - The shop sells rev 2026.11 (blue; on-board amp with its own quiet 3.0 V supply, HUANO dial laid
   flat, PicoBlade plugs; files at `ea41efe`), and the PCBWay shared project builds it. Its GPIO
   interposer (1×7 socket, 7.1 mm) is at `e557f70`.
