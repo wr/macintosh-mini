@@ -66,7 +66,7 @@ _Optional:_ If you want to skip the automatic script and install everything your
 
 ## Getting help
 
-Open a [GitHub issue](https://github.com/wr/macintosh-mini/issues) — I'm happy to help, and very responsive!
+Ask in the help forum on [Wells Workshop on Discord](https://discord.gg/gACNgfyB7k), where other builders can help too. Found a bug or want a feature? Open a [GitHub issue](https://github.com/wr/macintosh-mini/issues).
 
 ## Credits
 
