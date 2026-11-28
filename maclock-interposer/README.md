@@ -10,7 +10,7 @@ An SMD socket underneath plugs onto the Pi and an SMD pin header on top plugs in
 
 The display uses the Pi's hardware I²C pins for its sync signals, so the Pi reaches the main board's input chip and battery gauge over a software I²C bus on GPIO 10 and 11. Three resistors on the Pi side complete the link. R1 and R2 pull SDA and SCL up to the Pi's 3.3 V. R3 pulls up INT, which the main board's input chip only ever pulls low. The main board has none of these, because the ESP32-P4 build brings its own. The Pi's own pull-up or pull-down on GPIO 10, 11 and 27 should be switched off in software.
 
-The board is drawn the way it sits in the Maclock: Pi mounted upside-down, seen from the screen. Order it with **red solder mask and white silkscreen**, like the 2027.01 main board, so it can't be paired with a blue 2026.11 board by mistake. The screen side is inverted (silk is the background; the lettering and the open-hardware logo are bare mask). Branding is on the Pi side, and J2's pin labels are on both sides.
+The board is drawn the way it sits in the Maclock: Pi mounted upside-down, seen from the screen. Order it with **red solder mask and white silkscreen**, like the 2027.01 main board, so it can't be paired with a blue 2026.11 board by mistake. The screen side is inverted (silk is the background; the lettering, the open-hardware logo and the character are bare mask). Branding is on the Pi side, and J2's pin labels are on both sides.
 
 | J2 pin | Silk | Net   | Pi header pin | GPIO |
 | ------ | ---- | ----- | ------------- | ---- |
