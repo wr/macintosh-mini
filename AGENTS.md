@@ -56,9 +56,19 @@ the tiny Mac boots System 7 or Mac OS 8. This repo holds the installer (`setup.s
 | `REUSE.toml` | Which licence covers each file. |
 
 ## Board revisions
-- `main` has rev 2026.11 (on-board amp with its own quiet 3.0 V supply, HUANO dial laid flat,
-  PicoBlade plugs) and the GPIO interposer. The shop sells 2026.11 and the PCBWay shared project
-  builds it.
+- `maclock-pcb/` holds rev 2027.01: one board for the Pi and ESP32-P4 builds, with a 5 V boost,
+  one-way switch, latching low-battery cutoff, TCA9554 input chip, MAX17048 gauge and an 8-pin
+  link (SDA SCL GND 5V 5V GND INT AUDIO). Red solder mask. Not built or tested yet, and its
+  software isn't written. The GPIO interposer in `maclock-interposer/` is rev 2027.01 too: the
+  same 8-pin link, I²C pull-ups to the Pi's 3.3 V on GPIO 10/11, INT on GPIO 27, red, 0.8 mm. It
+  takes a Pi Zero 2 W or a Pi 3 A+: its Pi socket (J1, 7.1 mm) sits 6 mm below the screen's, just
+  above J2, so a 3 A+ clears the rear shell's handle; nothing may overlap the main board's window
+  (a plastic piece rises 28 mm through it). An interposer's J2 plugs straight onto the main
+  board's J4, so when either moves, pin 1 must still land on pin 1: J4's pin 1 is at the window
+  end, so J2's pin 1 is at the end away from GPIO 21.
+- The shop sells rev 2026.11 (blue; on-board amp with its own quiet 3.0 V supply, HUANO dial laid
+  flat, PicoBlade plugs; files at `ea41efe`), and the PCBWay shared project builds it. Its GPIO
+  interposer (1×7 socket, 7.1 mm) is at `e557f70`.
 - The earlier boards that were built and sold say rev 2026.09 on the silk (`fad641b`). Anything
   about those boards means 2026.09, even where it says "2026.10": rev 2026.10 was never built.
 
@@ -84,7 +94,7 @@ Habits:
   filler and save in a separate `pcbnew` run (filling in the same run that created the board
   ignores rounded edges), then gate DRC with and without `--refill-zones`.
 - J1 and J3 are the same 2-pin PicoBlade. The `Label` field on J1–J3 ("Switch", "Power",
-  "Speaker": hidden on the symbols, shown on the board silk) is all that tells them apart; keep it
+  "Spkr": hidden on the symbols, shown on the board silk) is all that tells them apart; keep it
   when cleaning up fields.
 - pcbnew 10 traps: after the first change in a process, getters can return bare `SwigPyObject`s,
   so read everything first, then mutate; iterate `fp.GraphicalItems()` last, in its own run. A
