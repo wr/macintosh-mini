@@ -7,7 +7,7 @@
 	(title_block
 		(title "Macintosh Mini breakout")
 		(date "2026-10-04")
-		(rev "2026.11")
+		(rev "2027.01")
 		(company "Wells Workshop")
 		(comment 1 "github.com/wr/macintosh-mini")
 		(comment 2 "Licensed CERN-OHL-S-2.0")
@@ -6503,12 +6503,6 @@
 		(uuid "3c42594b-df04-46de-a783-3cb314ca3591")
 	)
 	(junction
-		(at 187.96 53.34)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "40fafcc0-de68-44c5-8fdd-71974c11d111")
-	)
-	(junction
 		(at 219.71 58.42)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -6679,16 +6673,6 @@
 			(type default)
 		)
 		(uuid "037c561a-8e4c-4d57-b6d7-26827253ead7")
-	)
-	(wire
-		(pts
-			(xy 96.52 205.74) (xy 106.68 205.74)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "0676e243-2552-4cf0-832c-a41daa0841ec")
 	)
 	(wire
 		(pts
@@ -6902,7 +6886,7 @@
 	)
 	(wire
 		(pts
-			(xy 88.9 182.88) (xy 96.52 182.88)
+			(xy 88.9 182.88) (xy 106.68 182.88)
 		)
 		(stroke
 			(width 0)
@@ -6962,7 +6946,7 @@
 	)
 	(wire
 		(pts
-			(xy 168.91 109.22) (xy 171.45 109.22)
+			(xy 168.91 109.22) (xy 184.15 109.22)
 		)
 		(stroke
 			(width 0)
@@ -7042,7 +7026,7 @@
 	)
 	(wire
 		(pts
-			(xy 105.41 53.34) (xy 110.49 53.34)
+			(xy 105.41 53.34) (xy 130.81 53.34)
 		)
 		(stroke
 			(width 0)
@@ -7252,16 +7236,6 @@
 	)
 	(wire
 		(pts
-			(xy 179.07 109.22) (xy 184.15 109.22)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "5f7db99c-70b6-4a60-a6ff-3232279505b8")
-	)
-	(wire
-		(pts
 			(xy 76.2 177.8) (xy 76.2 181.61)
 		)
 		(stroke
@@ -7379,16 +7353,6 @@
 			(type default)
 		)
 		(uuid "7670f525-2246-4e43-aec0-37efffeeb7bf")
-	)
-	(wire
-		(pts
-			(xy 201.93 134.62) (xy 209.55 134.62)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "7a79f0bd-0610-4c74-b923-6341ec07a2af")
 	)
 	(wire
 		(pts
@@ -7512,16 +7476,6 @@
 	)
 	(wire
 		(pts
-			(xy 118.11 53.34) (xy 130.81 53.34)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "94bea884-0f5e-437b-be37-b20461d8c3e5")
-	)
-	(wire
-		(pts
 			(xy 73.66 270.51) (xy 73.66 274.32)
 		)
 		(stroke
@@ -7549,16 +7503,6 @@
 			(type default)
 		)
 		(uuid "96cd33df-408b-418f-b64c-855c653ee7e9")
-	)
-	(wire
-		(pts
-			(xy 118.11 35.56) (xy 130.81 35.56)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "97254581-73ab-4a20-9136-a39ae47319c1")
 	)
 	(wire
 		(pts
@@ -7602,16 +7546,6 @@
 	)
 	(wire
 		(pts
-			(xy 110.49 53.34) (xy 118.11 53.34)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "a0c2146d-dd8e-4e64-92c9-e7df8ecdf99f")
-	)
-	(wire
-		(pts
 			(xy 35.56 45.72) (xy 33.02 45.72)
 		)
 		(stroke
@@ -7649,16 +7583,6 @@
 			(type default)
 		)
 		(uuid "a5e225c7-8d5c-4398-931c-d21ce673bc9a")
-	)
-	(wire
-		(pts
-			(xy 171.45 109.22) (xy 179.07 109.22)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "a6e94454-1967-49a7-94a2-409112e76a88")
 	)
 	(wire
 		(pts
@@ -7709,16 +7633,6 @@
 			(type default)
 		)
 		(uuid "b6aaf10f-804d-4559-8924-6dcecfc20a19")
-	)
-	(wire
-		(pts
-			(xy 96.52 182.88) (xy 106.68 182.88)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "b6ad97ee-2bbe-4709-aff9-6a3a2f3216b0")
 	)
 	(wire
 		(pts
@@ -7862,7 +7776,7 @@
 	)
 	(wire
 		(pts
-			(xy 105.41 35.56) (xy 110.49 35.56)
+			(xy 105.41 35.56) (xy 130.81 35.56)
 		)
 		(stroke
 			(width 0)
@@ -7879,16 +7793,6 @@
 			(type default)
 		)
 		(uuid "cb29549d-f1e0-4e6b-ba88-18c643969f8a")
-	)
-	(wire
-		(pts
-			(xy 110.49 35.56) (xy 118.11 35.56)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "cd22a220-3e8a-4fd3-aa66-5433dd984967")
 	)
 	(wire
 		(pts
@@ -8042,7 +7946,7 @@
 	)
 	(wire
 		(pts
-			(xy 194.31 134.62) (xy 201.93 134.62)
+			(xy 194.31 134.62) (xy 209.55 134.62)
 		)
 		(stroke
 			(width 0)
@@ -8112,7 +8016,7 @@
 	)
 	(wire
 		(pts
-			(xy 76.2 205.74) (xy 96.52 205.74)
+			(xy 76.2 205.74) (xy 106.68 205.74)
 		)
 		(stroke
 			(width 0)
@@ -13454,7 +13358,7 @@
 		(in_bom yes)
 		(on_board yes)
 		(in_pos_files yes)
-		(dnp no)
+		(dnp yes)
 		(uuid "657074b1-d122-46f6-9991-a749efe15bf0")
 		(property "Reference" "C22"
 			(at 92.075 184.15 0)
@@ -19311,4 +19215,5 @@
 			(page "1")
 		)
 	)
+	(embedded_fonts no)
 )
