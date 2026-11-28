@@ -84,6 +84,10 @@ def set_zone(name, zone_tab=night_schedule.ZONE_TAB, zoneinfo=ZONEINFO,
     if not os.path.isfile(target):
         raise Refused(f"no {target}")
     new = f"{localtime}.{os.getpid()}.new"
+    try:
+        os.unlink(new)      # left by a run that was cut short
+    except FileNotFoundError:
+        pass
     os.symlink(target, new)
     os.replace(new, localtime)
     if os.path.exists(timezone_file):
