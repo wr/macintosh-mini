@@ -177,7 +177,8 @@ Edge cases:
 
 - Where sunset and sunrise aren't known (a timezone with no city, such as UTC, or a day when the sun stays up or down), `sunset` means 19:00 and `sunrise` 07:00.
 - The Pi has no clock battery, so the schedule waits until NTP has set the time.
-- A start during the night dims at once, to level 0 too. Turn the dial to bring the screen up.
+- A start during the night dims at once, except to level 0: the screen is never turned off just after power-on. It turns off from the next night on.
+- Changing the level during the night applies at once, if the screen is brighter than the new level.
 
 ---
 

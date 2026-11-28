@@ -306,16 +306,19 @@ def is_night(cfg, coords, now):
 
 
 class Schedule:
-    """Acts only when night starts or ends, so the dial wins in between:
-    turning it at night holds until the next night starts.
+    """Acts when night starts or ends, and when "how dim" changes during the
+    night, so the dial wins in between: turning it at night holds until the
+    next night starts.
 
     When night starts it remembers the level and, if that's brighter than
     "how dim", goes to "how dim". When night ends it goes back to the level
-    it remembered."""
+    it remembered. Starting up at night with "how dim" at 0 leaves the screen
+    alone, so it never goes black seconds after power-on."""
 
     def __init__(self):
         self.was = None          # None not known yet, False day, True night
         self.day_level = None    # the level remembered when night started
+        self.applied = None      # the "how dim" last acted on
 
     def update(self, night, level, dim_level, changed=False):
         """Call regularly with whether it's night, the level now and "how
@@ -326,13 +329,19 @@ class Schedule:
             # Dimming was turned off, or its times moved
             target = self.day_level
             self.was = False
-        if night == self.was:
-            return target
-        if night:
-            self.day_level = level
+        if night != self.was:
+            if night:
+                self.day_level = level
+                starting_up = self.was is None
+                if level > dim_level and not (starting_up and dim_level == 0):
+                    target = dim_level
+                self.applied = dim_level
+            elif self.was and self.day_level is not None:
+                target = self.day_level
+            self.was = night
+        elif night and dim_level != self.applied:
+            # "How dim" changed during the night: it applies at once
             if level > dim_level:
                 target = dim_level
-        elif self.was and self.day_level is not None:
-            target = self.day_level
-        self.was = night
+            self.applied = dim_level
         return target

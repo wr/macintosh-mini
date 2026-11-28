@@ -262,13 +262,51 @@ class ScheduleTest(unittest.TestCase):
         self.assertEqual(s.update(False, 20, 20, changed=True), 80)
         self.assertIsNone(s.update(False, 80, 20))
 
-    def test_how_dim_changed_at_night_waits_for_the_next_night(self):
+    def test_starting_up_at_night_with_off_leaves_the_screen_alone(self):
+        s = ns.Schedule()
+        self.assertIsNone(s.update(True, 100, 0))
+        for _ in range(5):
+            self.assertIsNone(s.update(True, 100, 0))
+        self.assertIsNone(s.update(False, 100, 0))
+        # The next night starts: off, as set
+        self.assertEqual(s.update(True, 100, 0), 0)
+        self.assertEqual(s.update(False, 0, 0), 100)
+
+    def test_how_dim_changed_at_night_applies_at_once(self):
+        s = ns.Schedule()
+        s.update(False, 80, 20)
+        s.update(True, 80, 20)
+        self.assertEqual(s.update(True, 20, 10, changed=True), 10)
+        self.assertIsNone(s.update(True, 10, 10))
+        self.assertEqual(s.update(True, 10, 0), 0)
+        self.assertEqual(s.update(False, 0, 0), 80)
+
+    def test_how_dim_raised_at_night_does_not_brighten(self):
         s = ns.Schedule()
         s.update(False, 80, 20)
         s.update(True, 80, 20)
         self.assertIsNone(s.update(True, 20, 50, changed=True))
-        self.assertEqual(s.update(False, 20, 50), 80)
-        self.assertEqual(s.update(True, 80, 50), 50)
+        # The dial then wins as usual: 50 is not applied again
+        self.assertIsNone(s.update(True, 70, 50))
+        self.assertEqual(s.update(False, 70, 50), 80)
+
+    def test_off_chosen_after_starting_up_at_night_turns_the_screen_off(self):
+        s = ns.Schedule()
+        self.assertEqual(s.update(True, 100, 20), 20)
+        self.assertEqual(s.update(True, 20, 0, changed=True), 0)
+
+    def test_other_changes_at_night_leave_the_backlight_alone(self):
+        # The chime, the zone, the times (still inside the window)
+        s = ns.Schedule()
+        s.update(False, 80, 20)
+        s.update(True, 80, 20)
+        for _ in range(3):
+            self.assertIsNone(s.update(True, 65, 20, changed=True))
+
+    def test_times_moved_so_night_starts_now_dims_even_to_off(self):
+        s = ns.Schedule()
+        s.update(False, 80, 0)
+        self.assertEqual(s.update(True, 80, 0, changed=True), 0)
 
     def test_a_whole_day_through_the_clock(self):
         # 22:00 to 07:00 at 20, checked every minute from noon to noon
