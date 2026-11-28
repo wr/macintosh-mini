@@ -2041,7 +2041,7 @@
 			(embedded_fonts no)
 		)
 	)
-	(text "J2: link to the main board, rev 2027.01, in the same order as its J4\n(SDA SCL GND 5V 5V GND INT AUDIO); one straight 8-way Dupont cable.\nThe screen owns the Pi's hardware I2C pins, so the main board's I2C runs\nbit-banged (i2c-gpio) on GPIO 10 (SDA) and 11 (SCL). R1/R2 are its pull-ups\nto the Pi's 3.3 V; the main board has none. R3 pulls up the main board's\nopen-drain INT on GPIO 27. Audio stays on GPIO 19 (PWM). GPIO 26 (pin 37)\nis unused. Pins 13, 19, 23, 35 and 37 don't reach the screen."
+	(text "J2: link to the main board, rev 2027.01, in the same order as its J4\n(SDA SCL GND 5V 5V GND INT AUDIO). J2 plugs straight onto J4, pin 1 onto pin 1,\nso on this board J2's pin 1 sits at the end away from GPIO 21.\nThe screen owns the Pi's hardware I2C pins, so the main board's I2C runs\nbit-banged (i2c-gpio) on GPIO 10 (SDA) and 11 (SCL). R1/R2 are its pull-ups\nto the Pi's 3.3 V; the main board has none. R3 pulls up the main board's\nopen-drain INT on GPIO 27. Audio stays on GPIO 19 (PWM). GPIO 26 (pin 37)\nis unused. Pins 13, 19, 23, 35 and 37 don't reach the screen."
 		(exclude_from_sim no)
 		(at 167.64 116.84 0)
 		(effects
@@ -2050,7 +2050,7 @@
 			)
 			(justify left top)
 		)
-		(uuid "bf4cc2e8-0447-4265-a86a-f3f6a0cffbb6")
+		(uuid "92664080-a5f5-4489-9258-f6331a6af23c")
 	)
 	(junction
 		(at 213.36 93.98)

@@ -6311,17 +6311,6 @@
 		)
 		(uuid "547b204a-56f9-4ab6-b255-0a8004be128b")
 	)
-	(text "J4 joins the Pi or P4 interposer with a straight 1x8 Dupont cable.\nThe order is fail-safe: reversed, 5V lands on 5V; shifted by one, on GND.\nGND_PWR carries the computer's and the boost's return current to J2\nthrough NT1, so it never crosses the audio ground.\nNo I2C pull-ups here: the Pi interposer and the P4 board bring their own."
-		(exclude_from_sim no)
-		(at 15.24 66.04 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left top)
-		)
-		(uuid "575416d5-95fe-4e96-a641-b0f87d42594d")
-	)
 	(text "Speaker"
 		(exclude_from_sim no)
 		(at 274.32 54.61 0)
@@ -6412,6 +6401,17 @@
 			(justify left top)
 		)
 		(uuid "9c4b08b4-1b95-41da-80a9-b8b36f3ba063")
+	)
+	(text "The Pi or P4 interposer's J2 socket plugs straight onto J4, pin 1 onto pin 1.\nThe order is fail-safe: reversed, 5V lands on 5V; shifted by one, on GND.\nGND_PWR carries the computer's and the boost's return current to J2\nthrough NT1, so it never crosses the audio ground.\nNo I2C pull-ups here: the Pi interposer and the P4 board bring their own."
+		(exclude_from_sim no)
+		(at 15.24 66.04 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left top)
+		)
+		(uuid "9f31a594-22c3-4259-9a13-dc79d7cd7142")
 	)
 	(text "U7 reads the dial and both buttons (I2C address 0x20) through its own\n100 kOhm pull-ups and pulls INT low when one changes. VDD comes from the\nswitched battery: its I2C input-high threshold, 0.7 x VDD, stays under\nthe 3.3 V bus. P4-P7 are unused; their pull-ups hold them high."
 		(exclude_from_sim no)
@@ -19215,5 +19215,4 @@
 			(page "1")
 		)
 	)
-	(embedded_fonts no)
 )
