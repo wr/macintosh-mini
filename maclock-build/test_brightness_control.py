@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Tests for the night-dimming logic in brightness_control.py.
+"""Tests for brightness_control.py: its settings and the level from outside.
+
+The schedule itself is tested in test_night_schedule.py.
 
 Run: python3 -m unittest test_brightness_control
 The lgpio module only exists on the Pi, so it is stubbed out here; nothing
@@ -9,16 +11,17 @@ under test touches GPIO.
 import contextlib
 import io
 import os
+import socket
 import sys
 import tempfile
 import types
 import unittest
-from datetime import date, datetime, time, timedelta, timezone
-from zoneinfo import ZoneInfo
+from datetime import date, datetime, timezone
 
 sys.modules.setdefault("lgpio", types.ModuleType("lgpio"))
 
 import brightness_control as bc  # noqa: E402
+import night_schedule as ns  # noqa: E402
 
 UTC = timezone.utc
 
@@ -51,166 +54,6 @@ class SunTimes(unittest.TestCase):
 
     def test_polar_night_returns_none(self):
         self.assertIsNone(bc.sun_times(69.6492, 18.9553, date(2024, 12, 21)))
-
-
-class NightFactor(unittest.TestCase):
-    # A fake location where the sun rises at 06:00 and sets at 18:00 local,
-    # every day, so the tests read as clock times.
-    TZ = timezone(timedelta(hours=-5))
-
-    def sun(self, lat, lon, day):
-        return (datetime.combine(day, time(6), self.TZ).astimezone(UTC),
-                datetime.combine(day, time(18), self.TZ).astimezone(UTC))
-
-    def at(self, hh, mm=0, day=date(2026, 3, 10)):
-        return datetime.combine(day, time(hh, mm), self.TZ)
-
-    def factor(self, now, off_at=time(22, 0), night=0.5):
-        cfg = bc.NightConfig(lat=0, lon=0, factor=night, off_at=off_at)
-        return bc.night_factor(now, cfg, sun_times=self.sun)
-
-    def test_day_is_full_brightness(self):
-        self.assertEqual(self.factor(self.at(12)), 1.0)
-
-    def test_after_sunset_dims(self):
-        self.assertEqual(self.factor(self.at(19)), 0.5)
-
-    def test_after_cutoff_is_dark(self):
-        self.assertEqual(self.factor(self.at(22, 30)), 0.0)
-
-    def test_after_midnight_stays_dark(self):
-        self.assertEqual(self.factor(self.at(3)), 0.0)
-
-    def test_dark_ends_an_hour_before_sunrise(self):
-        self.assertEqual(self.factor(self.at(4, 59)), 0.0)
-        self.assertEqual(self.factor(self.at(5, 0)), 0.5)
-        self.assertEqual(self.factor(self.at(5, 59)), 0.5)
-
-    def test_sunrise_restores_full_brightness(self):
-        self.assertEqual(self.factor(self.at(6, 1)), 1.0)
-
-    def test_cutoff_after_midnight(self):
-        self.assertEqual(self.factor(self.at(23), off_at=time(1, 0)), 0.5)
-        self.assertEqual(self.factor(self.at(1, 30), off_at=time(1, 0)), 0.0)
-
-    def test_cutoff_before_sunset_goes_dark_at_sunset(self):
-        # High-latitude summer: 22:00 comes before a 22:08 sunset. Here the
-        # fixture sets at 18:00, so a 17:00 cutoff stands in for it.
-        self.assertEqual(self.factor(self.at(18, 30), off_at=time(17, 0)), 0.0)
-        self.assertEqual(self.factor(self.at(16, 0), off_at=time(17, 0)), 1.0)
-
-    def test_no_cutoff_dims_all_night(self):
-        self.assertEqual(self.factor(self.at(3), off_at=None), 0.5)
-
-
-
-def local_now(zone, y, mo, d, hh, mm=0):
-    """Build `now` the way the daemon sees it on a Pi set to `zone`: an
-    aware datetime carrying a fixed offset, as datetime.now().astimezone()
-    returns."""
-    dt = datetime(y, mo, d, hh, mm, tzinfo=ZoneInfo(zone))
-    return dt.astimezone(timezone(dt.utcoffset()))
-
-
-class NightFactorRealSun(unittest.TestCase):
-    """Real sun_times at places where clock time and solar time disagree."""
-
-    def factor(self, zone, lat, lon, *when, off_at=time(22, 0)):
-        cfg = bc.NightConfig(lat=lat, lon=lon, factor=0.5, off_at=off_at)
-        return bc.night_factor(local_now(zone, *when), cfg)
-
-    def test_stockholm_midsummer_dark_after_late_sunset(self):
-        # Sunset 22:08 CEST is after the 22:00 cutoff: dark from sunset on
-        stockholm = ("Europe/Stockholm", 59.33, 18.07)
-        self.assertEqual(self.factor(*stockholm, 2024, 6, 21, 21, 30), 1.0)
-        self.assertEqual(self.factor(*stockholm, 2024, 6, 21, 22, 30), 0.0)
-        self.assertEqual(self.factor(*stockholm, 2024, 6, 22, 1, 0), 0.0)
-        self.assertEqual(self.factor(*stockholm, 2024, 6, 22, 3, 0), 0.5)  # sunrise 03:30
-        self.assertEqual(self.factor(*stockholm, 2024, 6, 22, 4, 0), 1.0)
-
-    def test_nome_sunset_after_local_midnight(self):
-        # Alaska's clock runs ~3 h ahead of the sun: June sunset is 01:47,
-        # sunrise 04:19. The 22:00 cutoff came before sunset, so dark from
-        # sunset until 03:19, then dim until sunrise.
-        nome = ("America/Nome", 64.50, -165.41)
-        self.assertEqual(self.factor(*nome, 2024, 6, 22, 0, 30), 1.0)
-        self.assertEqual(self.factor(*nome, 2024, 6, 22, 2, 30), 0.0)
-        self.assertEqual(self.factor(*nome, 2024, 6, 22, 3, 30), 0.5)
-        self.assertEqual(self.factor(*nome, 2024, 6, 22, 5, 0), 1.0)
-
-    def test_reykjavik_sunset_minutes_past_midnight(self):
-        # Sunset 00:04, sunrise 02:55: dark from sunset until 01:55
-        rvk = ("Atlantic/Reykjavik", 64.15, -21.94)
-        self.assertEqual(self.factor(*rvk, 2024, 6, 22, 0, 30), 0.0)
-        self.assertEqual(self.factor(*rvk, 2024, 6, 22, 2, 30), 0.5)
-
-    def test_utc_plus_14_midday_is_day(self):
-        self.assertEqual(self.factor("Pacific/Kiritimati", 1.87, -157.4,
-                                     2024, 6, 21, 12, 0), 1.0)
-
-    def test_polar_night_dims(self):
-        # No sunrise to end a cutoff, so polar night only dims, all day
-        tromso = ("Europe/Oslo", 69.65, 18.96)
-        self.assertEqual(self.factor(*tromso, 2024, 12, 21, 12, 0), 0.5)
-        self.assertEqual(self.factor(*tromso, 2024, 12, 21, 23, 0), 0.5)
-
-    def test_first_day_of_midnight_sun_is_day(self):
-        # The last sunset is still in the window but no sunrise follows it
-        self.assertEqual(self.factor("Europe/Oslo", 69.65, 18.96,
-                                     2024, 5, 18, 12, 0), 1.0)
-
-    def test_first_day_of_polar_night_only_dims(self):
-        self.assertEqual(self.factor("Europe/Oslo", 69.65, 18.96,
-                                     2024, 11, 28, 12, 0), 0.5)
-
-    def test_midnight_sun_never_dims(self):
-        self.assertEqual(self.factor("Europe/Oslo", 69.65, 18.96,
-                                     2024, 6, 21, 23, 0), 1.0)
-
-
-class DialOverride(unittest.TestCase):
-    def test_dial_at_night_wakes_until_next_sunset(self):
-        state = bc.NightState()
-        self.assertEqual(state.update(0.5), 0.5)
-        state.dial_moved()
-        self.assertEqual(state.update(0.5), 1.0)   # woken
-        self.assertEqual(state.update(0.0), 1.0)   # still woken past cutoff
-        self.assertEqual(state.update(1.0), 1.0)   # sunrise
-        self.assertEqual(state.update(0.5), 0.5)   # next sunset dims again
-
-    def test_dial_during_day_does_not_pin(self):
-        state = bc.NightState()
-        state.update(1.0)
-        state.dial_moved()
-        self.assertEqual(state.update(0.5), 0.5)
-
-
-class BootGrace(unittest.TestCase):
-    # A reboot after the cutoff should not come up to a black screen: the
-    # Mac dims for the first few minutes instead, then goes dark.
-
-    def test_off_is_dimmed_during_grace(self):
-        state = bc.NightState(dim=0.5, started=1000.0)
-        self.assertEqual(state.update(0.0, now=1000.0), 0.5)
-        self.assertEqual(state.update(0.0, now=1000.0 + bc.BOOT_GRACE_S - 1), 0.5)
-
-    def test_off_applies_once_grace_ends(self):
-        state = bc.NightState(dim=0.5, started=1000.0)
-        self.assertEqual(state.update(0.0, now=1000.0 + bc.BOOT_GRACE_S), 0.0)
-
-    def test_grace_does_not_touch_dim_or_day(self):
-        state = bc.NightState(dim=0.5, started=1000.0)
-        self.assertEqual(state.update(0.5, now=1000.0), 0.5)
-        self.assertEqual(state.update(1.0, now=1000.0), 1.0)
-
-    def test_dial_during_grace_still_wakes(self):
-        state = bc.NightState(dim=0.5, started=1000.0)
-        state.update(0.0, now=1000.0)
-        state.dial_moved()
-        self.assertEqual(state.update(0.0, now=1000.0 + bc.BOOT_GRACE_S), 1.0)
-
-    def test_grace_is_ten_minutes(self):
-        self.assertEqual(bc.BOOT_GRACE_S, 600)
 
 
 ZONE_TAB = """\
@@ -259,47 +102,89 @@ class ZoneCoords(unittest.TestCase):
         self.assertAlmostEqual(lon, 139.74, places=1)
 
 
-class Config(unittest.TestCase):
-    def load(self, env, zone="America/New_York"):
-        return bc.load_night_config(env, zone=zone, zone_tab=ZONE_TAB)
+class Settings(unittest.TestCase):
+    """The settings are read again when the file changes, and the place when
+    the time zone does."""
 
-    def test_disabled_by_default(self):
-        self.assertIsNone(self.load({}))
+    def setUp(self):
+        self.dir = tempfile.mkdtemp()
+        self.path = os.path.join(self.dir, "brightness-control")
 
-    def test_location_from_timezone(self):
-        cfg = self.load({"NIGHT_DIM": "1"}, zone="Asia/Tokyo")
-        self.assertAlmostEqual(cfg.lat, 35.654, places=3)
-        self.assertAlmostEqual(cfg.lon, 139.745, places=3)
+    def save(self, text):
+        with open(self.path + ".new", "w") as f:
+            f.write(text)
+        os.replace(self.path + ".new", self.path)
 
-    def test_explicit_location_overrides_timezone(self):
-        cfg = self.load({"NIGHT_DIM": "1", "LAT": "40.7", "LON": "-74.0",
-                         "NIGHT_FACTOR": "0.4", "NIGHT_OFF_AT": "23:15"}, zone="Asia/Tokyo")
-        self.assertEqual((cfg.lat, cfg.lon, cfg.factor, cfg.off_at),
-                         (40.7, -74.0, 0.4, time(23, 15)))
+    def test_no_file_is_off(self):
+        s = bc.NightSettings(self.path, ZONE_TAB)
+        s.refresh("America/New_York")
+        self.assertFalse(s.cfg.on)
 
-    def test_blank_location_falls_back_to_timezone(self):
-        cfg = self.load({"NIGHT_DIM": "1", "LAT": "", "LON": ""})
-        self.assertAlmostEqual(cfg.lat, 40.714, places=3)
+    def test_a_changed_file_is_read_again(self):
+        s = bc.NightSettings(self.path, ZONE_TAB)
+        self.assertTrue(s.refresh("America/New_York"))    # the first look
+        self.assertFalse(s.refresh("America/New_York"))
+        self.save("NIGHT_DIM=1\nNIGHT_FROM=21:30\nNIGHT_UNTIL=sunrise\nNIGHT_LEVEL=0\n")
+        self.assertTrue(s.refresh("America/New_York"))
+        self.assertEqual((s.cfg.on, s.cfg.from_, s.cfg.until, s.cfg.level),
+                         (True, 21 * 60 + 30, ns.SUNRISE, 0))
+        self.assertFalse(s.refresh("America/New_York"))
 
-    def test_defaults(self):
-        cfg = self.load({"NIGHT_DIM": "1"})
-        self.assertEqual((cfg.factor, cfg.off_at), (0.5, time(22, 0)))
+    def test_place_follows_the_time_zone(self):
+        s = bc.NightSettings(self.path, ZONE_TAB)
+        s.refresh("America/New_York")
+        self.assertAlmostEqual(s.coords[0], 40.714, places=3)
+        self.assertTrue(s.refresh("Asia/Tokyo"))
+        self.assertAlmostEqual(s.coords[0], 35.654, places=3)
+        self.assertTrue(s.refresh("Etc/UTC"))
+        self.assertIsNone(s.coords)
 
-    def test_blank_off_at_disables_cutoff(self):
-        cfg = self.load({"NIGHT_DIM": "1", "NIGHT_OFF_AT": ""})
-        self.assertIsNone(cfg.off_at)
+    def test_place_set_by_hand_wins(self):
+        self.save("NIGHT_DIM=1\nLAT=40.7\nLON=-74.0\n")
+        s = bc.NightSettings(self.path, ZONE_TAB)
+        s.refresh("Asia/Tokyo")
+        self.assertEqual(s.coords, (40.7, -74.0))
 
-    def test_bad_values_disable_instead_of_crashing(self):
-        # A typo in the config must not take the dial down with a crash loop
-        for bad in ({"NIGHT_FACTOR": "half"}, {"NIGHT_OFF_AT": "10pm"},
-                    {"LAT": "40,7", "LON": "1"}):
+    def test_bad_values_turn_dimming_off_instead_of_crashing(self):
+        # A typo in the file must not take the dial down with a crash loop
+        for bad in ("NIGHT_LEVEL=dim", "NIGHT_FROM=10pm", "NIGHT_UNTIL=25:00",
+                    "LAT=40,7\nLON=1", "NIGHT_LEVEL=101"):
+            self.save("NIGHT_DIM=1\n" + bad + "\n")
+            s = bc.NightSettings(self.path, ZONE_TAB)
             with contextlib.redirect_stdout(io.StringIO()) as out:
-                self.assertIsNone(self.load({"NIGHT_DIM": "1", **bad}), bad)
+                s.refresh("America/New_York")
+            self.assertFalse(s.cfg.on, bad)
             self.assertIn("night dimming off", out.getvalue())
 
-    def test_unknown_timezone_and_no_location_disables(self):
-        with contextlib.redirect_stdout(io.StringIO()):
-            self.assertIsNone(self.load({"NIGHT_DIM": "1"}, zone="Etc/UTC"))
+
+class LevelFromOutside(unittest.TestCase):
+    """Mac OS's brightness slider: a level sent to the socket."""
+
+    def test_only_2_to_100_as_plain_digits(self):
+        for good, value in ((b"2", 2), (b"100", 100), (b"57\n", 57)):
+            self.assertEqual(bc.parse_level(good), value)
+        for bad in (b"", b"1", b"0", b"101", b"-5", b"5.5", b"0x10", b"1000",
+                    b"abc", b"5 5"):
+            self.assertIsNone(bc.parse_level(bad), bad)
+
+    def test_socket_takes_the_newest_level_and_anyone_may_send(self):
+        with tempfile.TemporaryDirectory(dir="/tmp") as d:
+            sock = bc.open_control(d)
+            self.addCleanup(sock.close)
+            path = os.path.join(d, bc.LEVEL_SOCKET)
+            self.assertEqual(os.stat(path).st_mode & 0o777, 0o666)
+            self.assertIsNone(bc.read_control(sock))
+            with socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM) as s:
+                for data in (b"40", b"junk", b"73", b"900"):
+                    s.sendto(data, path)
+            self.assertEqual(bc.read_control(sock), 73)
+            self.assertIsNone(bc.read_control(sock))
+
+    def test_level_is_published_for_others_to_read(self):
+        with tempfile.TemporaryDirectory() as d:
+            bc.publish_level(64, d)
+            with open(os.path.join(d, bc.LEVEL_FILE)) as f:
+                self.assertEqual(f.read(), "64")
 
 
 if __name__ == "__main__":
