@@ -33,13 +33,13 @@ The board is drawn the way it sits in the Maclock: Pi mounted upside-down, seen 
 | R1, R2 | 2 | 2.2 kΩ ±1% 0402 — UNI-ROYAL `0402WGF2201TCE`                          | [`C25879`](https://www.lcsc.com/product-detail/C25879.html)           | Bottom side. I²C pull-ups on SDA and SCL          |
 | R3  | 1   | 10 kΩ ±1% 0402 — UNI-ROYAL `0402WGF1002TCE`                            | [`C25744`](https://www.lcsc.com/product-detail/C25744.html)           | Bottom side. Pull-up on INT                       |
 
-Both sides carry parts, so order two-sided assembly. J1's footprint (in `maclock-interposer.pretty`) follows its datasheet: 2.3 × 1.02 mm pads and two 1.2 mm holes for its pegs. J3 still uses KiCad's generic land (3.15 × 1.0 mm pads, ±2.52 mm from the centreline); Hanbo's drawing suggests 3.2 × 1.02 mm pads with their outer ends 8.6 mm apart, so check J3 against it before ordering.
+Both sides carry parts, so order two-sided assembly. J1's locating pegs are 1.4 mm long, so on a 0.8 mm board they stick out of the screen side beside J3: ask for the screen side (J3) to be pasted and placed first. J1's footprint (in `maclock-interposer.pretty`) follows its datasheet: 2.3 × 1.02 mm pads and two 1.2 mm holes for its pegs. J3 still uses KiCad's generic land (3.15 × 1.0 mm pads, ±2.52 mm from the centreline); Hanbo's drawing suggests 3.2 × 1.02 mm pads with their outer ends 8.6 mm apart, so check J3 against it before ordering.
 
 ## Use
 
 Stack Pi → interposer → display, with the side marked `THIS SIDE FACING SCREEN` toward the display. Plug J2 straight onto the main board's `Link` header, `SDA` (J2's square pad) onto `SDA`. Each side's labels then line up with the other's.
 
-The interposer adds about 10.4 mm between the Pi and the display (7.1 mm socket + 0.8 mm PCB + 2.54 mm header base). The Pi sits 6 mm lower than the display's socket, so a Pi 3 A+ ends about 3 mm above the display's top edge and a Zero 2 W about 23 mm below it. The board reaches 4.2 mm past the Pi's header edge. The Pi's two mounting holes on its header side line up with H1 and H2: fix them with M2.5 screws and 9.6 mm spacers (the Pi's 2.5 mm header base plus J1). J2 stands 7.1 mm off the screen side, and the Dupont plug in it points toward the display — check both against your case and the display board before ordering.
+The interposer adds about 10.4 mm between the Pi and the display (7.1 mm socket + 0.8 mm PCB + 2.54 mm header base). The Pi sits 6 mm lower than the display's socket, so a Pi 3 A+ ends about 3 mm above the display's top edge and a Zero 2 W about 23 mm below it. The board reaches 4.2 mm past the Pi's header edge. The Pi's two mounting holes on its header side line up with H1 and H2: fix them with M2.5 screws and spacers 9.6 mm long (the Pi's 2.5 mm header base plus J1). That isn't a stock length: 10 mm spacers work but leave the Pi 0.4 mm short of fully seated. J2 stands 7.1 mm off the screen side, and the Dupont plug in it points toward the display — check both against your case and the display board before ordering.
 
 ## License
 
