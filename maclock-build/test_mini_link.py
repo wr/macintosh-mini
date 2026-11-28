@@ -316,6 +316,12 @@ class Replies(unittest.TestCase):
         self.assertEqual(self.spawn.calls, [("--chime", "0", "")])
         self.assertEqual(struct.unpack(">h", self.ask("MS")[8:10])[0], 0)
 
+    def test_a_chime_change_that_could_not_start_leaves_the_name_alone(self):
+        (self.home / ".macintosh_chime").write_text("Macintosh II\n")
+        self.spawn.result = False
+        self.assertEqual(self.result("Mc", 4), ml.IO_ERR)
+        self.assertEqual((self.home / ".macintosh_chime").read_text(), "Macintosh II\n")
+
     def test_set_chime_out_of_range(self):
         for bad in (-1, 9, 300):
             self.assertEqual(self.result("Mc", bad), -50)
@@ -505,6 +511,14 @@ class Chimes(unittest.TestCase):
         self.apply.result = False
         self.assertFalse(ml.install_chime(4, "", self.home, self.cache, self.fetch, self.apply))
         self.assertFalse(tag.exists())      # there was no name before
+        self.assertFalse(Path(self.home, "chime.wav").exists())
+
+    def test_a_failed_install_puts_the_home_folders_chime_back(self):
+        Path(self.home, "chime.wav").write_bytes(WAV + b"old")
+        self.apply.result = False
+        for n in (4, 0):
+            self.assertFalse(ml.install_chime(n, "Quadra", self.home, self.cache, self.fetch, self.apply))
+            self.assertEqual(Path(self.home, "chime.wav").read_bytes(), WAV + b"old")
 
     def test_a_downloaded_sound_is_kept(self):
         os.makedirs(self.cache)

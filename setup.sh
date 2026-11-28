@@ -1026,13 +1026,21 @@ read_night_conf() {
   CUR_NIGHT_DIM=0; CUR_NIGHT_FROM=22:00; CUR_NIGHT_UNTIL=07:00; CUR_NIGHT_LEVEL=20
   v=$(conf_get NIGHT_DIM | tr 'A-Z' 'a-z')
   case "$v" in 1|true|yes) CUR_NIGHT_DIM=1 ;; esac
-  if grep -q '^NIGHT_FROM=' "$NIGHT_CONF" 2>/dev/null; then
-    v=$(conf_get NIGHT_FROM | tr 'A-Z' 'a-z');  [[ $v =~ ^(sunset|$NIGHT_CLOCK)$ ]]  && CUR_NIGHT_FROM=$v
-    v=$(conf_get NIGHT_UNTIL | tr 'A-Z' 'a-z'); [[ $v =~ ^(sunrise|$NIGHT_CLOCK)$ ]] && CUR_NIGHT_UNTIL=$v
-    v=$(conf_get NIGHT_LEVEL); [[ $v =~ ^(100|[1-9]?[0-9])$ ]] && CUR_NIGHT_LEVEL=$v
-  elif [[ $CUR_NIGHT_DIM -eq 1 ]] && grep -qE '^NIGHT_(FACTOR|OFF_AT)=' "$NIGHT_CONF" 2>/dev/null; then
-    CUR_NIGHT_FROM=sunset; CUR_NIGHT_UNTIL=sunrise; CUR_NIGHT_LEVEL=50
+  if ! grep -q '^NIGHT_FROM=' "$NIGHT_CONF" 2>/dev/null \
+     && grep -qE '^NIGHT_(FACTOR|OFF_AT)=' "$NIGHT_CONF" 2>/dev/null; then
+    if [[ $CUR_NIGHT_DIM -eq 1 ]]; then
+      CUR_NIGHT_FROM=sunset; CUR_NIGHT_UNTIL=sunrise; CUR_NIGHT_LEVEL=50
+    fi
+    return 0
   fi
+  # A mistyped value turns dimming off, as it does for brightness_control.py:
+  # the update must not switch on what a typo had switched off.
+  v=$(conf_get NIGHT_FROM | tr 'A-Z' 'a-z')
+  if [[ $v =~ ^(sunset|$NIGHT_CLOCK)$ ]]; then CUR_NIGHT_FROM=$v; elif [[ -n $v ]]; then CUR_NIGHT_DIM=0; fi
+  v=$(conf_get NIGHT_UNTIL | tr 'A-Z' 'a-z')
+  if [[ $v =~ ^(sunrise|$NIGHT_CLOCK)$ ]]; then CUR_NIGHT_UNTIL=$v; elif [[ -n $v ]]; then CUR_NIGHT_DIM=0; fi
+  v=$(conf_get NIGHT_LEVEL)
+  if [[ $v =~ ^(100|[1-9]?[0-9])$ ]]; then CUR_NIGHT_LEVEL=$v; elif [[ -n $v ]]; then CUR_NIGHT_DIM=0; fi
   return 0
 }
 read_night_conf
@@ -2361,9 +2369,13 @@ if [[ $INSTALL_SHEEPSHAVER -eq 1 || $INSTALL_BASILISK -eq 1 ]]; then
     sudo install -m644 /tmp/night_schedule.py /usr/local/bin/night_schedule.py || return $?
     sudo install -m755 /tmp/mini_link.py /usr/local/bin/mini-link || return $?
     sudo install -D -m755 /tmp/mini_link_apply.py /usr/local/sbin/mini-link-apply || return $?
-    printf '%s ALL=(root) NOPASSWD: /usr/local/sbin/mini-link-apply\n' "$USER" > /tmp/020-mini-link
-    sudo visudo -c -f /tmp/020-mini-link >/dev/null || return $?
-    sudo install -m440 /tmp/020-mini-link /etc/sudoers.d/020-mini-link || return $?
+    # A file of our own making, not a name in /tmp someone else could have put there
+    local rule
+    rule=$(mktemp) || return $?
+    printf '%s ALL=(root) NOPASSWD: /usr/local/sbin/mini-link-apply\n' "$USER" > "$rule" || return $?
+    sudo visudo -c -f "$rule" >/dev/null || return $?
+    sudo install -m440 "$rule" /etc/sudoers.d/020-mini-link || return $?
+    rm -f "$rule"
     set_serial_pref "$HOME/.basilisk_ii_prefs" || return $?
     set_serial_pref "$HOME/.sheepshaver_prefs" || return $?
   }

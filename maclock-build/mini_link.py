@@ -446,7 +446,10 @@ class Mini:
                 f.write((CHIMES[n - 1][0] if n else NO_CHIME) + "\n")
         except OSError:
             return IO_ERR
-        return 0 if self.spawn("--chime", str(n), before) else IO_ERR
+        if self.spawn("--chime", str(n), before):
+            return 0
+        restore_chime_name(self.home, before)
+        return IO_ERR
 
     def set_night(self, **changes):
         cfg = self.night()
@@ -561,22 +564,40 @@ def copy_file(src, dst):
     os.replace(dst + ".new", dst)
 
 
+def restore_chime_name(home, before):
+    tag_file = os.path.join(home, ".macintosh_chime")
+    try:
+        if before:
+            with open(tag_file, "w") as f:
+                f.write(before + "\n")
+        else:
+            os.unlink(tag_file)
+    except OSError:
+        pass
+
+
 def install_chime(n, before, home, cache, fetch=fetch_sound, apply=apply):
     """Makes chime n the startup chime, as the installer's settings editor
     does: the sound and its crash sound into the home folder, then into
     /usr/local/bin, where the launcher plays them from. 0 is no chime. If it
     fails, the chime's name goes back to what it was."""
+    chime = os.path.join(home, "chime.wav")
+    try:
+        with open(chime, "rb") as f:
+            old = f.read()
+    except OSError:
+        old = None
     try:
         if n:
             name = CHIMES[n - 1][2]
-            copy_file(fetch(name, cache), os.path.join(home, "chime.wav"))
+            copy_file(fetch(name, cache), chime)
             try:
                 copy_file(fetch(CRASHES[name], cache), os.path.join(home, "crash.wav"))
             except OSError as e:
                 log(f"keeping the old crash sound: {e}")
         else:
             try:
-                os.unlink(os.path.join(home, "chime.wav"))
+                os.unlink(chime)
             except FileNotFoundError:
                 pass
         if not apply("sounds", timeout=20):
@@ -584,13 +605,15 @@ def install_chime(n, before, home, cache, fetch=fetch_sound, apply=apply):
         return True
     except OSError as e:
         log(f"chime not changed: {e}")
-        tag_file = os.path.join(home, ".macintosh_chime")
+        restore_chime_name(home, before)
+        # The home folder's copy too: the installer installs from it on an update
         try:
-            if before:
-                with open(tag_file, "w") as f:
-                    f.write(before + "\n")
+            if old is None:
+                os.unlink(chime)
             else:
-                os.unlink(tag_file)
+                with open(chime + ".new", "wb") as f:
+                    f.write(old)
+                os.replace(chime + ".new", chime)
         except OSError:
             pass
         return False

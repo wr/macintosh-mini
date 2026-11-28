@@ -463,9 +463,14 @@ class NightDimming(unittest.TestCase):
         self.assertEqual(self.current('NIGHT_DIM=1\nNIGHT_FROM=21:30\nNIGHT_UNTIL=sunrise\n'
                                       'NIGHT_LEVEL=0\n'), '1 21:30 sunrise 0')
 
-    def test_mistyped_settings_fall_back_to_the_defaults(self):
-        self.assertEqual(self.current('NIGHT_DIM=yes\nNIGHT_FROM=10pm\nNIGHT_UNTIL=sunset\n'
-                                      'NIGHT_LEVEL=101\n'), '1 22:00 07:00 20')
+    def test_a_mistyped_setting_means_off_as_it_does_for_the_dial_script(self):
+        import night_schedule
+        for bad in ('NIGHT_FROM=10pm', 'NIGHT_UNTIL=sunset', 'NIGHT_LEVEL=101'):
+            conf = 'NIGHT_DIM=yes\n' + bad + '\n'
+            self.assertEqual(self.current(conf), '0 22:00 07:00 20', bad)
+            with self.assertRaises(ValueError):
+                night_schedule.parse_config(conf)
+        self.assertEqual(self.current('NIGHT_DIM=yes\nNIGHT_LEVEL=35\n'), '1 22:00 07:00 35')
 
     def test_update_moves_an_old_file_and_keeps_a_hand_set_place(self):
         import night_schedule
@@ -634,10 +639,13 @@ class MiniLink(unittest.TestCase):
 
     def test_root_is_only_for_the_one_program(self):
         fn = function('install_mini_link')
-        self.assertIn("printf '%s ALL=(root) NOPASSWD: /usr/local/sbin/mini-link-apply\\n' \"$USER\"", fn)
+        self.assertIn("printf '%s ALL=(root) NOPASSWD: /usr/local/sbin/mini-link-apply\\n' "
+                      '"$USER" > "$rule" || return $?', fn)
         self.assertEqual(fn.count('NOPASSWD'), 1)
-        self.assertLess(fn.index('visudo -c -f /tmp/020-mini-link'),
-                        fn.index('/etc/sudoers.d/020-mini-link'))
+        self.assertLess(fn.index('visudo -c -f "$rule"'), fn.index('/etc/sudoers.d/020-mini-link'))
+        # Never a fixed name in /tmp, which someone else could have put there
+        self.assertIn('rule=$(mktemp) || return $?', fn)
+        self.assertNotIn('/tmp/020', fn)
         # The path the rule names is the one mini-link runs
         import mini_link
         self.assertEqual(mini_link.APPLY, '/usr/local/sbin/mini-link-apply')
