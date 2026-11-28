@@ -7427,6 +7427,16 @@
 	)
 	(wire
 		(pts
+			(xy 110.49 53.34) (xy 118.11 53.34)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "a0c2146d-dd8e-4e64-92c9-e7df8ecdf99f")
+	)
+	(wire
+		(pts
 			(xy 35.56 45.72) (xy 33.02 45.72)
 		)
 		(stroke
@@ -7684,6 +7694,16 @@
 			(type default)
 		)
 		(uuid "cb29549d-f1e0-4e6b-ba88-18c643969f8a")
+	)
+	(wire
+		(pts
+			(xy 110.49 35.56) (xy 118.11 35.56)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "cd22a220-3e8a-4fd3-aa66-5433dd984967")
 	)
 	(wire
 		(pts
@@ -8305,16 +8325,6 @@
 		)
 		(uuid "cd2d5e35-299b-4221-9cc4-a3c266801e74")
 	)
-	(label "SW1"
-		(at 120.65 35.56 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "d0c17ed0-bf6e-46a1-852c-7474627338a0")
-	)
 	(label "SDA"
 		(at 30.48 38.1 180)
 		(effects
@@ -8334,16 +8344,6 @@
 			(justify left bottom)
 		)
 		(uuid "db062f5d-1baa-4cc5-a5dd-096cea7ceb75")
-	)
-	(label "SW2"
-		(at 120.65 53.34 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "dff9f94c-39c0-4fce-a6cc-0459bc43d497")
 	)
 	(label "INT"
 		(at 30.48 53.34 180)
@@ -13567,118 +13567,6 @@
 		)
 	)
 	(symbol
-		(lib_id "Device:R")
-		(at 114.3 53.34 90)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "84772bcc-600a-4d11-8431-342f414a18df")
-		(property "Reference" "R2"
-			(at 114.3 49.53 90)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "1k"
-			(at 114.3 57.15 90)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Resistor_SMD:R_0402_1005Metric_Pad0.72x0.64mm_HandSolder"
-			(at 114.3 53.34 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 114.3 53.34 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Resistor, 1 %, 0402"
-			(at 114.3 53.34 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Manufacturer" "UNI-ROYAL"
-			(at 114.3 53.34 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "MPN" "0402WGF1001TCE"
-			(at 114.3 53.34 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "LCSC" "C11702"
-			(at 114.3 53.34 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "2f9ddbb9-506a-4a3f-89a2-f0aa03f0faae")
-		)
-		(pin "2"
-			(uuid "f2eb1f1e-f697-486d-96c2-da3a3cc1b132")
-		)
-		(instances
-			(project "maclock-breakout"
-				(path "/4073cbd1-b7cf-4fb7-b392-207b756c9551"
-					(reference "R2")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "power:GND")
 		(at 99.06 267.97 0)
 		(unit 1)
@@ -16369,118 +16257,6 @@
 			(project "maclock-breakout"
 				(path "/4073cbd1-b7cf-4fb7-b392-207b756c9551"
 					(reference "C12")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Device:R")
-		(at 114.3 35.56 90)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "bd710966-772b-46ce-b09b-d1740abc7533")
-		(property "Reference" "R1"
-			(at 114.3 31.75 90)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "1k"
-			(at 114.3 39.37 90)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Resistor_SMD:R_0402_1005Metric_Pad0.72x0.64mm_HandSolder"
-			(at 114.3 35.56 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 114.3 35.56 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Resistor, 1 %, 0402"
-			(at 114.3 35.56 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Manufacturer" "UNI-ROYAL"
-			(at 114.3 35.56 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "MPN" "0402WGF1001TCE"
-			(at 114.3 35.56 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "LCSC" "C11702"
-			(at 114.3 35.56 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "641b2822-a42f-43fb-a7a4-c4f7da826364")
-		)
-		(pin "2"
-			(uuid "79333079-e0c1-4824-bc7e-21e1c77f5cc9")
-		)
-		(instances
-			(project "maclock-breakout"
-				(path "/4073cbd1-b7cf-4fb7-b392-207b756c9551"
-					(reference "R1")
 					(unit 1)
 				)
 			)
