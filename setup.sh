@@ -31,11 +31,16 @@
 #                       leave the wi-fi radio's power saving alone, or turn it
 #                       off so the Pi stays reachable when idle (default: off)
 #   --night-dim | --no-night-dim
-#                       dim the screen from sunset to sunrise (default: prompt)
-#   --night-off <t>     when the screen turns off at night: never, or HH:MM
-#                       (default: prompt; 22:00 on a fresh install)
-#   --timezone <zone>   Area/City for the sunrise schedule (default: keep, or
-#                       prompt when the Pi is still on UTC)
+#                       dim the screen at night, or don't (default: prompt)
+#   --night-from <t>    when the screen dims: HH:MM or sunset (default: prompt;
+#                       22:00 on a fresh install)
+#   --night-until <t>   when it comes back: HH:MM or sunrise (default: prompt;
+#                       07:00 on a fresh install)
+#   --night-level <n>   how dim, 0 to 100; 0 turns the screen off (default:
+#                       prompt; 20 on a fresh install)
+#   --timezone <zone>   Area/City: the Mac's clock, and where sunset and sunrise
+#                       are worked out for (default: keep, or prompt when the
+#                       Pi is still on UTC)
 #   --auto-mute | --no-auto-mute
 #                       speaker auto-mute: mute the speaker when no sound is
 #                       playing. Only for a speaker that hisses or burbles when
@@ -61,7 +66,7 @@ set -euo pipefail
 
 REPO_BRANCH="main"   # --branch: test an unmerged branch on a real Pi
 REPO_RAW="https://raw.githubusercontent.com/wr/macintosh-mini/$REPO_BRANCH"
-VERSION="1.11.0"
+VERSION="1.12.0"
 
 # SheepShaver paths (DISK_IMAGE is auto-discovered or set via --disk)
 DISK_IMAGE=""
@@ -603,8 +608,10 @@ NEW_HOSTNAME=""
 PERF=""   # "" = prompt, 1 = on, 0 = off
 BLUETOOTH=""   # "" = installed choice or on, 1 = on, 0 = off
 WIFI_POWERSAVE=0   # 0 = turn the radio's power saving off, 1 = leave it alone
-NIGHT_DIM=""       # "" = prompt, 1 = dim the screen at night, 0 = don't
-NIGHT_OFF=""       # "" = prompt, "never", or HH:MM to turn the screen off
+NIGHT_DIM=""       # "" = prompt (an update keeps what's set), 1 = dim the screen at night, 0 = don't
+NIGHT_FROM=""      # when the screen dims: HH:MM or sunset ("" = prompt or keep)
+NIGHT_UNTIL=""     # when it comes back: HH:MM or sunrise ("" = prompt or keep)
+NIGHT_LEVEL=""     # how dim, 0-100; 0 turns the screen off ("" = prompt or keep)
 TIMEZONE=""        # Area/City to set; the night schedule needs a real one
 NIGHT_CONF=/etc/default/brightness-control
 AUDIO_GATE=""      # speaker auto-mute: "" = prompt (an update keeps the installed choice), 1 = on, 0 = off
@@ -634,7 +641,10 @@ while [[ $# -gt 0 ]]; do
     --no-wifi-powersave) WIFI_POWERSAVE=0; shift ;;
     --night-dim)     NIGHT_DIM=1; shift ;;
     --no-night-dim)  NIGHT_DIM=0; shift ;;
-    --night-off)     NIGHT_OFF=$2; shift 2 ;;
+    --night-from)    NIGHT_FROM=$2; shift 2 ;;
+    --night-until)   NIGHT_UNTIL=$2; shift 2 ;;
+    --night-level)   NIGHT_LEVEL=$2; shift 2 ;;
+    --night-off)     die "--night-off is gone. Night dimming takes --night-from, --night-until and --night-level (0 turns the screen off)." ;;
     --timezone)      TIMEZONE=$2; shift 2 ;;
     --auto-mute)     AUDIO_GATE=1; shift ;;
     --no-auto-mute)  AUDIO_GATE=0; shift ;;
@@ -645,6 +655,14 @@ while [[ $# -gt 0 ]]; do
     *) die "Unknown option: $1" ;;
   esac
 done
+
+NIGHT_CLOCK='([01][0-9]|2[0-3]):[0-5][0-9]'
+[[ -z $NIGHT_FROM || $NIGHT_FROM =~ ^(sunset|$NIGHT_CLOCK)$ ]] \
+  || die "--night-from takes HH:MM or sunset, not '$NIGHT_FROM'"
+[[ -z $NIGHT_UNTIL || $NIGHT_UNTIL =~ ^(sunrise|$NIGHT_CLOCK)$ ]] \
+  || die "--night-until takes HH:MM or sunrise, not '$NIGHT_UNTIL'"
+[[ -z $NIGHT_LEVEL || $NIGHT_LEVEL =~ ^(100|[1-9]?[0-9])$ ]] \
+  || die "--night-level takes 0 to 100, not '$NIGHT_LEVEL'"
 
 # A Mac prepared for phone setup gets Basilisk II and the Maclock hardware
 # unless the command says otherwise.
@@ -831,6 +849,14 @@ if [[ ($INSTALL_SHEEPSHAVER -eq 1 || $INSTALL_BASILISK -eq 1) && -z $CHIME_NAME 
   done
 fi
 [[ -z $CHIME_NAME ]] && CHIME_NAME=$DEFAULT_CHIME
+# A chime named by --chime is recorded by its tag too: the settings editor and
+# mini-link read it from there.
+if [[ -z ${CHIME_TAG:-} && $NEED_PREFS -eq 1 ]]; then
+  for entry in "${CHIMES_DATA[@]}"; do
+    IFS='|' read -r tag _ filename <<< "$entry"
+    [[ "$filename" == "$CHIME_NAME" ]] && CHIME_TAG=$tag
+  done
+fi
 [[ -n ${CHIME_TAG:-} ]] && printf '%s\n' "$CHIME_TAG" > "$HOME/.macintosh_chime"
 
 # Color — BasiliskII defaults to 8-bit (lighter), SheepShaver to 16-bit.
@@ -890,6 +916,25 @@ pref_get() { sed -n "s/^$2 //p" "$1" 2>/dev/null | head -1; }
 pref_set() {
   if grep -q "^$2 " "$1" 2>/dev/null; then sed -i "s#^$2 .*#$2 $3#" "$1"
   else printf '%s %s\n' "$2" "$3" >> "$1"; fi
+}
+
+# The Mac's modem port runs mini-link (installed further down), which answers
+# the Mini's Mac OS software. A leading | makes the emulator run a program on
+# the port.
+MINI_LINK_PREF="|/usr/local/bin/mini-link"
+
+# Points an existing prefs file's modem port at mini-link, unless the owner has
+# put something of their own there (the emulators' stock devices don't count).
+# $1=prefs
+set_serial_pref() {
+  local cur
+  [[ -f $1 ]] || return 0
+  cur=$(pref_get "$1" seriala)
+  case "$cur" in
+    ""|/dev/ttyS0|/dev/tts/0|/dev/cuau0|/dev/tty00|/dev/null|"$MINI_LINK_PREF")
+      pref_set "$1" seriala "$MINI_LINK_PREF" ;;
+    *) echo "Keeping your own modem port in $1: seriala $cur" ;;
+  esac
 }
 
 reconf_disk() {   # $1=prefs  $2=is_basilisk
@@ -963,6 +1008,134 @@ reconf_chime() {
   return 0
 }
 
+# Night dimming (maclock only): at night the backlight goes down to a level
+# the owner picks and comes back in the morning; turning the dial in between
+# wins until the next night. "From" and "until" are clock times, or sunset and
+# sunrise at the timezone's city. See maclock-build/night_schedule.py. Either
+# way it needs the right timezone, so a Pi still on UTC gets a picker like
+# raspi-config's. A re-run keeps whatever is set.
+conf_get() { { sed -n "s/^$1=//p" "$NIGHT_CONF" | head -1; } 2>/dev/null || true; }
+
+# What's set now: CUR_NIGHT_DIM, CUR_NIGHT_FROM, CUR_NIGHT_UNTIL and
+# CUR_NIGHT_LEVEL, with the defaults for anything missing or mistyped. Before
+# 1.12.0 the file held NIGHT_FACTOR and NIGHT_OFF_AT (half the dial level from
+# sunset, dark from a set time until an hour before sunrise): with dimming on,
+# that becomes sunset to sunrise at 50; off stays off.
+read_night_conf() {
+  local v
+  CUR_NIGHT_DIM=0; CUR_NIGHT_FROM=22:00; CUR_NIGHT_UNTIL=07:00; CUR_NIGHT_LEVEL=20
+  v=$(conf_get NIGHT_DIM | tr 'A-Z' 'a-z')
+  case "$v" in 1|true|yes) CUR_NIGHT_DIM=1 ;; esac
+  if ! grep -q '^NIGHT_FROM=' "$NIGHT_CONF" 2>/dev/null \
+     && grep -qE '^NIGHT_(FACTOR|OFF_AT)=' "$NIGHT_CONF" 2>/dev/null; then
+    if [[ $CUR_NIGHT_DIM -eq 1 ]]; then
+      CUR_NIGHT_FROM=sunset; CUR_NIGHT_UNTIL=sunrise; CUR_NIGHT_LEVEL=50
+    fi
+    return 0
+  fi
+  # A mistyped value turns dimming off, as it does for brightness_control.py:
+  # the update must not switch on what a typo had switched off.
+  v=$(conf_get NIGHT_FROM | tr 'A-Z' 'a-z')
+  if [[ $v =~ ^(sunset|$NIGHT_CLOCK)$ ]]; then CUR_NIGHT_FROM=$v; elif [[ -n $v ]]; then CUR_NIGHT_DIM=0; fi
+  v=$(conf_get NIGHT_UNTIL | tr 'A-Z' 'a-z')
+  if [[ $v =~ ^(sunrise|$NIGHT_CLOCK)$ ]]; then CUR_NIGHT_UNTIL=$v; elif [[ -n $v ]]; then CUR_NIGHT_DIM=0; fi
+  v=$(conf_get NIGHT_LEVEL)
+  if [[ $v =~ ^(100|[1-9]?[0-9])$ ]]; then CUR_NIGHT_LEVEL=$v; elif [[ -n $v ]]; then CUR_NIGHT_DIM=0; fi
+  return 0
+}
+read_night_conf
+
+# Night dimming in a few words. $1=on (1/0) $2=from $3=until $4=level
+night_summary() {
+  local when="$2 to $3"
+  [[ $1 == 1 ]] || { printf 'Off'; return 0; }
+  when=${when/#sunset/Sunset}
+  if [[ $4 == 0 ]]; then printf '%s, screen off' "$when"
+  else printf '%s, dimmed to %s%%' "$when" "$4"; fi
+}
+
+current_timezone() {
+  local tz
+  tz=$(timedatectl show -p Timezone --value 2>/dev/null) || tz=$(cat /etc/timezone 2>/dev/null) || true
+  # Etc/* zones (UTC, GMT+5 ...) have no city: nobody's own timezone, and no
+  # place to work out a sunrise for
+  case "$tz" in ""|UTC|Universal|GMT|Etc/*) return 1 ;; esac
+  printf '%s' "$tz"
+}
+
+pick_timezone() {
+  # zone.tab, not zone1970.tab: the latter folds Oslo, Stockholm, Amsterdam
+  # and a hundred others into one zone each, and nobody will find their
+  # city under Berlin. raspi-config reads the same table.
+  local tab=/usr/share/zoneinfo/zone.tab
+  [[ -f $tab ]] || tab=/usr/share/zoneinfo/zone1970.tab
+  [[ -f $tab ]] || die "No tzdata zone table at /usr/share/zoneinfo"
+  local areas=() cities=() item area city
+  while read -r item; do areas+=("$item" ""); done \
+    < <(awk -F'\t' '!/^#/ { split($3, p, "/"); print p[1] }' "$tab" | sort -u)
+  area=$(wt_menu "Timezone" "Pick your area:" "${areas[0]}" 12 "${areas[@]}") \
+    || return 1
+  while read -r item; do cities+=("$item" ""); done \
+    < <(awk -F'\t' -v a="$area/" '!/^#/ && index($3, a) == 1 { print substr($3, length(a) + 1) }' "$tab" | sort)
+  city=$(wt_menu "Timezone" "Pick the nearest city in $area:" "${cities[0]}" 14 "${cities[@]}") \
+    || return 1
+  TIMEZONE="$area/$city"
+}
+
+# Asks about night dimming, starting from what's chosen or set. Sets NIGHT_DIM
+# and, when it's on, NIGHT_FROM, NIGHT_UNTIL and NIGHT_LEVEL; "Update timezone"
+# sets TIMEZONE. Returns 1 if cancelled.
+pick_night() {
+  local tz cur pick keep=()
+  local dim=${NIGHT_DIM:-$CUR_NIGHT_DIM} from=${NIGHT_FROM:-$CUR_NIGHT_FROM}
+  local until=${NIGHT_UNTIL:-$CUR_NIGHT_UNTIL} level=${NIGHT_LEVEL:-$CUR_NIGHT_LEVEL}
+  while true; do
+    # Stock Pi OS images ship Europe/London, so a zone that looks set may
+    # not be. Show it and offer the picker either way.
+    tz=${TIMEZONE:-$(current_timezone || echo "not set")}
+    keep=()
+    if   [[ $dim != 1 ]]; then cur=No
+    elif [[ $from == 22:00 && $until == 07:00 ]]; then cur="10 PM to 7 AM"
+    elif [[ $from == sunset && $until == sunrise ]]; then cur="Sunset to sunrise"
+    else cur="Keep $from to $until"; keep=("$cur" ""); fi
+    pick=$(wt_menu "Night Dimming" \
+      "Do you want your screen to dim automatically at night?
+Useful if your Macintosh Mini is a desk accessory or display piece. Turning the dial brings the screen back until the next night.
+Timezone: $tz" "$cur" $(( 4 + ${#keep[@]} / 2 )) \
+      "10 PM to 7 AM"     "" \
+      "Sunset to sunrise" "" \
+      ${keep[@]+"${keep[@]}"} \
+      "Update timezone"   "" \
+      "No"                "") || return 1
+    case "$pick" in
+      "Update timezone")   pick_timezone || true; continue ;;
+      No)                  NIGHT_DIM=0; return 0 ;;
+      "10 PM to 7 AM")     from=22:00; until=07:00 ;;
+      "Sunset to sunrise") from=sunset; until=sunrise ;;
+    esac
+    break
+  done
+  # A hand-set level that is not one of the presets gets its own entry, so
+  # pressing Enter keeps it
+  keep=()
+  case "$level" in
+    20) cur="Dim" ;;  50) cur="Half" ;;  0) cur="Off" ;;
+    *)  cur="Keep $level%"; keep=("$cur" "") ;;
+  esac
+  pick=$(wt_menu "Night Dimming" "How dim should the screen get at night?" "$cur" \
+    $(( 3 + ${#keep[@]} / 2 )) \
+    "Dim"  "20% brightness" \
+    "Half" "50% brightness" \
+    "Off"  "the screen turns off" \
+    ${keep[@]+"${keep[@]}"}) || return 1
+  case "$pick" in Dim) level=20 ;; Half) level=50 ;; Off) level=0 ;; esac
+  # The times are the timezone's, and UTC is nobody's
+  if [[ -z $TIMEZONE ]] && ! current_timezone >/dev/null; then
+    pick_timezone || return 1
+  fi
+  NIGHT_DIM=1; NIGHT_FROM=$from; NIGHT_UNTIL=$until; NIGHT_LEVEL=$level
+}
+
 # Speaker auto-mute (the audio gate, installed further down). The Pi's audio
 # PWM runs even when nothing plays, and on rev 2026.09 boards and earlier it
 # carries the Pi's supply noise into the amp: hiss, and a burble on battery.
@@ -988,7 +1161,7 @@ pick_audio_gate() {
 # The settings editor. $1 = the emulator's prefs, or "" on a hardware-only
 # install; $2 = 1 for Basilisk II. Select edits the highlighted setting; Back
 # returns to the previous menu. Emulator settings change in place at once;
-# Speaker auto-mute takes effect when the install runs.
+# Night dimming and Speaker auto-mute take effect when the install runs.
 configure_existing() {
   local prefs=$1 isb=$2 cur_disk cur_depth cur_chime cur_color cur_modelid cur_model cur_atalk cur_gate pick
   local rows=()
@@ -1020,6 +1193,8 @@ configure_existing() {
       fi
     fi
     if [[ $INSTALL_MACLOCK -eq 1 ]]; then
+      rows+=("Night dimming:" "$(night_summary "${NIGHT_DIM:-$CUR_NIGHT_DIM}" \
+        "${NIGHT_FROM:-$CUR_NIGHT_FROM}" "${NIGHT_UNTIL:-$CUR_NIGHT_UNTIL}" "${NIGHT_LEVEL:-$CUR_NIGHT_LEVEL}")")
       cur_gate=Off; [[ ${AUDIO_GATE:-${INSTALLED_AUDIO_GATE:-0}} == 1 ]] && cur_gate=On
       rows+=("Speaker auto-mute:" "$cur_gate")
     fi
@@ -1033,6 +1208,7 @@ configure_existing() {
       "Color depth:")   reconf_color   "$prefs" "$isb" || true ;;
       "Mac model:")     reconf_modelid "$prefs"        || true ;;
       "AppleTalk:")     reconf_appletalk "$prefs"      || true ;;
+      "Night dimming:") pick_night                     || true ;;
       "Speaker auto-mute:")
         pick_audio_gate "${AUDIO_GATE:-${INSTALLED_AUDIO_GATE:-0}}" || true ;;
     esac
@@ -1096,91 +1272,16 @@ if [[ -z $NEW_HOSTNAME ]]; then
 fi
 NEW_HOSTNAME=${NEW_HOSTNAME// /-}
 
-# Night dimming (maclock only). Sunset to sunrise the backlight runs at half
-# the dial level and goes dark from NIGHT_OFF_AT; see brightness_control.py.
-# The script takes its location from the timezone, so a Pi still on UTC gets
-# a picker like raspi-config's. A re-run defaults to whatever the last run chose.
-conf_get() { { sed -n "s/^$1=//p" "$NIGHT_CONF" | head -1; } 2>/dev/null || true; }
-
-current_timezone() {
-  local tz
-  tz=$(timedatectl show -p Timezone --value 2>/dev/null) || tz=$(cat /etc/timezone 2>/dev/null) || true
-  # Etc/* zones (UTC, GMT+5 ...) have no city, so no place to compute a
-  # sunrise for
-  case "$tz" in ""|UTC|Universal|GMT|Etc/*) return 1 ;; esac
-  printf '%s' "$tz"
-}
-
-pick_timezone() {
-  # zone.tab, not zone1970.tab: the latter folds Oslo, Stockholm, Amsterdam
-  # and a hundred others into one zone each, and nobody will find their
-  # city under Berlin. raspi-config reads the same table.
-  local tab=/usr/share/zoneinfo/zone.tab
-  [[ -f $tab ]] || tab=/usr/share/zoneinfo/zone1970.tab
-  [[ -f $tab ]] || die "No tzdata zone table at /usr/share/zoneinfo"
-  local areas=() cities=() item area city
-  while read -r item; do areas+=("$item" ""); done \
-    < <(awk -F'\t' '!/^#/ { split($3, p, "/"); print p[1] }' "$tab" | sort -u)
-  area=$(wt_menu "Timezone" "Pick your area:" "${areas[0]}" 12 "${areas[@]}") \
-    || return 1
-  while read -r item; do cities+=("$item" ""); done \
-    < <(awk -F'\t' -v a="$area/" '!/^#/ && index($3, a) == 1 { print substr($3, length(a) + 1) }' "$tab" | sort)
-  city=$(wt_menu "Timezone" "Pick the nearest city in $area:" "${cities[0]}" 14 "${cities[@]}") \
-    || return 1
-  TIMEZONE="$area/$city"
-}
-
 if [[ -n $TIMEZONE && ! -f /usr/share/zoneinfo/$TIMEZONE ]]; then
   die "Unknown timezone: $TIMEZONE (see: timedatectl list-timezones)"
 fi
-if [[ -n $NIGHT_OFF && ! $NIGHT_OFF =~ ^(never|([01][0-9]|2[0-3]):[0-5][0-9])$ ]]; then
-  die "--night-off takes 'never' or HH:MM, not '$NIGHT_OFF'"
-fi
 if [[ $INSTALL_MACLOCK -eq 1 && $UPDATE_MODE != quick ]]; then
   if [[ -z $NIGHT_DIM ]]; then
-    # Stock Pi OS images ship Europe/London, so a zone that looks set may
-    # not be. Show it and offer the picker either way.
-    tz=${TIMEZONE:-$(current_timezone || echo "not set")}
-    yes_tag="Yes (timezone: $tz)"
-    cur=No; [[ $(conf_get NIGHT_DIM) == 1 ]] && cur=$yes_tag
-    NIGHT_CHOICE=$(wt_menu "Night Dimming" \
-      "Do you want your screen to dim automatically from sunset to sunrise?
-Useful if your Macintosh Mini is a desk accessory or display piece." "$cur" 3 \
-      "$yes_tag"          "" \
-      "Update timezone"   "" \
-      "No"                "") || die "Cancelled"
-    case "$NIGHT_CHOICE" in
-      "Yes"*)            NIGHT_DIM=1 ;;
-      "Update timezone") NIGHT_DIM=1; pick_timezone || die "Cancelled" ;;
-      No)                NIGHT_DIM=0 ;;
-    esac
+    pick_night || die "Cancelled"
   fi
-  # The schedule needs a real zone: UTC has no reference city
+  # The schedule needs a real zone: UTC is nobody's, and has no reference city
   if [[ $NIGHT_DIM -eq 1 && -z $TIMEZONE ]] && ! current_timezone >/dev/null; then
     pick_timezone || die "Cancelled"
-  fi
-  if [[ $NIGHT_DIM -eq 1 && -z $NIGHT_OFF ]]; then
-    # A hand-edited time that is not one of the presets gets its own entry,
-    # so pressing Enter keeps it
-    off_now=$(conf_get NIGHT_OFF_AT); keep=()
-    case "$off_now" in
-      21:00) cur="9 PM" ;;  22:00) cur="10 PM" ;;  23:00) cur="11 PM" ;;
-      00:00) cur="12 AM" ;; 01:00) cur="1 AM" ;;
-      "") if grep -q '^NIGHT_OFF_AT=$' "$NIGHT_CONF" 2>/dev/null; then cur=Never; else cur="10 PM"; fi ;;
-      *) cur="Keep $off_now"; keep=("$cur" "") ;;
-    esac
-    OFF_CHOICE=$(wt_menu "Night Dimming" "Do you want your screen to turn off at night?
-(It comes back on 1 hour before sunrise.)" "$cur" $(( 6 + ${#keep[@]} / 2 )) \
-      "Never" "" "9 PM" "" "10 PM" "" "11 PM" "" "12 AM" "" "1 AM" "" ${keep[@]+"${keep[@]}"}) || die "Cancelled"
-    case "$OFF_CHOICE" in
-      Keep*)   NIGHT_OFF=$off_now ;;
-      Never)   NIGHT_OFF=never ;;
-      "9 PM")  NIGHT_OFF=21:00 ;;
-      "10 PM") NIGHT_OFF=22:00 ;;
-      "11 PM") NIGHT_OFF=23:00 ;;
-      "12 AM") NIGHT_OFF=00:00 ;;
-      "1 AM")  NIGHT_OFF=01:00 ;;
-    esac
   fi
   if [[ -z $AUDIO_GATE ]]; then
     pick_audio_gate "${INSTALLED_AUDIO_GATE:-0}" || die "Cancelled"
@@ -1282,7 +1383,7 @@ if [[ $INSTALL_BASILISK -eq 1 ]]; then
 fi
 [[ $PERF -eq 1 ]] && TOTAL_STEPS=$((TOTAL_STEPS+2))
 TOTAL_STEPS=$((TOTAL_STEPS+1))   # bluetooth
-[[ $INSTALL_SHEEPSHAVER -eq 1 || $INSTALL_BASILISK -eq 1 ]] && TOTAL_STEPS=$((TOTAL_STEPS+1))   # Wi-Fi setup
+[[ $INSTALL_SHEEPSHAVER -eq 1 || $INSTALL_BASILISK -eq 1 ]] && TOTAL_STEPS=$((TOTAL_STEPS+2))   # Wi-Fi setup, mini-link
 
 # --- Open the gauge --------------------------------------------------------
 start_gauge
@@ -1632,40 +1733,33 @@ EOF
   }
   run "[maclock] Patching config.txt" patch_config
 
+  # Night dimming's settings, as chosen above or as they were; a file from
+  # before 1.12.0 is moved to the new settings on the way (read_night_conf).
+  # The text matches format_config in maclock-build/night_schedule.py.
   write_night_conf() {
-    [[ -n $NIGHT_DIM ]] || return 0
-    local lat lon factor off_at
+    local lat lon
+    read_night_conf   # again: Mac OS may have changed them since this started
     # A hand-set location survives re-runs
     lat=$(conf_get LAT); lon=$(conf_get LON)
-    factor=$(conf_get NIGHT_FACTOR); factor=${factor:-0.5}
-    if [[ $NIGHT_OFF == never ]]; then
-      off_at=""
-    elif [[ -n $NIGHT_OFF ]]; then
-      off_at=$NIGHT_OFF
-    elif grep -q '^NIGHT_OFF_AT=' "$NIGHT_CONF" 2>/dev/null; then
-      # Blank is a valid setting (dim, never dark), so only fall back to
-      # the default when the key is absent entirely.
-      off_at=$(conf_get NIGHT_OFF_AT)
-    else
-      off_at=22:00
-    fi
     sudo tee "$NIGHT_CONF" >/dev/null <<EOF
-# Night dimming for the maclock backlight. Read by brightness-control.service;
-# after editing: sudo systemctl restart brightness-control
-NIGHT_DIM=$NIGHT_DIM
-# Optional. Blank, the location is the timezone's reference city from tzdata.
+# Night dimming for the Macintosh Mini's backlight. brightness-control
+# reads this file again whenever it changes.
+NIGHT_DIM=${NIGHT_DIM:-$CUR_NIGHT_DIM}
+# When the screen dims and when it comes back: HH:MM, or sunset and sunrise
+NIGHT_FROM=${NIGHT_FROM:-$CUR_NIGHT_FROM}
+NIGHT_UNTIL=${NIGHT_UNTIL:-$CUR_NIGHT_UNTIL}
+# How dim, 0 to 100. 0 turns the screen off.
+NIGHT_LEVEL=${NIGHT_LEVEL:-$CUR_NIGHT_LEVEL}
+# Optional. Blank, sunset and sunrise are those of the time zone's city.
 # Set both in decimal degrees (north and east positive) for a closer fix.
 LAT=$lat
 LON=$lon
-# Sunset to sunrise, the dial level is multiplied by this
-NIGHT_FACTOR=$factor
-# From this time the screen goes fully dark, until an hour before sunrise.
-# Blank to only dim.
-NIGHT_OFF_AT=$off_at
 EOF
   }
 
   install_gpio_helpers() {
+    curl -fL --retry 3 -o /tmp/night_schedule.py "$REPO_RAW/maclock-build/night_schedule.py" || return $?
+    sudo install -m644 /tmp/night_schedule.py /usr/local/bin/night_schedule.py || return $?
     for f in brightness_control.py button_handler.py; do
       curl -fL --retry 3 -o "/tmp/$f" "$REPO_RAW/maclock-build/$f" || return $?
       sudo install -m755 "/tmp/$f" "/usr/local/bin/$f" || return $?
@@ -1965,6 +2059,7 @@ fpu true
 nogui true
 nosound false
 ether slirp
+seriala $MINI_LINK_PREF
 ignoreillegal false$extra
 EOF
   }
@@ -2160,6 +2255,7 @@ ether slirp
 udptunnel true
 udpport 6066
 udpappletalkonly true
+seriala $MINI_LINK_PREF
 jit false
 jitfpu false
 frameskip 2
@@ -2255,6 +2351,35 @@ WRAPPER
     sudo systemctl restart mac-setup.service
   }
   run "Installing Wi-Fi setup (hotspot + setup page)" install_mac_setup
+fi
+
+# --- Mac OS status and settings ---------------------------------------------
+# mini-link answers the Mini's Mac OS software (a menu bar item and a control
+# panel) on the Mac's modem port: the emulator runs it when Mac OS opens the
+# port. It runs as $USER, so the changes that need root (the timezone, night
+# dimming's settings, the installed chime) go through mini-link-apply, which
+# checks everything it's given; a sudoers rule lets $USER run that one program
+# as root and nothing else. See maclock-build/mini_link.py.
+if [[ $INSTALL_SHEEPSHAVER -eq 1 || $INSTALL_BASILISK -eq 1 ]]; then
+  install_mini_link() {
+    local f
+    for f in night_schedule.py mini_link.py mini_link_apply.py; do
+      curl -fL --retry 3 -o "/tmp/$f" "$REPO_RAW/maclock-build/$f" || return $?
+    done
+    sudo install -m644 /tmp/night_schedule.py /usr/local/bin/night_schedule.py || return $?
+    sudo install -m755 /tmp/mini_link.py /usr/local/bin/mini-link || return $?
+    sudo install -D -m755 /tmp/mini_link_apply.py /usr/local/sbin/mini-link-apply || return $?
+    # A file of our own making, not a name in /tmp someone else could have put there
+    local rule
+    rule=$(mktemp) || return $?
+    printf '%s ALL=(root) NOPASSWD: /usr/local/sbin/mini-link-apply\n' "$USER" > "$rule" || return $?
+    sudo visudo -c -f "$rule" >/dev/null || return $?
+    sudo install -m440 "$rule" /etc/sudoers.d/020-mini-link || return $?
+    rm -f "$rule"
+    set_serial_pref "$HOME/.basilisk_ii_prefs" || return $?
+    set_serial_pref "$HOME/.sheepshaver_prefs" || return $?
+  }
+  run "Installing mini-link (status and settings for Mac OS)" install_mini_link
 fi
 
 # --- Record what was installed, so the next run knows it is an update -----

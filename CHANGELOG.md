@@ -3,6 +3,9 @@
 Notable changes to the macintosh-mini installer (`setup.sh`). Re-running on an
 existing Pi shows the entries added since the installed version.
 
+## [1.12.0] - 2026-11-27
+- Night dimming has changed: the screen dims to a brightness you choose (or turns off) between two times you choose, or from sunset to sunrise, and turning the dial brings it back until the next night. If you had it on, it now dims to half from sunset to sunrise and no longer turns off at night. To change that, pick Edit settings, then Night dimming.
+
 ## [1.11.0] - 2026-11-12
 - Speaker auto-mute is now a setting, off on new installs. Only turn it on if your speaker hisses or burbles when nothing is playing.
 - Updating keeps what your Mac has. To change it, pick Edit settings, then Speaker auto-mute.

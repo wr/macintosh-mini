@@ -145,7 +145,7 @@ Anything an owner sees or hears on a Mini gets tried on a real Pi before it's ca
 ## Layout
 ```
 setup.sh            the installer (curl | bash from main)
-maclock-build/      Pi helpers it installs (buttons, brightness, Wi-Fi setup) and their tests
+maclock-build/      Pi helpers it installs (buttons, brightness, Wi-Fi setup, the link to Mac OS) and their tests
 emulators/          emulator notes and the startup chimes
 disk-image/         recipe for the Mac OS 8.1 disk on the Internet Archive
 maclock-pcb/        breakout board (KiCad 10)
