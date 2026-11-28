@@ -267,7 +267,8 @@ class ScheduleTest(unittest.TestCase):
         self.assertIsNone(s.update(True, 100, 0))
         for _ in range(5):
             self.assertIsNone(s.update(True, 100, 0))
-        self.assertIsNone(s.update(False, 100, 0))
+        # Morning: back to the level it started with, which is where it is
+        self.assertEqual(s.update(False, 100, 0), 100)
         # The next night starts: off, as set
         self.assertEqual(s.update(True, 100, 0), 0)
         self.assertEqual(s.update(False, 0, 0), 100)
