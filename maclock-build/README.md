@@ -88,14 +88,16 @@ Two helpers drive the brightness dial and the two buttons on the front:
 - [`brightness_control.py`](./brightness_control.py) samples the dial every 1 ms, decodes the gray code, and sets the backlight through the kernel `pwm-gpio` driver on GPIO 18 (`/sys/class/pwm`).
 - [`button_handler.py`](./button_handler.py) handles the buttons. By default the right button (SW1, GPIO 27) shuts the Pi down, and the left button (SW2, GPIO 26) restarts the emulator, quits to a prompt when pressed twice, or starts Wi-Fi setup from a phone when held for 10 seconds (the installer sets that up; see [`mac_setup.py`](./mac_setup.py)). Edit the `COMMANDS`, `DOUBLE_COMMANDS` and `HOLD_COMMANDS` dicts to change them.
 
-Install both to `/usr/local/bin/`:
+Install both to `/usr/local/bin/`, with [`night_schedule.py`](./night_schedule.py), which the dial script needs for night dimming (step 3):
 
 ```bash
 curl -fL -o brightness_control.py https://raw.githubusercontent.com/wr/macintosh-mini/main/maclock-build/brightness_control.py
+curl -fL -o night_schedule.py     https://raw.githubusercontent.com/wr/macintosh-mini/main/maclock-build/night_schedule.py
 curl -fL -o button_handler.py     https://raw.githubusercontent.com/wr/macintosh-mini/main/maclock-build/button_handler.py
 
 sudo apt-get install -y python3-lgpio
 sudo install -m755 brightness_control.py /usr/local/bin/brightness_control.py
+sudo install -m644 night_schedule.py     /usr/local/bin/night_schedule.py
 sudo install -m755 button_handler.py     /usr/local/bin/button_handler.py
 ```
 
@@ -141,40 +143,41 @@ sudo systemctl enable --now brightness-control button-handler
 
 ### Night dimming (optional)
 
-The dial script can follow the sun:
+The dial script can dim the screen at night:
 
-- From sunset, the backlight runs at half the dial level.
-- From 10 pm, the screen goes dark until an hour before sunrise.
-- At sunrise, it comes back to wherever the dial was.
-- Turning the dial at night wakes the screen until the next sunset.
+- When night starts, it remembers the level and goes down to the one you set, unless the screen is already dimmer. Level 0 turns the screen off.
+- When night ends, it goes back to the level it remembered.
+- In between the dial wins: turn it at night and the screen stays where you put it until the next night starts.
 
-Sunrise and sunset are worked out on the Pi, offline, for the reference city of the system timezone, from the coordinates in tzdata's zone tables. Stock Pi OS images are set to Europe/London, so set your timezone first. The installer shows the zone and offers a picker; by hand:
+Night starts and ends at the times you set, or at sunset and sunrise. Those are worked out on the Pi, offline, for the reference city of the system timezone, from the coordinates in tzdata's zone tables. Either way the times are the timezone's, and stock Pi OS images are set to Europe/London, so set yours first. The installer shows the zone and offers a picker; by hand:
 
 ```bash
 sudo timedatectl set-timezone America/New_York   # timedatectl list-timezones
 sudo tee /etc/default/brightness-control >/dev/null <<'EOF'
 NIGHT_DIM=1
+NIGHT_FROM=22:00
+NIGHT_UNTIL=07:00
+NIGHT_LEVEL=20
 LAT=
 LON=
-NIGHT_FACTOR=0.5
-NIGHT_OFF_AT=22:00
 EOF
-sudo systemctl restart brightness-control
 ```
+
+The dial script reads the file again whenever it changes, so there's nothing to restart.
 
 | Setting | What it does |
 | --- | --- |
 | `NIGHT_DIM` | `1` turns night dimming on. |
+| `NIGHT_FROM` | When the screen dims: `HH:MM`, or `sunset`. |
+| `NIGHT_UNTIL` | When it comes back: `HH:MM`, or `sunrise`. |
+| `NIGHT_LEVEL` | How dim, 0 to 100. `0` turns the screen off. |
 | `LAT`, `LON` | Optional. Your latitude and longitude in decimal degrees (north and east positive), if the timezone's city is far from you. |
-| `NIGHT_FACTOR` | Scales the dial level between sunset and sunrise. |
-| `NIGHT_OFF_AT` | When the screen goes dark. Leave it blank to only dim. |
 
 Edge cases:
 
-- A cutoff earlier than sunset (a midsummer 22:08 sunset under the 22:00 default) means dark from sunset.
-- In polar night the screen only dims, since no sunrise would end the dark.
-- The Pi has no clock battery, so the schedule stays off until NTP has set the time.
-- A boot after the cutoff dims for the first ten minutes instead of coming up dark, then goes dark unless the dial is turned.
+- Where sunset and sunrise aren't known (a timezone with no city, such as UTC, or a day when the sun stays up or down), `sunset` means 19:00 and `sunrise` 07:00.
+- The Pi has no clock battery, so the schedule waits until NTP has set the time.
+- A start during the night dims at once, to level 0 too. Turn the dial to bring the screen up.
 
 ---
 

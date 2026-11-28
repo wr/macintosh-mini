@@ -26,6 +26,13 @@ def function(name):
     return m.group(0)
 
 
+def one_liner(name):
+    m = re.search(rf'^{name}\(\) \{{ .* \}}\n', SETUP, re.M)
+    if not m:
+        raise AssertionError(f'{name}() not found on one line in setup.sh')
+    return m.group(0)
+
+
 def heredoc(tag, first_line):
     for m in re.finditer(rf"<<'{tag}'\n(.*?)\n{tag}\n", SETUP, re.S):
         if m.group(1).startswith(first_line):
@@ -403,6 +410,258 @@ class Hotspot(unittest.TestCase):
         # RFC 8910 wants a captive-portal API (JSON over HTTPS) there, not a page;
         # phones find the page through their usual checks.
         self.assertNotIn('dhcp-option=114', SETUP)
+
+
+class NightDimming(unittest.TestCase):
+    """One schedule for both builds: from, until (clock times, or sunset and
+    sunrise) and how dim. The installer keeps what's set and moves a file
+    from before 1.12.0."""
+
+    CLOCK = re.search(r"^NIGHT_CLOCK=.*\n", SETUP, re.M).group(0)
+    OLD = ('# Night dimming for the maclock backlight.\nNIGHT_DIM=%s\nLAT=%s\nLON=%s\n'
+           'NIGHT_FACTOR=0.5\nNIGHT_OFF_AT=%s\n')
+
+    def script(self, conf, body):
+        tmp = Path(tempfile.mkdtemp())
+        if conf is not None:
+            (tmp / 'conf').write_text(conf)
+        (tmp / 'sudo').write_text('#!/bin/sh\nexec "$@"\n')
+        (tmp / 'sudo').chmod(0o755)
+        script = (self.CLOCK + f'NIGHT_CONF={tmp}/conf\n'
+                  + 'NIGHT_DIM="" NIGHT_FROM="" NIGHT_UNTIL="" NIGHT_LEVEL="" TIMEZONE=""\n'
+                  + one_liner('conf_get')
+                  + ''.join(function(f) for f in ('read_night_conf', 'night_summary',
+                                                  'write_night_conf', 'pick_night'))
+                  + body)
+        r = subprocess.run(['bash', '-euo', 'pipefail', '-c', script], capture_output=True,
+                           text=True, env=dict(os.environ, PATH=f'{tmp}:/usr/bin:/bin'))
+        self.assertEqual(r.returncode, 0, r.stderr)
+        return r.stdout, tmp / 'conf'
+
+    def current(self, conf):
+        out, _ = self.script(conf, 'read_night_conf\n'
+                             'echo "$CUR_NIGHT_DIM $CUR_NIGHT_FROM $CUR_NIGHT_UNTIL $CUR_NIGHT_LEVEL"\n')
+        return out.strip()
+
+    def written(self, conf, chosen=''):
+        """What the install leaves in the file, as night_schedule reads it."""
+        import night_schedule
+        _, path = self.script(conf, chosen + '\nwrite_night_conf\n')
+        return night_schedule.parse_config(path.read_text()), path.read_text()
+
+    def test_no_file_is_off_with_the_defaults(self):
+        self.assertEqual(self.current(None), '0 22:00 07:00 20')
+
+    def test_on_before_1_12_becomes_sunset_to_sunrise_at_50(self):
+        for off_at in ('22:00', '01:00', ''):
+            self.assertEqual(self.current(self.OLD % (1, '', '', off_at)), '1 sunset sunrise 50')
+
+    def test_off_before_1_12_stays_off(self):
+        self.assertEqual(self.current(self.OLD % (0, '', '', '22:00')), '0 22:00 07:00 20')
+
+    def test_new_settings_are_kept(self):
+        self.assertEqual(self.current('NIGHT_DIM=1\nNIGHT_FROM=21:30\nNIGHT_UNTIL=sunrise\n'
+                                      'NIGHT_LEVEL=0\n'), '1 21:30 sunrise 0')
+
+    def test_mistyped_settings_fall_back_to_the_defaults(self):
+        self.assertEqual(self.current('NIGHT_DIM=yes\nNIGHT_FROM=10pm\nNIGHT_UNTIL=sunset\n'
+                                      'NIGHT_LEVEL=101\n'), '1 22:00 07:00 20')
+
+    def test_update_moves_an_old_file_and_keeps_a_hand_set_place(self):
+        import night_schedule
+        cfg, text = self.written(self.OLD % (1, '51.5', '-0.13', '23:00'))
+        self.assertEqual(cfg, night_schedule.NightConfig(True, night_schedule.SUNSET,
+                                                         night_schedule.SUNRISE, 50, 51.5, -0.13))
+        self.assertNotIn('NIGHT_FACTOR', text)
+        self.assertNotIn('NIGHT_OFF_AT', text)
+
+    def test_update_with_no_file_writes_dimming_off(self):
+        import night_schedule
+        self.assertEqual(self.written(None)[0], night_schedule.NightConfig())
+
+    def test_what_is_chosen_wins_over_what_was_set(self):
+        import night_schedule
+        cfg, _ = self.written('NIGHT_DIM=0\nNIGHT_FROM=21:30\nNIGHT_UNTIL=06:00\nNIGHT_LEVEL=35\n',
+                              'NIGHT_DIM=1 NIGHT_LEVEL=0')
+        self.assertEqual(cfg, night_schedule.NightConfig(True, 21 * 60 + 30, 6 * 60, 0))
+
+    def test_writes_the_file_as_night_schedule_does(self):
+        import night_schedule
+        for cfg in (night_schedule.NightConfig(),
+                    night_schedule.NightConfig(True, night_schedule.SUNSET, night_schedule.SUNRISE, 50),
+                    night_schedule.NightConfig(True, 60, 23 * 60 + 59, 0, 40.7, -74)):
+            self.assertEqual(self.written(night_schedule.format_config(cfg))[1],
+                             night_schedule.format_config(cfg))
+
+    def test_summary(self):
+        out, _ = self.script(None, 'night_summary 0 22:00 07:00 20; echo\n'
+                             'night_summary 1 22:00 07:00 20; echo\n'
+                             'night_summary 1 sunset sunrise 50; echo\n'
+                             'night_summary 1 sunset 06:30 0; echo\n')
+        self.assertEqual(out.splitlines(), ['Off', '22:00 to 07:00, dimmed to 20%',
+                                            'Sunset to sunrise, dimmed to 50%',
+                                            'Sunset to 06:30, screen off'])
+
+    def pick(self, conf, answers, flags=''):
+        """Run pick_night with wt_menu giving each answer in turn (None = Cancel).
+        Returns what it chose and the entry each menu started on."""
+        tmp = Path(tempfile.mkdtemp())
+        (tmp / 'answers').write_text(''.join(f'{a}\n' for a in answers if a is not None))
+        fake = (f'wt_menu() {{ echo "default=$3" >&2; n=$(cat {tmp}/n 2>/dev/null || echo 0); '
+                f'n=$((n+1)); echo $n > {tmp}/n; a=$(sed -n "${{n}}p" {tmp}/answers); '
+                '[[ -n $a ]] || return 1; echo "$a"; }\n'
+                'current_timezone() { echo America/New_York; }\n'
+                'pick_timezone() { TIMEZONE=Asia/Tokyo; }\n')
+        out, _ = self.script(conf, fake + 'read_night_conf\n' + flags + '\n'
+                             'if pick_night; then echo "$NIGHT_DIM $NIGHT_FROM $NIGHT_UNTIL '
+                             '$NIGHT_LEVEL $TIMEZONE"; else echo cancelled; fi\n')
+        return out.strip()
+
+    def test_pick_the_defaults(self):
+        self.assertEqual(self.pick(None, ['10 PM to 7 AM', 'Dim']), '1 22:00 07:00 20')
+
+    def test_pick_sunset_to_sunrise_and_off(self):
+        self.assertEqual(self.pick(None, ['Sunset to sunrise', 'Off']), '1 sunset sunrise 0')
+
+    def test_pick_no(self):
+        self.assertEqual(self.pick('NIGHT_DIM=1\nNIGHT_FROM=sunset\n', ['No']), '0')
+
+    def test_pick_keeps_hand_set_times_and_level(self):
+        conf = 'NIGHT_DIM=1\nNIGHT_FROM=21:30\nNIGHT_UNTIL=06:00\nNIGHT_LEVEL=35\n'
+        self.assertEqual(self.pick(conf, ['Keep 21:30 to 06:00', 'Keep 35%']), '1 21:30 06:00 35')
+
+    def test_update_timezone_comes_back_to_the_question(self):
+        self.assertEqual(self.pick(None, ['Update timezone', 'Sunset to sunrise', 'Half']),
+                         '1 sunset sunrise 50 Asia/Tokyo')
+
+    def test_cancel_changes_nothing(self):
+        self.assertEqual(self.pick(None, [None]), 'cancelled')
+        self.assertEqual(self.pick(None, ['10 PM to 7 AM', None]), 'cancelled')
+
+    def flags(self, *args):
+        a = SETUP.index('NIGHT_CLOCK=')
+        b = SETUP.index('\n', SETUP.index("--night-level takes 0 to 100")) + 1
+        script = ('die() { echo "$*"; exit 1; }\nNIGHT_FROM=$1 NIGHT_UNTIL=$2 NIGHT_LEVEL=$3\n'
+                  + SETUP[a:b] + 'echo ok\n')
+        return subprocess.run(['bash', '-euo', 'pipefail', '-c', script, 'x', *args],
+                              capture_output=True, text=True).stdout.strip()
+
+    def test_flags_take_clock_times_or_the_sun(self):
+        for good in (('', '', ''), ('22:00', '07:00', '20'), ('sunset', 'sunrise', '0'),
+                     ('00:00', '23:59', '100')):
+            self.assertEqual(self.flags(*good), 'ok', good)
+        for bad in (('sunrise', '', ''), ('24:00', '', ''), ('7:00', '', ''), ('never', '', ''),
+                    ('', 'sunset', ''), ('', '07:60', ''), ('', '', '101'), ('', '', '-1'),
+                    ('', '', '050'), ('', '', 'off')):
+            self.assertIn('takes', self.flags(*bad), bad)
+
+    def test_the_old_flag_says_what_replaced_it(self):
+        self.assertRegex(SETUP, r'--night-off\)\s+die ".*--night-from, --night-until and --night-level')
+        for flag in ('--night-from)', '--night-until)', '--night-level)'):
+            self.assertIn(flag, SETUP)
+
+    def test_asked_on_a_fresh_install_and_offered_in_the_settings_editor(self):
+        self.assertIn('pick_night || die "Cancelled"', SETUP)
+        editor = function('configure_existing')
+        self.assertIn('"Night dimming:") pick_night', editor)
+        # The editor is used before the main prompts, so its helpers come first
+        self.assertLess(SETUP.index('pick_night() {'), SETUP.index('configure_existing() {'))
+
+    def test_settings_are_written_on_every_install_with_the_schedule_code(self):
+        helpers = function('install_gpio_helpers')
+        self.assertIn('night_schedule.py', helpers)
+        self.assertLess(helpers.index('write_night_conf'), helpers.index('systemctl restart'))
+        self.assertNotIn('[[ -n $NIGHT_DIM ]] || return 0', function('write_night_conf'))
+
+
+class MiniLink(unittest.TestCase):
+    """The Mac's modem port runs mini-link, which answers the Mini's Mac OS
+    software."""
+
+    PREF = '|/usr/local/bin/mini-link'
+
+    def set_pref(self, before):
+        tmp = Path(tempfile.mkdtemp())
+        prefs = tmp / 'prefs'
+        if before is not None:
+            prefs.write_text(before)
+        pref = re.search(r'^MINI_LINK_PREF=.*\n', SETUP, re.M).group(0)
+        script = (pref + one_liner('pref_get') + function('pref_set') + function('set_serial_pref')
+                  + f'set_serial_pref {prefs}\n')
+        r = subprocess.run(['bash', '-euo', 'pipefail', '-c', script], capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        return prefs.read_text() if prefs.exists() else None
+
+    def test_the_pref_is_the_one_the_contract_names(self):
+        self.assertIn(f'MINI_LINK_PREF="{self.PREF}"', SETUP)
+
+    def test_new_installs_get_it_for_both_emulators(self):
+        for fn in ('write_prefs', 'write_basilisk_prefs'):
+            self.assertIn('\nseriala $MINI_LINK_PREF\n', function(fn), fn)
+
+    def test_an_update_adds_it(self):
+        self.assertEqual(self.set_pref('rom ROM\nether slirp\n'),
+                         f'rom ROM\nether slirp\nseriala {self.PREF}\n')
+
+    def test_an_update_replaces_the_emulators_stock_device_and_leaves_ours(self):
+        if subprocess.run(['sed', '--version'], capture_output=True).returncode:
+            self.skipTest('pref_set needs GNU sed, as on the Pi')
+        want = f'rom ROM\nseriala {self.PREF}\nether slirp\n'
+        self.assertEqual(self.set_pref('rom ROM\nseriala /dev/ttyS0\nether slirp\n'), want)
+        self.assertEqual(self.set_pref(want), want)
+
+    def test_no_prefs_file_is_not_made(self):
+        self.assertIsNone(self.set_pref(None))
+
+    def test_an_owners_own_serial_device_is_kept(self):
+        before = 'rom ROM\nseriala /dev/ttyUSB0\n'
+        self.assertEqual(self.set_pref(before), before)
+
+    def test_update_covers_both_emulators_prefs(self):
+        fn = function('install_mini_link')
+        for prefs in ('.basilisk_ii_prefs', '.sheepshaver_prefs'):
+            self.assertIn(f'set_serial_pref "$HOME/{prefs}"', fn)
+
+    def test_installs_the_program_and_what_it_needs(self):
+        fn = function('install_mini_link')
+        for line in ('sudo install -m644 /tmp/night_schedule.py /usr/local/bin/night_schedule.py',
+                     'sudo install -m755 /tmp/mini_link.py /usr/local/bin/mini-link',
+                     'sudo install -D -m755 /tmp/mini_link_apply.py /usr/local/sbin/mini-link-apply'):
+            self.assertIn(line, fn)
+        here = Path(__file__).resolve().parent
+        for f in ('night_schedule.py', 'mini_link.py', 'mini_link_apply.py'):
+            self.assertTrue((here / f).is_file(), f)
+
+    def test_root_is_only_for_the_one_program(self):
+        fn = function('install_mini_link')
+        self.assertIn("printf '%s ALL=(root) NOPASSWD: /usr/local/sbin/mini-link-apply\\n' \"$USER\"", fn)
+        self.assertEqual(fn.count('NOPASSWD'), 1)
+        self.assertLess(fn.index('visudo -c -f /tmp/020-mini-link'),
+                        fn.index('/etc/sudoers.d/020-mini-link'))
+        # The path the rule names is the one mini-link runs
+        import mini_link
+        self.assertEqual(mini_link.APPLY, '/usr/local/sbin/mini-link-apply')
+
+    def test_installed_with_either_emulator_and_counted(self):
+        self.assertRegex(SETUP, r'if \[\[ \$INSTALL_SHEEPSHAVER -eq 1 \|\| \$INSTALL_BASILISK -eq 1 \]\]; then\n'
+                                r'  install_mini_link\(\) \{')
+        self.assertIn('TOTAL_STEPS=$((TOTAL_STEPS+2))   # Wi-Fi setup, mini-link', SETUP)
+
+    def test_the_version_mini_link_reports_is_recorded(self):
+        import mini_link
+        self.assertIn("printf 'VERSION=%s\\n", function('record_install'))
+        self.assertEqual(mini_link.INSTALL_STATE, re.search(r'^INSTALL_STATE=(\S+)', SETUP, re.M).group(1))
+
+    def test_a_chime_named_by_flag_is_recorded_by_its_tag(self):
+        self.assertIn('[[ "$filename" == "$CHIME_NAME" ]] && CHIME_TAG=$tag', SETUP)
+
+
+class Changelog(unittest.TestCase):
+
+    def test_this_version_has_an_entry(self):
+        version = re.search(r'^VERSION="([0-9.]+)"', SETUP, re.M).group(1)
+        md = (Path(__file__).resolve().parent.parent / 'CHANGELOG.md').read_text()
+        self.assertRegex(md, rf'(?m)^## \[{re.escape(version)}\] - \d{{4}}-\d\d-\d\d\n- ')
 
 
 if __name__ == '__main__':
