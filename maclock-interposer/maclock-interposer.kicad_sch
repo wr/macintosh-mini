@@ -308,6 +308,338 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "Connector_Generic:Conn_01x08"
+			(pin_names
+				(offset 1.016)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "J"
+				(at 0 10.16 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "Conn_01x08"
+				(at 0 -12.7 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Generic connector, single row, 01x08, script generated (kicad-library-utils/schlib/autogen/connector/)"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "connector"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "Connector*:*_1x??_*"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "Conn_01x08_1_1"
+				(rectangle
+					(start -1.27 8.89)
+					(end 1.27 -11.43)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type background)
+					)
+				)
+				(rectangle
+					(start -1.27 7.747)
+					(end 0 7.493)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start -1.27 5.207)
+					(end 0 4.953)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start -1.27 2.667)
+					(end 0 2.413)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start -1.27 0.127)
+					(end 0 -0.127)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start -1.27 -2.413)
+					(end 0 -2.667)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start -1.27 -4.953)
+					(end 0 -5.207)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start -1.27 -7.493)
+					(end 0 -7.747)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start -1.27 -10.033)
+					(end 0 -10.287)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(pin passive line
+					(at -5.08 7.62 0)
+					(length 3.81)
+					(name "Pin_1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -5.08 5.08 0)
+					(length 3.81)
+					(name "Pin_2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -5.08 2.54 0)
+					(length 3.81)
+					(name "Pin_3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -5.08 0 0)
+					(length 3.81)
+					(name "Pin_4"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "4"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -5.08 -2.54 0)
+					(length 3.81)
+					(name "Pin_5"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "5"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -5.08 -5.08 0)
+					(length 3.81)
+					(name "Pin_6"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "6"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -5.08 -7.62 0)
+					(length 3.81)
+					(name "Pin_7"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "7"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -5.08 -10.16 0)
+					(length 3.81)
+					(name "Pin_8"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "8"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "Connector_Generic:Conn_02x20_Odd_Even"
 			(pin_names
 				(offset 1.016)
@@ -1568,6 +1900,169 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "Device:R"
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 0)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "R"
+				(at 2.032 0 90)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "R"
+				(at 0 0 90)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at -1.778 0 90)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Resistor"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "R res resistor"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "R_*"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "R_0_1"
+				(rectangle
+					(start -1.016 -2.54)
+					(end 1.016 2.54)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "R_1_1"
+				(pin passive line
+					(at 0 3.81 270)
+					(length 1.27)
+					(name ""
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 0 -3.81 90)
+					(length 1.27)
+					(name ""
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+	)
+	(text "J2: link to the main board, rev 2027.01, in the same order as its J4\n(SDA SCL GND 5V 5V GND INT AUDIO); one straight 8-way Dupont cable.\nThe screen owns the Pi's hardware I2C pins, so the main board's I2C runs\nbit-banged (i2c-gpio) on GPIO 10 (SDA) and 11 (SCL). R1/R2 are its pull-ups\nto the Pi's 3.3 V; the main board has none. R3 pulls up the main board's\nopen-drain INT on GPIO 27. Audio stays on GPIO 19 (PWM). GPIO 26 (pin 37)\nis unused. Pins 13, 19, 23, 35 and 37 don't reach the screen."
+		(exclude_from_sim no)
+		(at 167.64 116.84 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left top)
+		)
+		(uuid "bf4cc2e8-0447-4265-a86a-f3f6a0cffbb6")
+	)
+	(junction
+		(at 213.36 93.98)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "5fea0068-baba-458e-8592-dcee2db673e0")
+	)
+	(junction
+		(at 205.74 93.98)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "fac3cc65-22d3-4d64-b5f6-445bc307b863")
 	)
 	(no_connect
 		(at 135.89 120.65)
@@ -1576,6 +2071,10 @@
 	(no_connect
 		(at 135.89 123.19)
 		(uuid "32ccd03b-602f-4130-b8db-3eb40979cd32")
+	)
+	(no_connect
+		(at 95.25 123.19)
+		(uuid "63656627-2feb-4e7a-b09e-c370f02596c1")
 	)
 	(no_connect
 		(at 135.89 105.41)
@@ -1589,15 +2088,55 @@
 		(at 135.89 92.71)
 		(uuid "c072bc8b-27dc-49e4-ab4c-e420c832cdc1")
 	)
-	(label "BTN2"
-		(at 95.25 123.19 180)
+	(wire
+		(pts
+			(xy 205.74 93.98) (xy 205.74 96.52)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "2e246d09-654c-4800-b7bf-4c01249a113e")
+	)
+	(wire
+		(pts
+			(xy 200.66 93.98) (xy 220.98 93.98)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "96349ab2-9c96-471c-9938-638dfe04b834")
+	)
+	(wire
+		(pts
+			(xy 220.98 93.98) (xy 220.98 96.52)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c56bab87-301b-4986-b29f-8ea7f7c19233")
+	)
+	(wire
+		(pts
+			(xy 213.36 93.98) (xy 213.36 96.52)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f0086381-6d53-4973-804b-5b0989ddec7c")
+	)
+	(label "GND"
+		(at 175.26 105.41 180)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify right bottom)
 		)
-		(uuid "0037974a-3309-4de6-be6f-3a6b8535a57d")
+		(uuid "0325fff5-8121-4719-969d-31d2a54ac326")
 	)
 	(label "GPIO22"
 		(at 95.25 95.25 180)
@@ -1648,6 +2187,16 @@
 			(justify right bottom)
 		)
 		(uuid "0cbb6a8e-6277-4633-9d82-f66b160d27b3")
+	)
+	(label "GND"
+		(at 175.26 97.79 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "1925d7b6-68d3-454a-a867-850336b16ee8")
 	)
 	(label "5V"
 		(at 175.26 100.33 180)
@@ -1719,16 +2268,6 @@
 		)
 		(uuid "27062903-d5d2-4abd-9d6a-461a8a9f475f")
 	)
-	(label "ENC_A"
-		(at 95.25 105.41 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "27ce3fa9-131f-441f-a9b0-38a3f6d5721a")
-	)
 	(label "GND"
 		(at 148.59 100.33 0)
 		(effects
@@ -1779,15 +2318,15 @@
 		)
 		(uuid "2b3639d1-d8b1-46a9-92d6-359e7671a655")
 	)
-	(label "ENC_B"
-		(at 175.26 92.71 180)
+	(label "INT"
+		(at 175.26 107.95 180)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify right bottom)
 		)
-		(uuid "31d90d9a-97ad-4907-bde6-6522a39aabea")
+		(uuid "317ff1de-f3cf-405b-b63e-4f1fe11984f5")
 	)
 	(label "GPIO18"
 		(at 107.95 90.17 0)
@@ -1798,6 +2337,16 @@
 			(justify left bottom)
 		)
 		(uuid "32700665-6173-45c6-a3f4-66de252a3331")
+	)
+	(label "INT"
+		(at 95.25 92.71 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "33fc43af-3f31-4233-a373-c537a263ee3a")
 	)
 	(label "GPIO2"
 		(at 95.25 80.01 180)
@@ -1889,6 +2438,16 @@
 		)
 		(uuid "65574143-48a2-4716-9870-b86cd950546c")
 	)
+	(label "SCL"
+		(at 175.26 95.25 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "69445119-1d4c-448c-9342-7b61728ff878")
+	)
 	(label "GPIO3"
 		(at 135.89 82.55 180)
 		(effects
@@ -1909,15 +2468,15 @@
 		)
 		(uuid "6dfdb54d-eaee-437d-9943-93b879591bdd")
 	)
-	(label "AUDIO"
-		(at 175.26 102.87 180)
+	(label "SDA"
+		(at 175.26 92.71 180)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify right bottom)
 		)
-		(uuid "722a8e72-2726-4355-8a64-b2796c55e720")
+		(uuid "6e0f111c-f3b9-477e-a061-c1918ff27588")
 	)
 	(label "GPIO25"
 		(at 148.59 102.87 0)
@@ -1929,15 +2488,15 @@
 		)
 		(uuid "78e2a273-429c-4b15-9212-02589de26fc6")
 	)
-	(label "BTN1"
-		(at 95.25 92.71 180)
+	(label "SCL"
+		(at 213.36 104.14 270)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify right bottom)
 		)
-		(uuid "7912a6d0-9097-4183-9a5c-87dbe7d94404")
+		(uuid "796bbd20-ed40-4739-bd65-f061a4d31774")
 	)
 	(label "GPIO15"
 		(at 148.59 87.63 0)
@@ -1948,16 +2507,6 @@
 			(justify left bottom)
 		)
 		(uuid "81306a79-9d6c-4bfd-8342-253f56cf9dab")
-	)
-	(label "ENC_A"
-		(at 175.26 97.79 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "869ff434-550f-48ea-8480-3fde0b638d1e")
 	)
 	(label "GPIO2"
 		(at 135.89 80.01 180)
@@ -2019,15 +2568,25 @@
 		)
 		(uuid "9138e1c8-4df6-4696-97ea-2ad1d13a487e")
 	)
-	(label "BTN1"
-		(at 175.26 107.95 180)
+	(label "AUDIO"
+		(at 175.26 110.49 180)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify right bottom)
 		)
-		(uuid "97ab475a-7a4c-4077-bea7-27a9ad0f5d7b")
+		(uuid "9941d677-cf63-4216-8ea8-fb9f88c1b5c2")
+	)
+	(label "SDA"
+		(at 95.25 100.33 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "9adf99c6-31e2-4ea3-8b60-7e473762c202")
 	)
 	(label "GPIO23"
 		(at 148.59 95.25 0)
@@ -2089,6 +2648,16 @@
 		)
 		(uuid "ab3d67b6-5e06-4fb1-9d34-73c99fcf88a5")
 	)
+	(label "5V"
+		(at 175.26 102.87 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "ad5eb9b6-6265-45e3-8673-07b8f9e63122")
+	)
 	(label "GND"
 		(at 107.95 82.55 0)
 		(effects
@@ -2118,6 +2687,26 @@
 			(justify right bottom)
 		)
 		(uuid "b75aed56-c920-41cc-b2d9-215685fc20e8")
+	)
+	(label "SDA"
+		(at 205.74 104.14 270)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "b8e7fb04-1056-4901-9304-84c8db8cbb76")
+	)
+	(label "INT"
+		(at 220.98 104.14 270)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "bb519f2a-ed46-4daf-9f9b-c8225159b38e")
 	)
 	(label "GPIO12"
 		(at 107.95 115.57 0)
@@ -2179,6 +2768,16 @@
 		)
 		(uuid "d14e3d39-dc36-4ca4-a9c3-8efa7fc5f9f1")
 	)
+	(label "SCL"
+		(at 95.25 105.41 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "d1fabeee-a1ee-49dc-8f23-c0ef4ca9bb31")
+	)
 	(label "GND"
 		(at 107.95 100.33 0)
 		(effects
@@ -2208,16 +2807,6 @@
 			(justify right bottom)
 		)
 		(uuid "d6b8cff2-debd-4fe6-8e9b-545bc1a683e6")
-	)
-	(label "BTN2"
-		(at 175.26 105.41 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "d6fb7f84-c735-484a-a2a3-c11c6dc0eb61")
 	)
 	(label "GPIO23"
 		(at 107.95 95.25 0)
@@ -2319,6 +2908,16 @@
 		)
 		(uuid "ea74bc1e-0ac3-4ff9-82bb-943da5e302ab")
 	)
+	(label "3V3"
+		(at 200.66 93.98 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "eb6e9da7-47d7-4860-91ce-4c19dc2023c7")
+	)
 	(label "GPIO7"
 		(at 148.59 107.95 0)
 		(effects
@@ -2359,26 +2958,6 @@
 		)
 		(uuid "f32e68e6-f8a8-4369-a631-a64d70b62172")
 	)
-	(label "ENC_B"
-		(at 95.25 100.33 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "f4ac1a61-1b29-4522-9f16-a7af7d383c39")
-	)
-	(label "GND"
-		(at 175.26 95.25 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "f7ce04a2-49ff-4d3a-bb85-68723121ee00")
-	)
 	(label "GPIO18"
 		(at 148.59 90.17 0)
 		(effects
@@ -2410,7 +2989,119 @@
 		(uuid "fd3d3ab7-f322-4a3c-92a4-ada61e60a440")
 	)
 	(symbol
-		(lib_id "Connector_Generic:Conn_01x07")
+		(lib_id "Device:R")
+		(at 205.74 100.33 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "085cec94-1f67-4a0c-8a0d-ab3e4e2ead0d")
+		(property "Reference" "R1"
+			(at 207.772 100.33 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "2.2k"
+			(at 205.74 100.33 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric_Pad0.72x0.64mm_HandSolder"
+			(at 205.74 100.33 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 205.74 100.33 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "I2C pull-up on SDA (GPIO 10) to the Pi's 3.3 V"
+			(at 205.74 100.33 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "UNI-ROYAL"
+			(at 205.74 100.33 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "0402WGF2201TCE"
+			(at 205.74 100.33 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C25879"
+			(at 205.74 100.33 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "3b6b3255-18df-4193-97db-da3ce903d77c")
+		)
+		(pin "2"
+			(uuid "b170a857-8780-4064-a9e5-8512459db91f")
+		)
+		(instances
+			(project "maclock-interposer"
+				(path "/3aefd1ae-7037-41a5-ae64-48550bbb8a48"
+					(reference "R1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector_Generic:Conn_01x08")
 		(at 180.34 100.33 0)
 		(unit 1)
 		(body_style 1)
@@ -2430,8 +3121,8 @@
 				)
 			)
 		)
-		(property "Value" "PM254V-11-07-H71-U"
-			(at 180.34 110.49 0)
+		(property "Value" "PM254V-11-08-H71-U"
+			(at 180.34 113.03 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -2440,7 +3131,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Connector_PinSocket_2.54mm:PinSocket_1x07_P2.54mm_Vertical"
+		(property "Footprint" "Connector_PinSocket_2.54mm:PinSocket_1x08_P2.54mm_Vertical"
 			(at 180.34 100.33 0)
 			(hide yes)
 			(show_name no)
@@ -2451,7 +3142,7 @@
 				)
 			)
 		)
-		(property "Datasheet" "https://www.lcsc.com/product-detail/C55218706.html"
+		(property "Datasheet" "https://www.lcsc.com/product-detail/C55218707.html"
 			(at 180.34 100.33 0)
 			(hide yes)
 			(show_name no)
@@ -2462,7 +3153,7 @@
 				)
 			)
 		)
-		(property "Description" "1x7 female header (socket), 2.54 mm, 7.1 mm, through-hole"
+		(property "Description" "1x8 female header (socket), 2.54 mm, 7.1 mm, through-hole. Link to the main board (rev 2027.01): SDA SCL GND 5V 5V GND INT AUDIO"
 			(at 180.34 100.33 0)
 			(hide yes)
 			(show_name no)
@@ -2484,7 +3175,7 @@
 				)
 			)
 		)
-		(property "MPN" "PM254V-11-07-H71-U"
+		(property "MPN" "PM254V-11-08-H71-U"
 			(at 180.34 100.33 0)
 			(hide yes)
 			(show_name no)
@@ -2495,7 +3186,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C55218706"
+		(property "LCSC" "C55218707"
 			(at 180.34 100.33 0)
 			(hide yes)
 			(show_name no)
@@ -2527,10 +3218,237 @@
 		(pin "7"
 			(uuid "bd5df679-e842-4866-b9a8-52297af6ab24")
 		)
+		(pin "8"
+			(uuid "179c5227-4e24-4a37-9eb6-0e0e7f8af5be")
+		)
 		(instances
 			(project "maclock-interposer"
 				(path "/3aefd1ae-7037-41a5-ae64-48550bbb8a48"
 					(reference "J2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:R")
+		(at 213.36 100.33 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "747dd009-15d8-4d2a-8070-d10624a1d15d")
+		(property "Reference" "R2"
+			(at 215.392 100.33 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "2.2k"
+			(at 213.36 100.33 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric_Pad0.72x0.64mm_HandSolder"
+			(at 213.36 100.33 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 213.36 100.33 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "I2C pull-up on SCL (GPIO 11) to the Pi's 3.3 V"
+			(at 213.36 100.33 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "UNI-ROYAL"
+			(at 213.36 100.33 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "0402WGF2201TCE"
+			(at 213.36 100.33 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C25879"
+			(at 213.36 100.33 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "29c815cf-b43d-4751-97aa-c310a73f221b")
+		)
+		(pin "2"
+			(uuid "dee3400e-9fb2-443e-ab52-5f2f1ba90885")
+		)
+		(instances
+			(project "maclock-interposer"
+				(path "/3aefd1ae-7037-41a5-ae64-48550bbb8a48"
+					(reference "R2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:R")
+		(at 220.98 100.33 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "b0b04447-aae3-4076-bc41-f6093a45eed7")
+		(property "Reference" "R3"
+			(at 223.012 100.33 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "10k"
+			(at 220.98 100.33 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric_Pad0.72x0.64mm_HandSolder"
+			(at 220.98 100.33 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 220.98 100.33 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Pull-up on the main board's open-drain INT (GPIO 27)"
+			(at 220.98 100.33 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "UNI-ROYAL"
+			(at 220.98 100.33 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "0402WGF1002TCE"
+			(at 220.98 100.33 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C25744"
+			(at 220.98 100.33 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "2fbd595b-58a1-46de-99e3-245cae6afb53")
+		)
+		(pin "2"
+			(uuid "46284b85-2204-4564-8492-0149a15691a9")
+		)
+		(instances
+			(project "maclock-interposer"
+				(path "/3aefd1ae-7037-41a5-ae64-48550bbb8a48"
+					(reference "R3")
 					(unit 1)
 				)
 			)
